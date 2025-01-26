@@ -1,0 +1,27 @@
+player_character:
+  name: "Adventurer"
+  class: "Warrior"
+  race: "Human"
+  level: 1
+  health: 100
+  mana: 50
+  experience: 0
+  attributes:
+    strength: 10
+    agility: 10
+    intelligence: 10
+    charisma: 10
+  inventory:
+    gold: 100
+    items:
+      - name: "Health Potion"
+        quantity: 2
+      - name: "Mana Potion"
+        quantity: 1
+  equipment:
+    weapon:
+      name: "Basic Sword"
+      damage: 5
+    armor:
+      name: "Leather Armor"
+      defense: 3

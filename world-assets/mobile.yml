@@ -1,0 +1,67 @@
+mob:
+  - id: 1
+    name: "Goblin"
+    description: "A small, green creature with sharp teeth and a nasty disposition."
+    level: 5
+    health: 
+      max: 100
+      current: 100
+    attack: 
+      min: 5
+      max: 10
+    defense: 3
+    experience: 50
+    loot:
+      - item_id: 101
+        chance: 0.5
+      - item_id: 102
+        chance: 0.2
+    behaviors:
+      - type: "aggressive"
+        trigger: "sight"
+      - type: "flee"
+        trigger: "low_health"
+  - id: 2
+    name: "Blood Elf"
+    description: "A tall, slender figure with piercing red eyes and pale skin."
+    level: 10
+    health:
+      max: 200
+      current: 200
+    attack:
+      min: 15
+      max: 25
+    defense: 8
+    experience: 150
+    loot:
+      - item_id: 201
+        chance: 0.3
+      - item_id: 202
+        chance: 0.1
+    behaviors:
+      - type: "aggressive"
+        trigger: "sight"
+      - type: "magic"
+        trigger: "attack"
+  - id: 3
+    name: "Undead Warrior"
+    description: "A reanimated corpse clad in tattered rags."
+    level: 8
+    health:
+      max: 150
+      current: 150
+    attack:
+      min: 10
+      max: 20
+    defense: 5
+    experience: 100
+    loot:
+      - item_id: 301
+        chance: 0.4
+      - item_id: 302
+        chance: 0.15
+    behaviors:
+      - type: "aggressive"
+        trigger: "sight"
+      - type: "resurrect"
+        trigger: "death"

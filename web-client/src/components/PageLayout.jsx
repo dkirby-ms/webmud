@@ -13,7 +13,7 @@ export const PageLayout = (props) => {
             <NavigationBar />
             <br />
             <h5>
-                <center>Welcome to the Microsoft Authentication Library For React Tutorial</center>
+                <center>Welcome to webMUD. Your sojourn begins here...</center>
             </h5>
             <br />
             {props.children}
@@ -21,14 +21,13 @@ export const PageLayout = (props) => {
             <AuthenticatedTemplate>
                 <footer>
                     <center>
-                        How did we do?
                         <a
-                            href="https://forms.office.com/Pages/ResponsePage.aspx?id=v4j5cvGGr0GRqy180BHbR_ivMYEeUKlEq8CxnMPgdNZUNDlUTTk2NVNYQkZSSjdaTk5KT1o4V1VVNS4u"
+                            href="http://github.com/dkirby-ms/webmud"
                             rel="noopener noreferrer"
                             target="_blank"
                         >
                             {' '}
-                            Share your experience!
+                            Contribute
                         </a>
                     </center>
                 </footer>

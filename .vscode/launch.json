@@ -3,12 +3,30 @@
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
-    "configurations": [    
+    "configurations": [
         {
-			"type": "node",
-			"request": "launch",
-			"name": "Launch web-client",
-			"program": "${workspaceFolder}/.vscode/vsCodeLaunchReactSample.js"
-		}
+            "name": "Debug game-data import",
+            "request": "launch",
+            "runtimeExecutable": "/home/saitcho/.nvm/versions/node/v22.13.1/bin/node",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "cwd": "${workspaceFolder}/game-data",
+            "program": "${workspaceFolder}/game-data/mobile-data.js",
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch mob-service",
+            "skipFiles": ["<node_internals>/**"],
+            "program": "${workspaceFolder}/mob-service/src/app.js",
+            "env": {
+                "MONGO_URL": "mongodb://localhost:27017",
+                "PORT": "3006"
+            },
+            "runtimeExecutable": "/home/saitcho/.nvm/versions/node/v22.13.1/bin/node",
+            "cwd": "${workspaceFolder}/mob-service"
+        }
     ]
 }

@@ -1,0 +1,29 @@
+{
+  "name": "game-service",
+  "version": "1.0.0",
+  "description": "Main game-service for a \"server instance\"",
+  "main": "src/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/dkirby-ms/webmud.git"
+  },
+  "keywords": [
+    "game",
+    "mud"
+  ],
+  "author": "saitcho",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dkirby-ms/webmud/issues"
+  },
+  "homepage": "https://github.com/dkirby-ms/webmud#readme",
+  "dependencies": {
+    "express": "^4.21.2",
+    "ws": "^8.18.0"
+  }
+}

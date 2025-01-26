@@ -1,0 +1,17 @@
+object:
+  id: string  # Unique identifier for the object
+  name: string  # Name of the object
+  description: string  # Description of the object
+  type: string  # Type of the object (e.g., weapon, armor, potion)
+  attributes:
+    weight: float  # Weight of the object
+    value: int  # Value of the object in game currency
+  stats:
+    damage: int  # Damage value if the object is a weapon
+    defense: int  # Defense value if the object is armor
+  location:
+    room_id: string  # ID of the room where the object is located
+  interactions:
+    pickup: boolean  # Whether the object can be picked up
+    use: boolean  # Whether the object can be used
+    equip: boolean  # Whether the object can be equipped

@@ -31,6 +31,14 @@ app.post('/characters', async (req, res) => {
   res.json(newChar);
 });
 
+// Create a new character (POST /characters/new)
+app.post('/characters/new', async (req, res) => {
+  const { userId, name, class: charClass, race } = req.body;
+  const newChar = new Character({ userId, name, class: charClass, race });
+  await newChar.save();
+  res.status(201).json(newChar);
+});
+
 // Get all characters for a user (GET /characters)
 app.get('/characters', async (req, res) => {
   // ...retrieve userId from session or token...

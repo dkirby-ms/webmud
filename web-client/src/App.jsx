@@ -1,9 +1,10 @@
 import { MsalProvider, AuthenticatedTemplate, useMsal, UnauthenticatedTemplate } from '@azure/msal-react';
 import { Container, Button } from 'react-bootstrap';
 import { PageLayout } from './components/PageLayout';
-import { IdTokenData } from './components/DataDisplay';
+import { IdTokenData } from './components/DataDisplayIDToken';
+import { WebSocketConsole } from './components/WebSocketConsole';
 import { loginRequest } from './authConfig';
-
+import { useEffect, useState } from 'react';
 import './styles/App.css';
 
 /**
@@ -21,6 +22,17 @@ const MainContent = () => {
     const { instance } = useMsal();
     const activeAccount = instance.getActiveAccount();
 
+    useEffect(() => {
+        if (activeAccount) {
+            instance.acquireTokenSilent({
+                ...loginRequest,
+                account: activeAccount,
+            }).catch((error) => {
+                console.error('Error acquiring token:', error);
+            });
+        }
+    }, [activeAccount, instance]);
+
     const handleRedirect = () => {
         instance
             .loginRedirect({
@@ -29,18 +41,26 @@ const MainContent = () => {
             })
             .catch((error) => console.log(error));
     };
+
+    const handleLogout = () => {
+        instance.logoutRedirect().catch((error) => console.log(error));
+    };
+
     return (
         <div className="App">
             <AuthenticatedTemplate>
-                {activeAccount ? (
-                    <Container>
-                        <IdTokenData idTokenClaims={activeAccount.idTokenClaims} />
-                    </Container>
-                ) : null}
+                <h1>Welcome, {activeAccount?.username}</h1>
+                <Container>
+                    {/* <IdTokenData idTokenClaims={activeAccount.idTokenClaims} /> */}
+                    <WebSocketConsole />
+                    <Button className="signOutButton" onClick={handleLogout} variant="secondary">
+                        Logout
+                    </Button>
+                </Container>
             </AuthenticatedTemplate>
             <UnauthenticatedTemplate>
                 <Button className="signInButton" onClick={handleRedirect} variant="primary">
-                    Sign up
+                    Login
                 </Button>
             </UnauthenticatedTemplate>
         </div>
