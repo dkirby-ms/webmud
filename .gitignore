@@ -5,3 +5,5 @@ game-data/node_modules
 mob-service/node_modules
 web-client/node_modules
 .env
+event-bus/mqtt-config/pwfile
+event-bus/mqtt-data/mosquitto.db

@@ -6,12 +6,20 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    restart:
+      unless-stopped
 
   mqtt:
     image: eclipse-mosquitto:latest
     container_name: webmud-mqtt
     ports:
       - "1883:1883"
+    volumes:
+      - ./event-bus/mqtt-config:/mosquitto/config:rw
+      - ./event-bus/mqtt-data:/mosquitto/data:rw
+      - ./event-bus/mqtt-log:/mosquitto/log:rw
+    restart: 
+      unless-stopped
 
   # auth-service:
   #   build:
@@ -38,3 +46,6 @@ services:
 
 volumes:
   mongo-data:
+  config:
+  data:
+  log:
