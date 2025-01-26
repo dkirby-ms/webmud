@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
-const { GameEvent, EventManager } = require('./event');
+const { GameEvent, EventManager } = require('./event.js');
 
 const app = express();
 const server = http.createServer(app);
@@ -18,43 +18,44 @@ let gameState = {
     worldDetails: {}
 };
 
-const weather = new EventManager();
-const combat = new EventManager();
-const playerManager = new EventManager();
-
+const chatManager = new EventManager();
 
 function updateGameState() {
     // Update game state logic her
     // For example, move NPCs, handle game events, etc.
     // Example of triggering a worldwide event
     const worldwideEvent = new GameEvent('worldwide', { message: 'A new worldwide event has started!' });
-    eventManager.triggerEvent(worldwideEvent);
-}
-
-function handleInput(input) {
-    // Handle input affecting the game world
-    // For example, player movements, actions, etc.
+    //eventManager.triggerEvent(worldwideEvent);
 }
 
 wss.on('connection', (ws) => {
+    
+    // handle new player connection
+
     ws.on('message', (message) => {
-        const input = JSON.parse(message);
-        handleInput(input);
+        // Handle incoming messages
+        //const input = JSON.parse(message);
+        //console.log(input)
     });
 
-    // // Adding a listener for worldwide events to notify all connected players
-    // eventManager.addListener('worldwide', async (data) => {
-    //     ws.send(JSON.stringify({ type: 'worldwide', data }));
-    // });
+    ws.on('close', () => {
+        // Handle player disconnect
+        console.log('Client disconnected');
+    });
+
+    ws.on('error', (error) => {
+        console.error(`WebSocket error: ${error}`);
+    });
 });
 
-function gameLoop() {
+function gameLoop() { // Will we even need a game loop for an event-driven game? hmm
     updateGameState();
-
-    setTimeout(gameLoop, 1000 / 30); // Run at 60 FPS
+    console.log(`Game tick: ${new Date().toISOString()}`);
+    
+    setTimeout(gameLoop, 10000); // Run at 15 FPS
 }
 
 server.listen(PORT, () => {
     console.log(`${SERVER_NAME} is listening on port ${PORT}`);
-    gameLoop();
+    gameLoop(); 
 });

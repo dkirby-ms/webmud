@@ -52,7 +52,7 @@ const MainContent = () => {
                 <h1>Welcome, {activeAccount?.username}</h1>
                 <Container>
                     {/* <IdTokenData idTokenClaims={activeAccount.idTokenClaims} /> */}
-                    <WebSocketConsole />
+                    <WebSocketConsole url={"http://localhost:28999"} />
                     <Button className="signOutButton" onClick={handleLogout} variant="secondary">
                         Logout
                     </Button>

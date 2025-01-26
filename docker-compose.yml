@@ -43,6 +43,17 @@ services:
       - "3001:3001"
     depends_on:
       - mongodb
+      - mqtt
+  
+  # game-service:
+  #   build:
+  #     context: ./game-service
+  #   container_name: webmud-game-service
+  #   ports:
+  #     - "28999:28999"
+  #   depends_on:
+  #     - mongodb
+  #     - mqtt
 
 volumes:
   mongo-data:

@@ -1,51 +1,57 @@
 import React, { useState, useEffect } from 'react';
-const [connectionStatus, setConnectionStatus] = useState('Disconnected');
 
-const sendMessage = () => {
-    if (messageInput.trim() !== '') {
-      const message = {
-        text: messageInput,
-        timestamp: new Date().toISOString(),
-      };
-      socket.send(JSON.stringify(message));
-      setMessageInput('');
-    }
-  };
-  
 export const WebSocketConsole = ({ url }) => {
     const [messages, setMessages] = useState([]);
+    const [messageInput, setMessageInput] = useState('');
     const [ws, setWs] = useState(null);
+    const [connectionStatus, setConnectionStatus] = useState('Disconnected');
+    const socket = new WebSocket(url);
 
     useEffect(() => {
-        const socket = new WebSocket(url);
-        setWs(socket);
-
-        socket.onmessage = (event) => {
-            setMessages((prevMessages) => [...prevMessages, event.data]);
-        };
-
-        socket.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
-
-        socket.onclose = () => {
-            console.log('WebSocket connection closed');
-        };
-
-        return () => {
+        socket.onopen = () => {
+            console.log('WebSocket connection established.');
+          };
+        
+          socket.onmessage = (event) => {
+            const receivedMessage = JSON.parse(event.data);
+            setMessages([...messages, receivedMessage]);
+          };
+        
+          return () => {
             socket.close();
-        };
-    }, [url]);
+          };
+    }, [messages]);
+
+    const sendMessage = () => {
+        if (messageInput.trim() !== '') {
+            const message = {
+                text: messageInput,
+                timestamp: new Date().toISOString(),
+            };
+            socket.send(JSON.stringify(message));
+            setMessageInput('');
+        }
+    };
 
     return (
-        <div className="websocket-console">
-            <h3>WebSocket Console</h3>
-            <div className="messages">
-                {messages.map((message, index) => (
-                    <div key={index} className="message">
-                        {message}
-                    </div>
-                ))}
+        <div className="App">
+            <div className="chat-container">
+                <div className="chat-messages">
+                    {messages.map((message, index) => (
+                        <div key={index} className="message">
+                            {message}
+                        </div>
+                    ))}
+                </div>
+                <div className="chat-input">
+                    <input
+                        type="text"
+                        placeholder="Type your message..."
+                        value={messageInput}
+                        onChange={(e) => setMessageInput(e.target.value)}
+                    />
+                    <button onClick={sendMessage}>Send</button>
+                </div>
             </div>
         </div>
     );
