@@ -20,6 +20,11 @@ let gameState = {
 
 const chatManager = new EventManager();
 
+function handleInput(message) {
+    // Handle incoming messages
+    
+}
+
 function updateGameState() {
     // Update game state logic her
     // For example, move NPCs, handle game events, etc.
@@ -35,7 +40,7 @@ wss.on('connection', (ws) => {
     ws.on('message', (message) => {
         // Handle incoming messages
         //const input = JSON.parse(message);
-        //console.log(input)
+        handleInput(message);
     });
 
     ws.on('close', () => {
