@@ -7,6 +7,12 @@ services:
     volumes:
       - mongo-data:/data/db
 
+  mqtt:
+    image: eclipse-mosquitto:latest
+    container_name: webmud-mqtt
+    ports:
+      - "1883:1883"
+
   # auth-service:
   #   build:
   #     context: ./auth-service

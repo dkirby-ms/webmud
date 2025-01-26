@@ -4,3 +4,4 @@ character-service/node_modules
 game-data/node_modules
 mob-service/node_modules
 web-client/node_modules
+.env
