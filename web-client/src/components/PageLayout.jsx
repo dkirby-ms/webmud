@@ -12,10 +12,6 @@ export const PageLayout = (props) => {
         <>
             <NavigationBar />
             <br />
-            <h5>
-                <center>Welcome to webMUD. Your sojourn begins here...</center>
-            </h5>
-            <br />
             {props.children}
             <br />
             <AuthenticatedTemplate>

@@ -4,6 +4,8 @@ import { PageLayout } from './components/PageLayout';
 import { IdTokenData } from './components/DataDisplayIDToken';
 import { WebSocketConsole } from './components/WebSocketConsole';
 import { loginRequest } from './authConfig';
+import React from 'react';
+import ReactDOM from 'react-dom';
 import { useEffect, useState } from 'react';
 import './styles/App.css';
 
@@ -27,11 +29,32 @@ const MainContent = () => {
             instance.acquireTokenSilent({
                 ...loginRequest,
                 account: activeAccount,
+            }).then((response) => {
+                console.log('Silent token acquisition successful:', response);
+                userServiceLogin(response.accessToken);
             }).catch((error) => {
                 console.error('Error acquiring token:', error);
             });
         }
     }, [activeAccount, instance]);
+
+    const userServiceLogin = (token) => {
+        fetch('http://localhost:28998/loginUser', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ accessToken: token })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Service response:', data);
+        })
+        .catch(error => {
+            console.error('Error calling service:', error);
+        });
+    };
 
     const handleRedirect = () => {
         instance
@@ -49,14 +72,16 @@ const MainContent = () => {
     return (
         <div className="App">
             <AuthenticatedTemplate>
-                <h1>Welcome, {activeAccount?.username}</h1>
-                <Container>
-                    {/* <IdTokenData idTokenClaims={activeAccount.idTokenClaims} /> */}
-                    <WebSocketConsole url={"http://localhost:28999"} />
-                    <Button className="signOutButton" onClick={handleLogout} variant="secondary">
-                        Logout
-                    </Button>
-                </Container>
+                {activeAccount ? (
+                    <Container>
+                        <h3>Welcome, {activeAccount?.username}</h3>  
+                        <WebSocketConsole url={"http://localhost:28999"} />
+                        <Button className="signOutButton" onClick={handleLogout} variant="secondary">
+                            Logout
+                        </Button>
+                        <IdTokenData idTokenClaims={activeAccount.idTokenClaims} />
+                    </Container>
+                ) : null}
             </AuthenticatedTemplate>
             <UnauthenticatedTemplate>
                 <Button className="signInButton" onClick={handleRedirect} variant="primary">

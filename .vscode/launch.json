@@ -5,6 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch user-service",
+            "request": "launch",
+            "runtimeExecutable": "/home/saitcho/.nvm/versions/node/v22.13.1/bin/node",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "cwd": "${workspaceFolder}/user-service",
+            "program": "${workspaceFolder}/user-service/src/app.js"
+        },
+        {
             "name": "Launch game-service",
             "request": "launch",
             "runtimeExecutable": "/home/saitcho/.nvm/versions/node/v22.13.1/bin/node",
