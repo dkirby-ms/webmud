@@ -50,15 +50,6 @@ export const msalConfig = {
     },
 };
 
-/**
- * Scopes you add here will be prompted for user consent during sign-in.
- * By default, MSAL.js will add OIDC scopes (openid, profile, email) to any login request.
- * For more information about OIDC scopes, visit: 
- * https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-permissions-and-consent#openid-connect-scopes
- */
-export const loginRequest = {
-    scopes: [],
-};
 
 /**
  * An optional silentRequest object can be used to achieve silent SSO
@@ -68,3 +59,26 @@ export const loginRequest = {
 //     scopes: ["openid", "profile"],
 //     loginHint: "example@domain.net"
 // };
+
+/**
+ * Add here the endpoints and scopes when obtaining an access token for protected web APIs. For more information, see:
+ * https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-browser/docs/resources-and-scopes.md
+ */
+export const protectedResources = {
+    loginUserAPI: {
+        endpoint: 'http://localhost:28998/loginUser',
+        scopes: {
+            UserService: ['https://agora9.onmicrosoft.com/7fd0082d-4fdc-4a0a-a104-440a71fd9e38/User.Service'],
+        },
+    },
+};
+
+/**
+ * Scopes you add here will be prompted for user consent during sign-in.
+ * By default, MSAL.js will add OIDC scopes (openid, profile, email) to any login request.
+ * For more information about OIDC scopes, visit:
+ * https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-permissions-and-consent#openid-connect-scopes
+ */
+export const loginRequest = {
+    scopes: [...protectedResources.loginUserAPI.scopes.UserService],
+};

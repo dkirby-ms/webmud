@@ -8,6 +8,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { useEffect, useState } from 'react';
 import './styles/App.css';
+import useFetchWithMsal from './hooks/useFetchWithMsal';
+import { protectedResources } from './authConfig';
 
 /**
  * Most applications will need to conditionally render certain components based on whether a user is signed in or not. 
@@ -23,6 +25,9 @@ const MainContent = () => {
      */
     const { instance } = useMsal();
     const activeAccount = instance.getActiveAccount();
+    const { error, execute } = useFetchWithMsal({
+        scopes: protectedResources.loginUserAPI.scopes.UserService
+    });
 
     useEffect(() => {
         if (activeAccount) {
@@ -39,21 +44,29 @@ const MainContent = () => {
     }, [activeAccount, instance]);
 
     const userServiceLogin = (token) => {
-        fetch('http://localhost:28998/loginUser', {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ accessToken: token })
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Service response:', data);
+        execute('POST', protectedResources.userServiceAPI.endpoint, { accessToken: token }).then((response) => {
+            if (response.status === 200 || response.status === 204) {
+                console.log('Service response:', response);
+            }
         })
         .catch(error => {
-            console.error('Error calling service:', error);
+                console.error('Error calling service:', error);
         });
+        // fetch('http://localhost:28998/loginUser', {
+        //     method: 'POST',
+        //     headers: {
+        //     'Content-Type': 'application/json',
+        //     'Authorization': `Bearer ${token}`
+        //     },
+        //     body: JSON.stringify({ accessToken: token })
+        // })
+        // .then(response => response.json())
+        // .then(data => {
+        //     console.log('Service response:', data);
+        // })
+        // .catch(error => {
+        //     console.error('Error calling service:', error);
+        // });
     };
 
     const handleRedirect = () => {
