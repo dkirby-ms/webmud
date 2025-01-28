@@ -34,9 +34,6 @@ function updateGameState() {
 }
 
 wss.on('connection', (ws) => {
-    
-    // handle new player connection
-
     ws.on('message', (message) => {
         // Handle incoming messages
         //const input = JSON.parse(message);
