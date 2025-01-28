@@ -1,7 +1,8 @@
 const express = require('express');
 const mqtt = require('mqtt');
-
+const cors = require('cors');
 const app = express();
+app.use(cors());
 const port = process.env.PORT || 28998; // Use the PORT environment variable or default to 3000
 const mqttServer = process.env.MQTT_SERVER || 'mqtt://localhost:1883';
 const mqttOptions = {
@@ -12,16 +13,15 @@ const mqttOptions = {
 app.use(express.json());
 
 app.post('/loginUser', (req, res) => {
-    const body = req.body;
-    
+    const userAccountInfo = JSON.parse(req.body);
     // send message to mqtt
     const client = mqtt.connect(mqttServer, mqttOptions);
     client.on('connect', () => {
         client.publish('Users/Auth', JSON.stringify(body));
         client.end();
     });
-    console.log(req.body);
-    res.send('Message sent to MQTT');
+    console.log('User login from ' + userAccountInfo.username + ' published to MQTT.');
+    res.send('User login from ' + userAccountInfo.username + ' published to MQTT.');
 });
 
 app.listen(port, () => {
