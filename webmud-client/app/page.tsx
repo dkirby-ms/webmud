@@ -1,22 +1,25 @@
 import { auth } from "auth"
+import { SessionProvider } from "next-auth/react"
+import ConnectionBar from './components/connectionBar'
+import ChatConsole from './components/chatConsole'
 
-export default async function Index() {
+export default async function webMUDClient() {
   const session = await auth()
+  if (session?.user) {
+    // TODO: Look into https://react.dev/reference/react/experimental_taintObjectReference
+    // filter out sensitive data before passing to client.
+    session.user = {
+      name: session.user.name,
+      email: session.user.email,
+    }
+  }
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-3xl font-bold">webmud client</h1>
-      <div>
-
-      </div>
-      <div className="flex flex-col rounded-md bg-neutral-100">
-        <div className="p-4 font-bold rounded-t-md bg-neutral-200">
-          Current Session
-        </div>
-        <pre className="py-6 px-4 whitespace-pre-wrap break-all">
-          {JSON.stringify(session, null, 2)}
-        </pre>
-      </div>
-    </div>
+    <>
+      <SessionProvider basePath={"/auth"} session={session}>
+        <ConnectionBar />
+        <ChatConsole messages={[]} />
+      </SessionProvider>
+    </>
   )
 }
