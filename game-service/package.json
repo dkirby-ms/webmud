@@ -24,6 +24,7 @@
   "homepage": "https://github.com/dkirby-ms/webmud#readme",
   "dependencies": {
     "express": "^4.21.2",
+    "socket.io": "^4.8.1",
     "ws": "^8.18.0"
   }
 }
