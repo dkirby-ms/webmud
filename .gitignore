@@ -2,3 +2,4 @@ node_modules/
 .env
 event-bus/mqtt-config/pwfile
 event-bus/mqtt-data/mosquitto.db
+.next/
