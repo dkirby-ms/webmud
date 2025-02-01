@@ -3,3 +3,4 @@ node_modules/
 event-bus/mqtt-config/pwfile
 event-bus/mqtt-data/mosquitto.db
 .next/
+webmud-client/.env.local
