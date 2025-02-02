@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 // ...existing code...
 import { signIn, signOut, useSession } from 'next-auth/react';
+import styles from './connectionBar.module.css'
 
 export default function ConnectionBar() {
   const { data: session, status } = useSession();
@@ -27,7 +28,6 @@ export default function ConnectionBar() {
   };
 
   const handleConnect = () => {
-
     setIsConnected(true);
   };
 
@@ -37,34 +37,38 @@ export default function ConnectionBar() {
   };
 
   return (
-    <div style={{ background: '#333', padding: '0.5rem', color: '#eee' }}>
+    <div className={styles.connectionBar}>
       {status !== 'authenticated' ? (
         <button onClick={handleLogin}>Log In</button>
       ) : (
-        <>
-          <span style={{ marginRight: '1rem' }}>Logged in as: {session?.user?.name}</span>
-          <button onClick={handleLogout} style={{ marginRight: '1rem' }}>Log Out</button>
-          {!isConnected ? (
-            <>
-              <select
-                value={selectedServer}
-                onChange={(e) => setSelectedServer(e.target.value)}
-                style={{ marginRight: '0.5rem' }}
-              >
-                <option value="" disabled>Select a server</option>
-                {servers.map(server => (
-                  <option key={server.id} value={server.id}>{server.name}</option>
-                ))}
-              </select>
-              <button onClick={handleConnect} disabled={!selectedServer}>Connect</button>
-            </>
-          ) : (
-            <>
-              <span style={{ marginRight: '0.5rem' }}>Connected to {selectedServer}</span>
-              <button onClick={handleDisconnect}>Disconnect</button>
-            </>
-          )}
-        </>
+        <div className={styles.loggedInWrapper}>
+          <div className={styles.leftSection}>
+            Logged in as: <span className={styles.userName}>{session?.user?.name}</span>
+            <button onClick={handleLogout} className={styles.logoutButton}>Log Out</button>
+          </div>
+          <div className={styles.rightSection}>
+            {!isConnected ? (
+              <>
+                <select
+                  value={selectedServer}
+                  onChange={(e) => setSelectedServer(e.target.value)}
+                  className={styles.serverSelect}
+                >
+                  <option value="" disabled>Select a server</option>
+                  {servers.map(server => (
+                    <option key={server.id} value={server.id}>{server.name}</option>
+                  ))}
+                </select>
+                <button onClick={handleConnect} disabled={!selectedServer} className={styles.connectButton}>Connect</button>
+              </>
+            ) : (
+              <>
+                Status:&nbsp;<span className={ styles.connectionStatus }><span className={styles.connectedIndicator}>●</span> {selectedServer}</span>
+                <button onClick={handleDisconnect} className={styles.disconnectButton}>Disconnect</button>
+              </>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

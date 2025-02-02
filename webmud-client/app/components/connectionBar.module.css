@@ -1,0 +1,59 @@
+.connectionBar {
+  /* Remove centering here so that the inner wrapper can use full width */
+  background-color: #222;
+  margin: 0.5em;
+  padding: 1em;
+}
+
+.loggedInWrapper {
+  display: flex;
+  justify-content: space-between; /* Distribute leftSection and rightSection across full width */
+  align-items: center;
+  width: 100%;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+}
+
+.userName {
+  margin-left: 0.5rem;
+  color: rgb(80, 222, 247);
+}
+
+.logoutButton {
+  margin-left: 0.5rem;
+  background: none;
+  border: none;
+  color: rgb(123, 121, 122);
+  cursor: pointer;
+}
+
+.serverSelect {
+  margin-right: 0.5rem;
+  color:rgb(1, 4, 97)
+}
+
+.connectButton,
+.disconnectButton {
+  background-color: #3e3d3d;
+  border: none;
+  padding: 0.25rem;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.connectionStatus {
+  margin-right: 20px;
+}
+
+.connectedIndicator {
+  color:rgb(0, 158, 18)
+}

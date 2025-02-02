@@ -1,7 +1,7 @@
 "use client"
 import React, { useState, useEffect, useRef } from 'react';
 import ScrollToBottom from 'react-scroll-to-bottom';
-import styles from './chatConsole.css';
+import styles from './chatConsole.module.css'
 interface SocketConsoleProps {
   messages: string[];
 }
