@@ -5,15 +5,43 @@ import styles from './chatConsole.module.css'
 interface SocketConsoleProps {
   messages: string[];
 }
+import io from 'socket.io-client';
+let socket;
 
 export default function ChatConsole({ }: SocketConsoleProps) {
-    const [messages, setMessages] = useState([]);
-    const [input, setInput] = useState('');
-    const messageEndRef = useRef(null);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const messageEndRef = useRef(null);
+  const connectedServer = useState('');
 
   useEffect(() => {
-    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });  
+    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    socketInitializer();
+  }, []);
+
+  const socketInitializer = async () => {
+    await fetch(connectedServer);
+    socket = io();
+
+    socket.on('connect', () => {
+      console.log('connected');
+    });
+
+    socket.on('update-input', msg => {
+      setInput(msg);
+    });
+  };
+
+  const onChangeHandler = (e) => {
+    setInput(e.target.value);
+    socket.emit('input-change', e.target.value);
+  };
+  const handleLogin = () => {
+    signIn('azure-ad-b2c');
+  };
 
   const handleSendMessage = () => {
     if (input.trim()) {

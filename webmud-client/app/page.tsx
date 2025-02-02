@@ -3,7 +3,6 @@ import { SessionProvider } from "next-auth/react"
 import ConnectionBar from './components/connectionBar'
 import ChatConsole from './components/chatConsole'
 import ActionPanel from './components/actionPanel'
-import styles from './client.module.css'
 
 export default async function webMUDClient() {
   const session = await auth()
@@ -20,6 +19,7 @@ export default async function webMUDClient() {
     <>
       <SessionProvider basePath={"/auth"} session={session}>
         <ConnectionBar />
+        <ActionPanel />
         <ChatConsole messages={[]} />
       </SessionProvider>
     </>

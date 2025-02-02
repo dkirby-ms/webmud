@@ -5,11 +5,14 @@ import axios from 'axios';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import styles from './connectionBar.module.css'
 
+
+
 export default function ConnectionBar() {
   const { data: session, status } = useSession();
   const [servers, setServers] = useState([]);
   const [selectedServer, setSelectedServer] = useState('');
   const [isConnected, setIsConnected] = useState(false);
+  
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -19,15 +22,15 @@ export default function ConnectionBar() {
     }
   }, [status]);
 
-  const handleLogin = () => {
-    signIn('azure-ad-b2c');
-  };
-
   const handleLogout = () => {
     signOut();
   };
 
   const handleConnect = () => {
+    const server = servers.find(({ id }) => id === selectedServer);
+    if (server) {
+      setConnectedServerAddress(server.uri);
+    }
     setIsConnected(true);
   };
 
@@ -63,7 +66,7 @@ export default function ConnectionBar() {
               </>
             ) : (
               <>
-                Status:&nbsp;<span className={ styles.connectionStatus }><span className={styles.connectedIndicator}>●</span> {selectedServer}</span>
+                Status:&nbsp;<span className={styles.connectionStatus}><span className={styles.connectedIndicator}>●</span> {selectedServer}</span>
                 <button onClick={handleDisconnect} className={styles.disconnectButton}>Disconnect</button>
               </>
             )}
