@@ -1,10 +1,9 @@
-function connectPlayer(data, socket, players) {
+function connectPlayer(server, data, socket, players) {
     const { playerId, playerName, playerLevel } = data;
     players[playerId] = { socket, playerName, playerLevel };
     console.log(`Player ${playerId} connected with name ${playerName} and level ${playerLevel}`);
-    
+    server.emi
     // Additional registration logic using someLibrary
-    someLibrary.doSomething();
 }
 
 function disconnectPlayer(socket, players) {

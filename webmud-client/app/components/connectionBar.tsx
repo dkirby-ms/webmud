@@ -4,16 +4,16 @@ import axios from 'axios';
 // ...existing code...
 import { signIn, signOut, useSession } from 'next-auth/react';
 import styles from './connectionBar.module.css'
-
-
+import { useSocket } from "../contexts/SocketContext";
 
 export default function ConnectionBar() {
   const { data: session, status } = useSession();
   const [servers, setServers] = useState([]);
   const [selectedServer, setSelectedServer] = useState('');
   const [isConnected, setIsConnected] = useState(false);
+  const [connectedServerAddress, setConnectedServerAddress] = useState('');
+  const { socket, connect, disconnect } = useSocket();
   
-
   useEffect(() => {
     if (status === 'authenticated') {
       axios.get('/api/servers')
@@ -21,6 +21,10 @@ export default function ConnectionBar() {
         .catch(err => console.error('Error fetching servers:', err));
     }
   }, [status]);
+
+  const handleLogin = () => {
+    signIn();
+  };
 
   const handleLogout = () => {
     signOut();
@@ -30,15 +34,17 @@ export default function ConnectionBar() {
     const server = servers.find(({ id }) => id === selectedServer);
     if (server) {
       setConnectedServerAddress(server.uri);
+      connect(server.uri);
     }
     setIsConnected(true);
   };
 
   const handleDisconnect = () => {
     // ...existing code...
+    disconnect();
     setIsConnected(false);
   };
-
+ 
   return (
     <div className={styles.connectionBar}>
       {status !== 'authenticated' ? (

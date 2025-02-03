@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "description": "Main game-service for a \"server instance\"",
   "main": "src/app.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "start": "node entrypoint.js",
+    "dev": "node entrypoint.js"
   },
   "repository": {
     "type": "git",
@@ -23,8 +24,16 @@
   },
   "homepage": "https://github.com/dkirby-ms/webmud#readme",
   "dependencies": {
+    "@socket.io/mongo-adapter": "^0.3.2",
+    "@types/mongodb": "^4.0.6",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
     "express": "^4.21.2",
+    "mongodb": "^6.13.0",
     "socket.io": "^4.8.1",
+    "winston": "^3.17.0",
     "ws": "^8.18.0"
   }
 }

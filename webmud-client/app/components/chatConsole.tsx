@@ -2,50 +2,46 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ScrollToBottom from 'react-scroll-to-bottom';
 import styles from './chatConsole.module.css'
-interface SocketConsoleProps {
-  messages: string[];
-}
-import io from 'socket.io-client';
-let socket;
+import { useSocket } from '../contexts/SocketContext';
 
 export default function ChatConsole({ }: SocketConsoleProps) {
+  const { socket } = useSocket();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const messageEndRef = useRef(null);
-  const connectedServer = useState('');
+  const messageEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleIncomingMessage = (data: any) => {
+      console.log('Incoming message:', data);
+      setMessages(prev => [...prev, data]);
+    };
+
+    const handleIncomingBroadcast = (data: any) => {
+      console.log('Incoming broadcast:', data);
+      setMessages(prev => [...prev, data]);
+    };
+
+    socket.on('message', handleIncomingMessage);
+    socket.on('broadcast', handleIncomingBroadcast);
+    
+    return () => {
+      socket.off('message', handleIncomingMessage);
+      socket.off('broadcast', handleIncomingBroadcast);
+    };
+  }, [socket]);
 
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  useEffect(() => {
-    socketInitializer();
-  }, []);
-
-  const socketInitializer = async () => {
-    await fetch(connectedServer);
-    socket = io();
-
-    socket.on('connect', () => {
-      console.log('connected');
-    });
-
-    socket.on('update-input', msg => {
-      setInput(msg);
-    });
-  };
-
-  const onChangeHandler = (e) => {
-    setInput(e.target.value);
-    socket.emit('input-change', e.target.value);
-  };
-  const handleLogin = () => {
-    signIn('azure-ad-b2c');
-  };
-
   const handleSendMessage = () => {
-    if (input.trim()) {
-      setMessages([...messages, input]);
+    if (input.trim() && socket) {
+      // Emit the message to the server
+      socket.emit('message', input);
+      //setMessages([...messages, input]);
+      setMessages(prev => [...prev, input]);
       setInput('');
     }
   };
