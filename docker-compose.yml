@@ -45,15 +45,15 @@ services:
   #   depends_on:
   #     - mongodb
 
-  character-service:
-    build:
-      context: ./character-service
-    container_name: webmud-character-service
-    ports:
-      - "3001:3001"
-    depends_on:
-      - mongodb
-      - mqtt
+  # character-service:
+  #   build:
+  #     context: ./character-service
+  #   container_name: webmud-character-service
+  #   ports:
+  #     - "3001:3001"
+  #   depends_on:
+  #     - mongodb
+  #     - mqtt
   
   # game-service:
   #   build:

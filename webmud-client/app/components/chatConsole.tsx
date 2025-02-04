@@ -1,8 +1,8 @@
 "use client"
 import React, { useState, useEffect, useRef } from 'react';
-import ScrollToBottom from 'react-scroll-to-bottom';
 import styles from './chatConsole.module.css'
 import { useSocket } from '../contexts/SocketContext';
+import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
 
 export default function ChatConsole({ }: SocketConsoleProps) {
   const { socket } = useSocket();
@@ -18,17 +18,10 @@ export default function ChatConsole({ }: SocketConsoleProps) {
       setMessages(prev => [...prev, data]);
     };
 
-    const handleIncomingBroadcast = (data: any) => {
-      console.log('Incoming broadcast:', data);
-      setMessages(prev => [...prev, data]);
-    };
-
     socket.on('message', handleIncomingMessage);
-    socket.on('broadcast', handleIncomingBroadcast);
     
     return () => {
       socket.off('message', handleIncomingMessage);
-      socket.off('broadcast', handleIncomingBroadcast);
     };
   }, [socket]);
 
@@ -48,14 +41,18 @@ export default function ChatConsole({ }: SocketConsoleProps) {
 
   return (
     <div className={styles.chatContainer}>
-      <ScrollToBottom className={styles.messagesContainer}>
-        {messages.map((msg, index) => (
-          <div key={index} className={styles.message}>
-            {msg}
-          </div>
-        ))}
-        <div ref={messageEndRef} />
-      </ScrollToBottom>
+      <div>
+      <StickToBottom className="h-[50vh] relative"  resize="smooth" initial="smooth">
+        <StickToBottom.Content className="flex flex-col gap-4">
+          {messages.map((msg, index) => (
+            <div key={index} className={styles.message}>
+              {msg}
+            </div>
+          ))}
+          <div ref={messageEndRef} />
+        </StickToBottom.Content>
+      </StickToBottom>
+      </div>
       <div className={styles.inputContainer}>
         <input
           type="text"
@@ -64,7 +61,7 @@ export default function ChatConsole({ }: SocketConsoleProps) {
           onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
           placeholder="Type a message..."
         />
-        <button onClick={handleSendMessage}>Send</button>
+        <button className={styles.sendButton} onClick={handleSendMessage}>Send</button>
       </div>
     </div>
   );

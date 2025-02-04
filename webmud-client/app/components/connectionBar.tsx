@@ -1,7 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-// ...existing code...
 import { signIn, signOut, useSession } from 'next-auth/react';
 import styles from './connectionBar.module.css'
 import { useSocket } from "../contexts/SocketContext";
@@ -14,6 +13,7 @@ export default function ConnectionBar() {
   const [connectedServerAddress, setConnectedServerAddress] = useState('');
   const { socket, connect, disconnect } = useSocket();
   
+  // monitor the server list if user is authenticated
   useEffect(() => {
     if (status === 'authenticated') {
       axios.get('/api/servers')
@@ -21,6 +21,25 @@ export default function ConnectionBar() {
         .catch(err => console.error('Error fetching servers:', err));
     }
   }, [status]);
+
+  // monitor the socket connection
+  useEffect(() => {
+    if (status !== 'authenticated') 
+      return;
+
+    if (!socket)
+      return;
+
+    const handleSocketConnect = (data: any) => {
+      console.log('Connection bar - connected to socket');
+    };
+
+    socket.on('connect', handleSocketConnect);
+    
+    return () => {
+      socket.off('connect', handleSocketConnect);
+    };
+  }, [socket]);
 
   const handleLogin = () => {
     signIn();

@@ -11,7 +11,7 @@ logger.add(
 
 const httpServer = createServer();
 
-const { close } = await createApp(httpServer, { sessionSecrets: ["changeitplz"] });
+const { close } = await createApp(httpServer, { sessionSecrets: ["changeitplz1"] });
 
 process.on("SIGTERM", async () => {
 

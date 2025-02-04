@@ -1,5 +1,24 @@
+const MONGODB_NAME = "game-service";
+const MONGO_SOCKET_ADAPTER_COLLECTION = "socket.io-adapter";
+
 function escape(str) {
   return str.replaceAll("~", "~~").replaceAll("%", "~%").replaceAll("_", "~_");
+}
+
+export async function setupMongoDB(mongoClient, logger) {
+  await mongoClient.connect();
+  logger.info("Connected to MongoDB");
+  try {
+     await mongoClient.db.createCollection(MONGO_SOCKET_ADAPTER_COLLECTION, {
+       capped: true,
+       size: 1e6
+    });
+    logger.info("MongoDB collection created");
+  } catch (e) {
+    logger.info("Collection already exists");
+  }
+  const db = new DB(mongoClient.db(MONGODB_NAME));
+  return db;
 }
 
 export class DB {

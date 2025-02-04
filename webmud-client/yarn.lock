@@ -1977,6 +1977,11 @@ use-sidecar@^1.1.3:
     detect-node-es "^1.1.0"
     tslib "^2.0.0"
 
+use-stick-to-bottom@^1.0.46:
+  version "1.0.46"
+  resolved "https://registry.npmjs.org/use-stick-to-bottom/-/use-stick-to-bottom-1.0.46.tgz"
+  integrity sha512-2EQ9dbLNQ+8FylNuG1qx3BBl0WnNEOIkKFLEsG065A27Dd7lgTqSHA7pIlAVItnvOoFzrk9YyD2gW8idjTBPTw==
+
 util-deprecate@^1.0.2:
   version "1.0.2"
   resolved "https://registry.npmjs.org/util-deprecate/-/util-deprecate-1.0.2.tgz"
