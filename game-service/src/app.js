@@ -7,6 +7,8 @@ import bodyParser from "body-parser";
 import { createAdapter } from "@socket.io/mongo-adapter";
 import { MongoClient } from "mongodb";
 import { DB, setupMongoDB } from "./db.js";
+import { ExpressAuth } from "@auth/express"
+import { initAuth } from "./auth/index.js";
 
 const SERVER_NAME = process.env.SERVER_NAME || 'Default Game Server';
 const CLEANUP_ZOMBIE_USERS_INTERVAL_IN_MS = 60_000; // 60 seconds
@@ -36,6 +38,9 @@ export async function createApp(httpServer, config) {
     });
     logger.debug("Socket.io server created and configured with MongoDB adapter");
   
+    logger.debug("Initializing auth and session management");
+    initAuth({ app, io, db, config });
+
     initEventHandlers({ io, db, config });
     setInterval(() => {
       io.emit('broadcast', { message: 'This is a periodic broadcast message' });
@@ -62,6 +67,9 @@ function createExpressApp() {
   app.set("x-powered-by", false);
 
   // setup middleware
+  logger.debug("Setting up auth middleware and AADB2C provider");
+  app.set("trust proxy", true)
+  app.use("/auth/*", ExpressAuth({ providers: [] }))
   logger.debug("Setting up CORS middleware");
   app.use(cors());
   logger.debug("Setting up bodyParser middleware");
@@ -72,26 +80,27 @@ function createExpressApp() {
 export { logger }
 
 function initEventHandlers({ io, db, config }) {
-  // io.use(async (socket, next) => {
-  //   //socket.userId = socket.request.user.id;
+  io.use(async (socket, next) => {
+    logger.debug("Socket.io connection established");
+    // socket.userId = socket.request.user.id;
 
-  //   // let channels;
+    // let channels;
 
-  //   // try {
-  //   //   channels = await db.fetchUserChannels(socket.userId);
-  //   // } catch (e) {
-  //   //   return next(new Error("something went wrong"));
-  //   // }
+    // try {
+    //   channels = await db.fetchUserChannels(socket.userId);
+    // } catch (e) {
+    //   return next(new Error("something went wrong"));
+    // }
 
-  //   // channels.forEach((channelId) => {
-  //   //   socket.join(channelRoom(channelId));
-  //   // });
+    // channels.forEach((channelId) => {
+    //   socket.join(channelRoom(channelId));
+    // });
 
-  //   // socket.join(userRoom(socket.userId));
-  //   // socket.join(sessionRoom(socket.request.session.id));
+    // socket.join(userRoom(socket.userId));
+    // socket.join(sessionRoom(socket.request.session.id));
 
-  //   // next();
-  // });
+    // next();
+  });
 
   io.on("connection", async (socket) => {
     // socket.on("connect", async () => {

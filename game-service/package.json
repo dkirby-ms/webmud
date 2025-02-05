@@ -30,13 +30,13 @@
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "body-parser": "^1.20.3",
+    "connect-mongo": "^5.1.0",
     "connect-mongodb-session": "^5.0.0",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "express-session": "^1.18.1",
     "mongodb": "^6.13.0",
     "socket.io": "^4.8.1",
-    "winston": "^3.17.0",
-    "ws": "^8.18.0"
+    "winston": "^3.17.0"
   }
 }

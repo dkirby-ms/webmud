@@ -14,7 +14,6 @@ const httpServer = createServer();
 const { close } = await createApp(httpServer, { sessionSecrets: ["changeitplz1"] });
 
 process.on("SIGTERM", async () => {
-
   logger.info("SIGTERM signal received");
   await close();
 });
