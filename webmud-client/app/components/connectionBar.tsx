@@ -24,36 +24,38 @@ export default function ConnectionBar() {
 
   // monitor the socket connection
   useEffect(() => {
+    // revisit this logic
     if (status !== 'authenticated') 
       return;
 
     if (!socket)
       return;
 
-    const handleSocketConnect = (data: any) => {
-      console.log('Connection bar - connected to socket');
-    };
+    // const handleSocketConnect = (data: any) => {
+    //   console.log('Connection bar - connected to socket');
+    // };
 
-    socket.on('connect', handleSocketConnect);
+    // socket.on('connect', handleSocketConnect);
     
-    return () => {
-      socket.off('connect', handleSocketConnect);
-    };
+    // return () => {
+    //   socket.off('connect', handleSocketConnect);
+    // };
   }, [socket]);
 
   const handleLogin = () => {
-    signIn();
+    signIn(); // signin using next-auth with configured AADB2C provider
   };
 
   const handleLogout = () => {
     signOut();
   };
 
+  // Connect to the selected server on the websocket server address
   const handleConnect = () => {
     const server = servers.find(({ id }) => id === selectedServer);
     if (server) {
-      setConnectedServerAddress(server.uri);
-      connect(server.uri);
+      setConnectedServerAddress(server.uri); // save the server address for display
+      connect(server.uri); // connect to the server using SocketContext's exposed connect method
     }
     setIsConnected(true);
   };

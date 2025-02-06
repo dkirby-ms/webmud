@@ -41,18 +41,21 @@ export async function createApp(httpServer, config) {
     logger.debug("Initializing auth and session management");
     initAuth({ app, io, db, config });
 
+    logger.debug("Initializing event handlers");
     initEventHandlers({ io, db, config });
-    setInterval(() => {
-      io.emit('broadcast', { message: 'This is a periodic broadcast message' });
-      const connectedClients = io.sockets.sockets.size;
-      logger.info(`Number of connected clients: ${connectedClients}`);
-      logger.info("Periodic broadcast message sent");
-    }, 30000);
+    // setInterval(() => {
+    //   io.emit('broadcast', { message: 'This is a periodic broadcast message' });
+    //   const connectedClients = io.sockets.sockets.size;
+    //   logger.info(`Number of connected clients: ${connectedClients}`);
+    //   logger.info("Periodic broadcast message sent");
+    // }, 30000);
+
+    logger.debug("Scheduling zombie users cleanup");
     const timerId = scheduleZombieUsersCleanup({ io, db });
   
     return {
       logger,
-      async close() {
+      async close() { // close is used in entrypoint.js to close the socket server when the process receives a SIGTERM signal
         io.close();
         await io.of("/").adapter.close();
         clearInterval(timerId);
@@ -79,29 +82,18 @@ function createExpressApp() {
 }
 export { logger }
 
-function initEventHandlers({ io, db, config }) {
-  io.use(async (socket, next) => {
-    logger.debug("Socket.io connection established");
-    // socket.userId = socket.request.user.id;
-
-    // let channels;
-
-    // try {
-    //   channels = await db.fetchUserChannels(socket.userId);
-    // } catch (e) {
-    //   return next(new Error("something went wrong"));
-    // }
-
-    // channels.forEach((channelId) => {
-    //   socket.join(channelRoom(channelId));
-    // });
-
-    // socket.join(userRoom(socket.userId));
-    // socket.join(sessionRoom(socket.request.session.id));
-
-    // next();
+function initMiddleware({ app, io, db, config }) {
+  io.use((socket, next) => {
+    if (isValid(socket.request)) {
+      next();
+    } else {
+      logger.errpr("Invalid request rejected by socket server.");
+      next(new Error("Invalid request rejected by socket server."));
+    }
   });
+}
 
+function initEventHandlers({ io, db, config }) {
   io.on("connection", async (socket) => {
     // socket.on("connect", async () => {
     //   logger.info("Client connected");

@@ -6,7 +6,7 @@ import session from "express-session";
 // import passport from "passport";
 // import { Strategy as JsonStrategy } from "passport-json";
 // import argon2 from "argon2";
-import { self } from "./self.js";
+// import { self } from "./self.js";
 import AADB2C from "@auth/express/providers/azure-ad-b2c"
 import { ExpressAuth } from "@auth/express"
 import MongoStore from 'connect-mongo'

@@ -18,13 +18,13 @@
         {
             "name": "Launch game-service",
             "request": "launch",
-            "runtimeExecutable": "/home/saitcho/.nvm/versions/node/v22.13.1/bin/node",
             "skipFiles": [
                 "<node_internals>/**"
             ],
             "type": "node",
             "cwd": "${workspaceFolder}/game-service",
-            "program": "${workspaceFolder}/game-service/src/app.js"
+            "program": "${workspaceFolder}/game-service/entrypoint.js",
+            "outputCapture": "std"
         },
         {
             "name": "Debug game-data import",
