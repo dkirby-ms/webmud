@@ -11,7 +11,7 @@ logger.add(
 
 const httpServer = createServer();
 
-const { close } = await createApp(httpServer, { sessionSecrets: ["changeitplz1"] });
+const { close } = await createApp(httpServer, { sessionSecrets: ["changeitplz1"], cors: { origin: "*", credentials: true } });
 
 process.on("SIGTERM", async () => {
   logger.info("SIGTERM signal received");

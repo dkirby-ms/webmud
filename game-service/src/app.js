@@ -41,6 +41,9 @@ export async function createApp(httpServer, config) {
     logger.debug("Initializing auth and session management");
     initAuth({ app, io, db, config });
 
+    logger.debug("Initializing game-service middleware");
+    //initMiddleware({ app, io, db, config });
+
     logger.debug("Initializing event handlers");
     initEventHandlers({ io, db, config });
     // setInterval(() => {
@@ -95,6 +98,7 @@ function initMiddleware({ app, io, db, config }) {
 
 function initEventHandlers({ io, db, config }) {
   io.on("connection", async (socket) => {
+    logger.info(`Client ${socket.id} connected`);
     // socket.on("connect", async () => {
     //   logger.info("Client connected");
     //   socket.emit("Client connected");

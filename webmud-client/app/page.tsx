@@ -3,7 +3,7 @@ import { SessionProvider } from "next-auth/react"
 import ConnectionBar from './components/connectionBar'
 import ChatConsole from './components/chatConsole'
 import ActionPanel from './components/actionPanel'
-import { SocketProvider } from "./contexts/SocketContext";
+import { GameServiceProvider } from "./contexts/GameServiceContext";
 
 export default async function webMUDClient() {
   const session = await auth()
@@ -19,13 +19,11 @@ export default async function webMUDClient() {
   return (
     <>
       <SessionProvider basePath={"/auth"} session={session}>
-        <SocketProvider>
-        <div>
+        <GameServiceProvider>
           <ConnectionBar />
           <ActionPanel messages={[]}/>
           <ChatConsole messages={[]} />
-        </div>
-        </SocketProvider>
+        </GameServiceProvider>
       </SessionProvider>
     </>
   )

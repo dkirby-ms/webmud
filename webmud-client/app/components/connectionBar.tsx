@@ -3,15 +3,13 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import styles from './connectionBar.module.css'
-import { useSocket } from "../contexts/SocketContext";
+import { useGameService } from "../contexts/GameServiceContext";
 
 export default function ConnectionBar() {
   const { data: session, status } = useSession();
   const [servers, setServers] = useState([]);
   const [selectedServer, setSelectedServer] = useState('');
-  const [isConnected, setIsConnected] = useState(false);
-  const [connectedServerAddress, setConnectedServerAddress] = useState('');
-  const { socket, connect, disconnect } = useSocket();
+  const { socket, serverAddress, connectionStatus, connect, disconnect } = useGameService();
   
   // monitor the server list if user is authenticated
   useEffect(() => {
@@ -22,25 +20,9 @@ export default function ConnectionBar() {
     }
   }, [status]);
 
-  // monitor the socket connection
-  useEffect(() => {
-    // revisit this logic
-    if (status !== 'authenticated') 
-      return;
+  useEffect(() =>  {
 
-    if (!socket)
-      return;
-
-    // const handleSocketConnect = (data: any) => {
-    //   console.log('Connection bar - connected to socket');
-    // };
-
-    // socket.on('connect', handleSocketConnect);
-    
-    // return () => {
-    //   socket.off('connect', handleSocketConnect);
-    // };
-  }, [socket]);
+  });
 
   const handleLogin = () => {
     signIn(); // signin using next-auth with configured AADB2C provider
@@ -54,17 +36,18 @@ export default function ConnectionBar() {
   const handleConnect = () => {
     const server = servers.find(({ id }) => id === selectedServer);
     if (server) {
-      setConnectedServerAddress(server.uri); // save the server address for display
       connect(server.uri); // connect to the server using SocketContext's exposed connect method
     }
-    setIsConnected(true);
   };
 
   const handleDisconnect = () => {
     // ...existing code...
     disconnect();
-    setIsConnected(false);
   };
+
+  const isConnected = ()  => {
+    return connectionStatus === 'connected';
+  }
  
   return (
     <div className={styles.connectionBar}>
@@ -77,7 +60,7 @@ export default function ConnectionBar() {
             <button onClick={handleLogout} className={styles.logoutButton}>Log Out</button>
           </div>
           <div className={styles.rightSection}>
-            {!isConnected ? (
+            {!isConnected() ? (
               <>
                 <select
                   value={selectedServer}

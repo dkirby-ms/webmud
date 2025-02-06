@@ -1,14 +1,14 @@
 "use client"
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './chatConsole.module.css'
-import { useSocket } from '../contexts/SocketContext';
+import { useGameService } from "../contexts/GameServiceContext";
 import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
 
-export default function ChatConsole({ }: SocketConsoleProps) {
-  const { socket } = useSocket();
+export default function ChatConsole() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const messageEndRef = useRef<HTMLDivElement>(null);
+  const { socket, serverAddress, connectionStatus, connect, disconnect } = useGameService();
 
   useEffect(() => {
     if (!socket) return;
