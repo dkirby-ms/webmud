@@ -8,15 +8,10 @@ import { logger } from "../util.js";
 
 const _30_DAYS = 30 * 24 * 60 * 60 * 1000;
 const OPENID_CONFIG = process.env.AUTH_AZURE_AD_OPENID_CONFIG || "https://agora9.b2clogin.com/agora9.onmicrosoft.com/B2C_1_signupsignin/v2.0/.well-known/openid-configuration"
-const B2C_PUBLIC_KEY = `-----BEGIN RSA PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtVKUtcx/n9rt5afY/2WF
-NvU6PlFMggCatsZ3l4RjKxH0jgdLq6CScb0P3ZGXYbPzXvmmLiWZizpb+h0qup5j
-znOvOr+Dhw9908584BSgC83YacjWNqEK3urxhyE2jWjwRm2N95WGgb5mzE5XmZIv
-kvyXnn7X8dvgFPF5QwIngGsDG8LyHuJWlaDhr/EPLMW4wHvH0zZCuRMARIJmmqiM
-y3VD4ftq4nS5s8vJL0pVSrkuNojtokp84AtkADCDU/BUhrc2sIgfnvZ03koCQRoZ
-mWiHu86SuJZYkDFstVTVSR0hiXudFlfQ2rOhPlpObmku68lXw+7V+P7jwrQRFfQV
-XwIDAQAB
------END RSA PUBLIC KEY-----`;
+const B2C_PUBLIC_KEY = `{"kid":"X5eXk4xyojNFum1kl2Ytv8dlNP4-c57dO6QGTVBwaNk","nbf":1493763266,"use":"sig","kty":"RSA","e":"AQAB","n":"tVKUtcx_n9rt5afY_2WFNvU6PlFMggCatsZ3l4RjKxH0jgdLq6CScb0P3ZGXYbPzXvmmLiWZizpb-h0qup5jznOvOr-Dhw9908584BSgC83YacjWNqEK3urxhyE2jWjwRm2N95WGgb5mzE5XmZIvkvyXnn7X8dvgFPF5QwIngGsDG8LyHuJWlaDhr_EPLMW4wHvH0zZCuRMARIJmmqiMy3VD4ftq4nS5s8vJL0pVSrkuNojtokp84AtkADCDU_BUhrc2sIgfnvZ03koCQRoZmWiHu86SuJZYkDFstVTVSR0hiXudFlfQ2rOhPlpObmku68lXw-7V-P7jwrQRFfQVXw"}`;
+const client = jwksClient({
+  jwksUri: 'https://agora9.b2clogin.com/agora9.onmicrosoft.com/b2c_1_signupsignin/discovery/v2.0/keys'
+});
 
 export function initAuth({ app, io, db, config }) {
   // setup auth middleware
@@ -33,7 +28,7 @@ export function initAuth({ app, io, db, config }) {
       }
   
       try {
-        const payload = validateJwt(token);
+        const payload = await validateJwt(token);
         socket.userId = payload.userId;
         next();
       } catch (e) {
@@ -63,19 +58,22 @@ function setupSession({ app, io, db, config }) {
   io.engine.use(sessionMiddleware);
 }
 
+function getKey(header, callback) {
+  client.getSigningKey(header.kid, (err, key) => {
+    if (err) {
+      return callback(err);
+    }
+    const signingKey = key.getPublicKey();
+    callback(null, signingKey);
+  });
+}
+
 // Function to validate a JWT issued by the Azure AD B2C tenant
-function validateJwt(token) {
-  // Create a JWKS client using the JWKS URI from the OpenID configuration
-  // const client = jwksClient({
-  //   jwksUri: OPENID_CONFIG
-  // });
-
-  // Decode the token to extract the header and its key id (kid)
-  const decodedToken = jwt.decode(token, { complete: true });
-  if (!decodedToken || !decodedToken.header || !decodedToken.header.kid) {
-    throw new Error("Invalid token");
-  }
-
-  // Verify and return the decoded token payload
-  return jwt.verify(token, B2C_PUBLIC_KEY);
+export function validateJwt(token) {
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, getKey, { algorithms: ['RS256'] }, (error, decoded) => {
+      if (error) return reject(error);
+      resolve(decoded);
+    });
+  });
 }
