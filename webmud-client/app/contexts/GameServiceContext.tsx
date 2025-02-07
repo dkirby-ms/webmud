@@ -1,6 +1,7 @@
 "use client"
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { io, Socket } from "socket.io-client";
+import { useSession } from "next-auth/react";
 
 interface GameServiceContextProps {
     socket: Socket | null;
@@ -22,10 +23,15 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
     const [socket, setSocket] = useState<Socket | null>(null);
     const [serverAddress, setServerAddress] = useState<string>('');
     const [connectionStatus, setConnectionStatus] = useState<string>('disconnected');
+    const { data: session, status } = useSession();
     
+    // create a socket and connect to the specified game service uri 
     const connect = (server: string) => {
-        // check existing socket if any
-        const newSocket = io(server); // create a socket and connect to the specified game service uri
+        const newSocket = io(server, {
+            auth: {
+                token: session?.accessToken
+            },
+        }); 
         newSocket.on('connect', () => {
             console.log('GameService provider connected to server:', server);
             setSocket(newSocket); // store the socket in the context state

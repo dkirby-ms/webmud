@@ -20,10 +20,6 @@ export default function ConnectionBar() {
     }
   }, [status]);
 
-  useEffect(() =>  {
-
-  });
-
   const handleLogin = () => {
     signIn(); // signin using next-auth with configured AADB2C provider
   };
@@ -73,6 +69,7 @@ export default function ConnectionBar() {
                   ))}
                 </select>
                 <button onClick={handleConnect} disabled={!selectedServer} className={styles.connectButton}>Connect</button>
+              
               </>
             ) : (
               <>

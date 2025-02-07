@@ -10,6 +10,7 @@ import { DB, setupMongoDB } from "./db.js";
 import { ExpressAuth } from "@auth/express"
 import { initAuth } from "./auth/index.js";
 
+
 const SERVER_NAME = process.env.SERVER_NAME || 'Default Game Server';
 const CLEANUP_ZOMBIE_USERS_INTERVAL_IN_MS = 60_000; // 60 seconds
 const MONGODB_ADDRESS = process.env.MONGO_ADDRESS || "mongodb://localhost:27017/?replicaSet=rs0";
@@ -41,17 +42,8 @@ export async function createApp(httpServer, config) {
     logger.debug("Initializing auth and session management");
     initAuth({ app, io, db, config });
 
-    logger.debug("Initializing game-service middleware");
-    //initMiddleware({ app, io, db, config });
-
     logger.debug("Initializing event handlers");
     initEventHandlers({ io, db, config });
-    // setInterval(() => {
-    //   io.emit('broadcast', { message: 'This is a periodic broadcast message' });
-    //   const connectedClients = io.sockets.sockets.size;
-    //   logger.info(`Number of connected clients: ${connectedClients}`);
-    //   logger.info("Periodic broadcast message sent");
-    // }, 30000);
 
     logger.debug("Scheduling zombie users cleanup");
     const timerId = scheduleZombieUsersCleanup({ io, db });
@@ -85,29 +77,9 @@ function createExpressApp() {
 }
 export { logger }
 
-function initMiddleware({ app, io, db, config }) {
-  io.use((socket, next) => {
-    if (isValid(socket.request)) {
-      next();
-    } else {
-      logger.errpr("Invalid request rejected by socket server.");
-      next(new Error("Invalid request rejected by socket server."));
-    }
-  });
-}
-
 function initEventHandlers({ io, db, config }) {
   io.on("connection", async (socket) => {
     logger.info(`Client ${socket.id} connected`);
-    // socket.on("connect", async () => {
-    //   logger.info("Client connected");
-    //   socket.emit("Client connected");
-    // });
-
-    socket.on("message", async () => {
-      logger.info("Message received");
-      socket.emit("message", "Message received");
-    });
     // socket.on("channel:create", createChannel({ io, socket, db }));
     // socket.on("channel:join", joinChannel({ io, socket, db }));
     // socket.on("channel:list", listChannels({ io, socket, db }));

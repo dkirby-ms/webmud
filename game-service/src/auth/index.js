@@ -1,18 +1,22 @@
-// import { signup } from "./signup.js";
-// import { login } from "./login.js";
-// import { logout } from "./logout.js";
 import session from "express-session";
-// import pgSession from "connect-pg-simple";
-// import passport from "passport";
-// import { Strategy as JsonStrategy } from "passport-json";
-// import argon2 from "argon2";
-// import { self } from "./self.js";
 import AADB2C from "@auth/express/providers/azure-ad-b2c"
 import { ExpressAuth } from "@auth/express"
 import MongoStore from 'connect-mongo'
-
+import jwt from 'jsonwebtoken';
+import jwksClient from 'jwks-rsa';
+import { logger } from "../util.js";
 
 const _30_DAYS = 30 * 24 * 60 * 60 * 1000;
+const OPENID_CONFIG = process.env.AUTH_AZURE_AD_OPENID_CONFIG || "https://agora9.b2clogin.com/agora9.onmicrosoft.com/B2C_1_signupsignin/v2.0/.well-known/openid-configuration"
+const B2C_PUBLIC_KEY = `-----BEGIN RSA PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtVKUtcx/n9rt5afY/2WF
+NvU6PlFMggCatsZ3l4RjKxH0jgdLq6CScb0P3ZGXYbPzXvmmLiWZizpb+h0qup5j
+znOvOr+Dhw9908584BSgC83YacjWNqEK3urxhyE2jWjwRm2N95WGgb5mzE5XmZIv
+kvyXnn7X8dvgFPF5QwIngGsDG8LyHuJWlaDhr/EPLMW4wHvH0zZCuRMARIJmmqiM
+y3VD4ftq4nS5s8vJL0pVSrkuNojtokp84AtkADCDU/BUhrc2sIgfnvZ03koCQRoZ
+mWiHu86SuJZYkDFstVTVSR0hiXudFlfQ2rOhPlpObmku68lXw+7V+P7jwrQRFfQV
+XwIDAQAB
+-----END RSA PUBLIC KEY-----`;
 
 export function initAuth({ app, io, db, config }) {
   // setup auth middleware
@@ -20,12 +24,25 @@ export function initAuth({ app, io, db, config }) {
   app.use("/auth/*", ExpressAuth({ providers: [ AADB2C ] }));
 
   setupSession({ app, io, db, config });
-  // setupPassport({ app, io, db });
 
-  // login({ app });
-  // logout({ app, io });
-  // signup({ app, db });
-  // self({ app });
+  io.use(async (socket, next) => {
+      // verify access token
+      const token = socket.handshake.auth.token;
+      if (!token) {
+        return next(new Error("Authentication error - access token not found"));
+      }
+  
+      try {
+        const payload = validateJwt(token);
+        socket.userId = payload.userId;
+        next();
+      } catch (e) {
+        next(new Error("Authentication error - invalid access token"));
+      }
+      // register user as connected
+      logger.info(`User ${socket.userId} connected`);
+    });
+
 }
 
 // need to fix this hardcoded connection string and pull from same mongodb used by logger
@@ -46,51 +63,19 @@ function setupSession({ app, io, db, config }) {
   io.engine.use(sessionMiddleware);
 }
 
-function setupPassport({ app, io, db }) {
-  passport.use(
-    new JsonStrategy(async (username, password, done) => {
-      const user = await db.findUserByUsername(username);
+// Function to validate a JWT issued by the Azure AD B2C tenant
+function validateJwt(token) {
+  // Create a JWKS client using the JWKS URI from the OpenID configuration
+  // const client = jwksClient({
+  //   jwksUri: OPENID_CONFIG
+  // });
 
-      if (!user) {
-        return done(new Error("invalid credentials"));
-      }
+  // Decode the token to extract the header and its key id (kid)
+  const decodedToken = jwt.decode(token, { complete: true });
+  if (!decodedToken || !decodedToken.header || !decodedToken.header.kid) {
+    throw new Error("Invalid token");
+  }
 
-      const isPasswordValid = await argon2.verify(user.password, password);
-
-      if (!isPasswordValid) {
-        return done(new Error("invalid credentials"));
-      }
-
-      done(null, {
-        id: user.id,
-        username,
-      });
-    }),
-  );
-
-  passport.serializeUser((user, cb) => {
-    cb(null, {
-      id: user.id,
-      username: user.username,
-    });
-  });
-
-  passport.deserializeUser((user, cb) => {
-    cb(null, user);
-  });
-
-  app.use(passport.initialize());
-  app.use(passport.session());
-
-  io.engine.use(passport.initialize());
-  io.engine.use(passport.session());
-
-  io.engine.use((req, res, next) => {
-    if (req.user) {
-      next();
-    } else {
-      res.writeHead(401);
-      res.end();
-    }
-  });
+  // Verify and return the decoded token payload
+  return jwt.verify(token, B2C_PUBLIC_KEY);
 }
