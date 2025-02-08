@@ -6,7 +6,7 @@ export const logger = createLogger({
   level: "info",
   format: format.json(),
   transports: [
-    new transports.Console(),
+    //new transports.Console(),
     new transports.File({ filename: 'logfile.log' })
   ]
 });
@@ -19,25 +19,25 @@ addFormats(ajv);
 
 export { ajv };
 
-export async function doInTransaction(pool, query) {
-  const client = await pool.connect();
-  let output;
+// export async function doInTransaction(pool, query) {
+//   const client = await pool.connect();
+//   let output;
 
-  try {
-    await client.query("BEGIN");
+//   try {
+//     await client.query("BEGIN");
 
-    output = await query(client);
+//     output = await query(client);
 
-    await client.query("COMMIT");
-  } catch (e) {
-    await client.query("ROLLBACK");
-    throw e;
-  } finally {
-    client.release();
-  }
+//     await client.query("COMMIT");
+//   } catch (e) {
+//     await client.query("ROLLBACK");
+//     throw e;
+//   } finally {
+//     client.release();
+//   }
 
-  return output;
-}
+//   return output;
+// }
 
 export function channelRoom(channelId) {
   return `channel:${channelId}`;

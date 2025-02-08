@@ -1,12 +1,9 @@
-import session from "express-session";
 import AADB2C from "@auth/express/providers/azure-ad-b2c"
 import { ExpressAuth } from "@auth/express"
-import MongoStore from 'connect-mongo'
 import jwt from 'jsonwebtoken';
 import jwksClient from 'jwks-rsa';
 import { logger } from "../util.js";
 
-const _30_DAYS = 30 * 24 * 60 * 60 * 1000;
 const OPENID_CONFIG = process.env.AUTH_AZURE_AD_OPENID_CONFIG || "https://agora9.b2clogin.com/agora9.onmicrosoft.com/B2C_1_signupsignin/v2.0/.well-known/openid-configuration"
 const B2C_PUBLIC_KEY = `{"kid":"X5eXk4xyojNFum1kl2Ytv8dlNP4-c57dO6QGTVBwaNk","nbf":1493763266,"use":"sig","kty":"RSA","e":"AQAB","n":"tVKUtcx_n9rt5afY_2WFNvU6PlFMggCatsZ3l4RjKxH0jgdLq6CScb0P3ZGXYbPzXvmmLiWZizpb-h0qup5jznOvOr-Dhw9908584BSgC83YacjWNqEK3urxhyE2jWjwRm2N95WGgb5mzE5XmZIvkvyXnn7X8dvgFPF5QwIngGsDG8LyHuJWlaDhr_EPLMW4wHvH0zZCuRMARIJmmqiMy3VD4ftq4nS5s8vJL0pVSrkuNojtokp84AtkADCDU_BUhrc2sIgfnvZ03koCQRoZmWiHu86SuJZYkDFstVTVSR0hiXudFlfQ2rOhPlpObmku68lXw-7V-P7jwrQRFfQVXw"}`;
 const client = jwksClient({
@@ -18,44 +15,26 @@ export function initAuth({ app, io, db, config }) {
   app.set("trust proxy", true);
   app.use("/auth/*", ExpressAuth({ providers: [ AADB2C ] }));
 
-  setupSession({ app, io, db, config });
-
+  // on each socket connection, verify the access token signature and register the user as connected.
   io.use(async (socket, next) => {
       // verify access token
       const token = socket.handshake.auth.token;
+      const session = socket.request.session;
       if (!token) {
         return next(new Error("Authentication error - access token not found"));
       }
-  
       try {
         const payload = await validateJwt(token);
-        socket.userId = payload.userId;
+        session.userId = payload.sub;
+        session.userFriendlyName = payload.name
         next();
       } catch (e) {
         next(new Error("Authentication error - invalid access token"));
       }
-      // register user as connected
-      logger.info(`User ${socket.userId} connected`);
+      
+      logger.debug(`${socket.client.id} connected from ${socket.handshake.address} `);
+      next();
     });
-
-}
-
-// need to fix this hardcoded connection string and pull from same mongodb used by logger
-function setupSession({ app, io, db, config }) {
-  const sessionMiddleware = session({
-    name: "sid",
-    secret: config.sessionSecrets,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      maxAge: _30_DAYS,
-      sameSite: "lax",
-    },
-    store: MongoStore.create({ mongoUrl: 'mongodb://localhost:27017/game-service' })
-  });
-
-  app.use(sessionMiddleware);
-  io.engine.use(sessionMiddleware);
 }
 
 function getKey(header, callback) {

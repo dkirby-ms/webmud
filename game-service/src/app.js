@@ -1,23 +1,48 @@
 import express from 'express';
-import http from 'http';
+import MongoStore from 'connect-mongo'
 import cors from "cors";
 import { Server } from 'socket.io';
 import { logger } from './util.js';
 import bodyParser from "body-parser";
 import { createAdapter } from "@socket.io/mongo-adapter";
 import { MongoClient } from "mongodb";
-import { DB, setupMongoDB } from "./db.js";
+import { setupMongoDB } from "./db.js";
 import { ExpressAuth } from "@auth/express"
 import { initAuth } from "./auth/index.js";
+import session from "express-session";
+import { getUser } from "./user/get.js";
+import { reachUser } from "./user/reach.js";
+import { searchUsers } from "./user/search.js";
+import { sendMessage } from "./message/send.js";
+import { listMessages } from "./message/list.js";
+import { ackMessage } from "./message/ack.js";
+import { typingMessage } from "./message/typing.js";
+import { createChannel } from "./channel/create.js";
+import { joinChannel } from "./channel/join.js";
+import { listChannels } from "./channel/list.js";
+import { searchChannels } from './channel/search.js';
 
 
+const _30_DAYS = 30 * 24 * 60 * 60 * 1000;
 const SERVER_NAME = process.env.SERVER_NAME || 'Default Game Server';
+const CLEANUP_DISCONNECT_GRACE_PERIOD = 10_000; // 60 seconds
 const CLEANUP_ZOMBIE_USERS_INTERVAL_IN_MS = 60_000; // 60 seconds
 const MONGODB_ADDRESS = process.env.MONGO_ADDRESS || "mongodb://localhost:27017/?replicaSet=rs0";
 const MONGODB_NAME = process.env.MONGODB_NAME = "game-service";
 const MONGO_SOCKET_ADAPTER_COLLECTION = process.env.MONGO_SOCKET_ADAPTER_COLLECTION || "socket.io-adapter";
+const SESSION_SECRET = process.env.SESSION_SECRET || "lolsecret42134213d2dcczq1";
 const mongoClient = new MongoClient(MONGODB_ADDRESS);
-
+const sessionMiddleware = session({
+  name: "sid",
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: _30_DAYS,
+    sameSite: "lax",
+  },
+  store: MongoStore.create({ mongoUrl: 'mongodb://localhost:27017/game-service' })
+});
 logger.level = process.env.LOG_LEVEL || 'debug'; // options: error, warn, info, http, verbose, debug, silly
 
 const db = await setupMongoDB(mongoClient, logger);
@@ -39,11 +64,15 @@ export async function createApp(httpServer, config) {
     });
     logger.debug("Socket.io server created and configured with MongoDB adapter");
   
-    logger.debug("Initializing auth and session management");
+    logger.debug("Initializing auth");
     initAuth({ app, io, db, config });
 
+    logger.debug("Initializing session middleware");
+    app.use(sessionMiddleware);
+    io.engine.use(sessionMiddleware);
+
     logger.debug("Initializing event handlers");
-    initEventHandlers({ io, db, config });
+    initEventHandlers({ app, io, db, config });
 
     logger.debug("Scheduling zombie users cleanup");
     const timerId = scheduleZombieUsersCleanup({ io, db });
@@ -77,38 +106,42 @@ function createExpressApp() {
 }
 export { logger }
 
-function initEventHandlers({ io, db, config }) {
+function initEventHandlers({ app, io, db, config }) {
   io.on("connection", async (socket) => {
-    logger.info(`Client ${socket.id} connected`);
-    // socket.on("channel:create", createChannel({ io, socket, db }));
-    // socket.on("channel:join", joinChannel({ io, socket, db }));
-    // socket.on("channel:list", listChannels({ io, socket, db }));
-    // socket.on("channel:search", searchChannels({ io, socket, db }));
-
-    // socket.on("user:get", getUser({ io, socket, db }));
-    // socket.on("user:reach", reachUser({ io, socket, db }));
-    // socket.on("user:search", searchUsers({ io, socket, db }));
-
-    // socket.on("message:send", sendMessage({ io, socket, db }));
-    // socket.on("message:list", listMessages({ io, socket, db }));
-    // socket.on("message:ack", ackMessage({ io, socket, db }));
-    // socket.on("message:typing", typingMessage({ io, socket, db }));
+    // register user as connected in mongodb and the session
+    const session = socket.request.session;
+    logger.info(`Client ${session.userFriendlyName} with userid ${session.userId} connected on socket ${socket.id} from ${socket.handshake.address}`);
+    
+    // register user socket event handlers
+    socket.on("channel:create", createChannel({ io, socket, db }));
+    socket.on("channel:join", joinChannel({ io, socket, db }));
+    socket.on("channel:list", listChannels({ io, socket, db }));
+    socket.on("channel:search", searchChannels({ io, socket, db }));
+    
+    socket.on("user:get", getUser({ io, socket, db }));
+    socket.on("user:reach", reachUser({ io, socket, db }));
+    socket.on("user:search", searchUsers({ io, socket, db }));
+    
+    socket.on("message:send", sendMessage({ io, socket, db }));
+    socket.on("message:list", listMessages({ io, socket, db }));
+    socket.on("message:ack", ackMessage({ io, socket, db }));
+    socket.on("message:typing", typingMessage({ io, socket, db }));
 
     socket.on("disconnect", async () => {
-      // the other users are not notified of the disconnection right away
-      // setTimeout(async () => {
-      //   const sockets = await io.in(userRoom(socket.userId)).fetchSockets();
-      //   const hasReconnected = sockets.length > 0;
+      //the other users are not notified of the disconnection right away
+      setTimeout(async () => {
+        const sockets = await io.in(userRoom(socket.userId)).fetchSockets();
+        const hasReconnected = sockets.length > 0;
 
-      //   if (!hasReconnected) {
-      //     await db.setUserIsDisconnected(socket.userId);
+        if (!hasReconnected) {
+          await db.setUserIsDisconnected(socket.userId);
 
-      //     io.to(userStateRoom(socket.userId)).emit(
-      //       "user:disconnected",
-      //       socket.userId,
-      //     );
-      //   }
-      // }, config.disconnectionGraceDelay ?? 10_000);
+          io.to(userStateRoom(socket.userId)).emit(
+            "user:disconnected",
+            socket.userId,
+          );
+        }
+      }, CLEANUP_DISCONNECT_GRACE_PERIOD); 
 
       //const channels = await db.fetchUserChannels(socket.userId);
 
@@ -121,13 +154,17 @@ function initEventHandlers({ io, db, config }) {
       // });
     });
 
-    // const wasOnline = await db.setUserIsConnected(socket.userId);
+    const wasOnline = await db.setUserIsConnected(session.userId);
 
-    // if (!wasOnline) {
-    //   socket
-    //     .to(userStateRoom(socket.userId))
-    //     .emit("user:connected", socket.userId);
-    // }
+    if (!wasOnline) {
+        // join standard channels or stored user defined custom ones
+        // .to(userStateRoom(socket.userId))
+        // .emit("user:connected", socket.userId);
+        logger.info(`User ${session.userId} is now connected`);
+    } else {
+      // may need to implement reconnect logic
+      logger.debug(`User ${session.userId} was already connected`);
+    }
   });
 }
 
@@ -139,7 +176,8 @@ function scheduleZombieUsersCleanup({ io, db }) {
 
     if (userIds.length) {
       userIds.forEach((userId) => {
-        io.to(userStateRoom(userId)).emit("user:disconnected", userId);
+        //io.to(userStateRoom(userId)).emit("user:disconnected", userId);
+        logger.debug(`${userId} is now considered as disconnected`);
       });
     }
   }
