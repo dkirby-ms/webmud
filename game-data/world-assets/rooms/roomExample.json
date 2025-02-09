@@ -1,0 +1,77 @@
+[
+    
+    {
+        "room_id": "room-002",
+        "name": "Hallway",
+        "description": "A long, narrow corridor with flickering lights, lined with portraits of past inhabitants.",
+        "properties": {
+            "lighting": "flickering",
+            "sound": "echoing",
+            "smell": "musty",
+            "temperature": "chilly",
+            "humidity": "moderate"
+        },
+        "exits": {
+            "south": {
+                "room_id": "room-001",
+                "description": "A door leading back to the Dank Office.",
+                "door": {
+                    "locked": false,
+                    "key_id": null 
+                }
+            },
+            "east": {
+                "room_id": "room-003",
+                "description": "A narrow archway leading to a mysterious study.",
+                "door": {
+                    "locked": true,
+                    "key_id": "key-002"
+                }
+            }
+        }
+    },
+    {
+        "room_id": "room-003",
+        "name": "Mysterious Study",
+        "description": "A room filled with ancient texts and artifacts, where every shadow hints at hidden secrets.",
+        "properties": {
+            "lighting": "dim",
+            "sound": "whispering",
+            "smell": "old paper",
+            "temperature": "warm",
+            "humidity": "dry"
+        },
+        "exits": {
+            "west": {
+                "room_id": "room-002",
+                "description": "A small door leading back to the Hallway.",
+                "door": {
+                    "locked": false,
+                    "key_id": null
+                }
+            }
+        }
+    },
+    {
+        "room_id": "room-001",
+        "name": "Dank Office",
+        "description": "A dusty, dimly-lit room filled with old books and mysterious artifacts. There is a window with a view to a small courtyard.",
+        "properties": {
+            "lighting": "dim",
+            "sound": "quiet",
+            "smell": "florid",
+            "temperature": "cool",
+            "humidity": "mild"
+        },
+        "exits": {
+            "north": {
+                "room_id": "room-002",
+                "description": "A sturdy, white wooden door with paneled insets leads out of the office.",
+                "door": {
+                    "locked": false,
+                    "key_id": null
+                }
+            }
+        }
+    }
+]

@@ -26,6 +26,7 @@ export function initAuth({ app, io, db, config }) {
       try {
         const payload = await validateJwt(token);
         session.userId = payload.sub;
+        socket.userId = payload.sub;
         session.userFriendlyName = payload.name
         next();
       } catch (e) {

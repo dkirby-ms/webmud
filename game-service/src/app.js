@@ -24,7 +24,7 @@ import { searchChannels } from './channel/search.js';
 
 
 const _30_DAYS = 30 * 24 * 60 * 60 * 1000;
-const SERVER_NAME = process.env.SERVER_NAME || 'Default Game Server';
+const WORLD_NAME = process.env.WORLD_NAME || 'Ribcage';
 const CLEANUP_DISCONNECT_GRACE_PERIOD = 10_000; // 60 seconds
 const CLEANUP_ZOMBIE_USERS_INTERVAL_IN_MS = 60_000; // 60 seconds
 const MONGODB_ADDRESS = process.env.MONGO_ADDRESS || "mongodb://localhost:27017/?replicaSet=rs0";
@@ -50,8 +50,11 @@ const mongoCollection = mongoClient.db(MONGODB_NAME).collection(MONGO_SOCKET_ADA
 
 logger.debug("Created mongoDB client and database")
 export async function createApp(httpServer, config) {
-    logger.info("Initializing game server " + SERVER_NAME);
+    logger.info("Initializing server instance" + WORLD_NAME);
+    logger.debug("Loading game world data");
+    const world = db.getOrCreateWorld(WORLD_NAME);
     
+
     logger.debug("Creating express app");
     const app = createExpressApp();
     httpServer.on("request", app);

@@ -37,9 +37,16 @@ export class DB {
     this.db = db;
     // Initialize various collections.
     this.users = db.collection("users");
+    this.users.createIndex({ userId: 1 }, { unique: true });
     this.channels = db.collection("channels");
     this.userChannels = db.collection("user_channels");
     this.messages = db.collection("messages");
+    this.worlds = db.collection("worlds");
+    this.worlds.createIndex({ name: 1 }, { unique: true });
+    this.rooms = db.collection("rooms");
+    this.gameObjects = db.collection("gameObjects");
+    this.mobs = db.collection("mobs");
+    
   }
 
   // Find and return a user document by their username.
@@ -234,5 +241,16 @@ export class DB {
       { user_id: userId, channel_id: channelId },
       { $set: { client_offset: messageId } }
     );
+  }
+
+  // Check the database for the existence of a game world and return it if found or create it if not found.
+  async getOrCreateWorld(name) {
+    const world = await this.worlds.findOne({ name: name });
+    const result = await this.worlds.findOneAndUpdate(
+      { name },
+      { $setOnInsert: { name } },
+      { returnDocument: "after", upsert: true }
+    );
+    return result.value;
   }
 }
