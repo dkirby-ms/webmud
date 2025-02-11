@@ -1,4 +1,6 @@
 import { ajv } from "../util.js";
+import type { Server as SocketIOServer, Socket } from "socket.io";
+import { Repositories } from "../db/index.js";
 
 const validate = ajv.compile({
   type: "object",
@@ -9,7 +11,14 @@ const validate = ajv.compile({
   additionalProperties: false,
 });
 
-export function listChannels({ socket, db }) {
+interface ListChannelsParams {
+	io: SocketIOServer;
+  session: any;
+	socket: Socket;
+	repositories: Repositories;
+}
+
+export function listChannels({ io, session, socket, repositories }: ListChannelsParams): (query: any, callback: (result: any) => void) => Promise<void> {
   return async (query, callback) => {
     if (typeof callback !== "function") {
       return;
@@ -22,7 +31,8 @@ export function listChannels({ socket, db }) {
       });
     }
 
-    const { data, hasMore } = await db.listChannels(socket.userId, query);
+    const typedQuery = query as { size: number; orderBy: "name:asc" };
+    const { data, hasMore } = await repositories.channelRepository.listChannels(session.userId, typedQuery.orderBy, typedQuery.size);
 
     callback({
       status: "OK",

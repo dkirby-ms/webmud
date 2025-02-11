@@ -1,4 +1,6 @@
 import { ajv } from "../util.js";
+import type {Server as SocketIOServer, Socket } from "socket.io";
+import { Repositories } from "../db/index.js";
 
 const validate = ajv.compile({
   type: "object",
@@ -10,7 +12,13 @@ const validate = ajv.compile({
   additionalProperties: false,
 });
 
-export function ackMessage({ socket, db }) {
+interface AckMessageParams {
+  socket: Socket;
+  session: any;
+  repositories: Repositories;
+}
+
+export function ackMessage({ socket, session, repositories }: AckMessageParams): (payload: any, callback: (result: any) => void) => Promise<void> {
   return async (payload, callback) => {
     if (typeof callback !== "function") {
       return;
@@ -24,7 +32,8 @@ export function ackMessage({ socket, db }) {
     }
 
     try {
-      await db.ackMessage(socket.userId, payload);
+      const validatedPayload = payload as { channelId: string; messageId: string };
+      await repositories.messageRepository.ackMessage(session.userId, payload.channelId, payload.messageId);
     } catch (e) {
       return callback({
         status: "ERROR",

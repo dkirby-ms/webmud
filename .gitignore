@@ -5,3 +5,4 @@ event-bus/mqtt-data/mosquitto.db
 .next/
 webmud-client/.env.local
 game-service/logfile.log
+game-service/build/

@@ -1,45 +1,42 @@
 {
   "name": "game-service",
   "version": "1.0.0",
-  "description": "Main game-service for a \"server instance\"",
-  "main": "src/app.js",
-  "type": "module",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node entrypoint.js",
-    "dev": "node entrypoint.js"
+    "build": "tsc",
+    "dev": "node ./build/entrypoint.js",
+    "start": "tsc && npm run dev"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/dkirby-ms/webmud.git"
-  },
-  "keywords": [
-    "game",
-    "mud"
-  ],
+  "type": "module",
+  "keywords": [],
   "author": "saitcho",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/dkirby-ms/webmud/issues"
-  },
-  "homepage": "https://github.com/dkirby-ms/webmud#readme",
+  "description": "",
   "dependencies": {
-    "@auth/express": "^0.8.4",
-    "@azure/msal-node": "^3.2.1",
-    "@socket.io/mongo-adapter": "^0.3.2",
-    "@types/mongodb": "^4.0.6",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
+    "axios": "^1.7.9",
     "body-parser": "^1.20.3",
     "connect-mongo": "^5.1.0",
-    "connect-mongodb-session": "^5.0.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-session": "^1.18.1",
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.1.0",
     "mongodb": "^6.13.0",
     "socket.io": "^4.8.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3",
     "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/express-session": "^1.18.1",
+    "@types/node": "^22.13.1",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "tsx": "^4.19.2"
   }
 }

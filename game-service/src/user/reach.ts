@@ -1,4 +1,6 @@
 import { ajv, logger, userRoom } from "../util.js";
+import type {Server as SocketIOServer, Socket } from "socket.io";
+import { Repositories } from "../db/index.js";
 
 const validate = ajv.compile({
   type: "object",
@@ -14,7 +16,14 @@ const validate = ajv.compile({
   additionalProperties: false,
 });
 
-export function reachUser({ io, socket, db }) {
+interface ReachUserParams {
+  io: SocketIOServer;
+  session: any;
+  socket: Socket;
+  repositories: Repositories;
+}
+
+export function reachUser({ io, session, socket, repositories }: ReachUserParams): (payload: any, callback: (result: any) => void) => Promise<void> {
   return async (payload, callback) => {
     if (typeof callback !== "function") {
       return;
@@ -30,7 +39,7 @@ export function reachUser({ io, socket, db }) {
     let channel;
 
     try {
-      channel = await db.createPrivateChannel(socket.userId, payload.userIds);
+      channel = await repositories.channelRepository.createPrivateChannel(session.userId, payload.userIds);
     } catch (e) {
       return callback({
         status: "ERROR",
@@ -39,14 +48,14 @@ export function reachUser({ io, socket, db }) {
 
     logger.info(
       "private channel [%s] was created by user [%s]",
-      channel.id,
-      socket.userId,
+      channel?.id,
+      session.userId,
     );
 
     // broadcast to other tabs of the same user
-    socket.to(userRoom(socket.userId)).emit("channel:created", channel);
+    socket.to(userRoom(session.userId)).emit("channel:created", channel);
 
-    io.in(userRoom(socket.userId)).socketsJoin(`channel:${channel.id}`);
+    io.in(userRoom(session.userId)).socketsJoin(`channel:${channel?.id}`);
 
     callback({
       status: "OK",

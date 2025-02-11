@@ -4,8 +4,12 @@ import styles from './chatConsole.module.css'
 import { useGameService } from "../contexts/GameServiceContext";
 import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
 
-export default function ChatConsole() {
-  const [messages, setMessages] = useState([]);
+interface ChatConsoleProps {
+  channel: string;
+}
+
+export default function ChatConsole({ channel }: ChatConsoleProps) {
+  const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState('');
   const messageEndRef = useRef<HTMLDivElement>(null);
   const { socket, serverAddress, connectionStatus, connect, disconnect } = useGameService();

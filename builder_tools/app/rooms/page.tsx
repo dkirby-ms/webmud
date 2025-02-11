@@ -5,6 +5,7 @@ const RoomsPage = () => {
   const [rooms, setRooms] = useState([]);
   const [form, setForm] = useState({ name: "" });
   const [search, setSearch] = useState("");
+  const [editingRoom, setEditingRoom] = useState<any>(null);
 
   const fetchRooms = async (q = "") => {
     const res = await fetch(`/api/rooms${q ? "?q=" + q : ""}`);
@@ -26,14 +27,14 @@ const RoomsPage = () => {
     fetchRooms();
   };
 
-  const updateRoom = async (id: string) => {
-    const newName = prompt("New name:");
-    if(newName) {
+  const saveEdit = async () => {
+    if (editingRoom) {
       await fetch("/api/rooms", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, name: newName }),
+        body: JSON.stringify(editingRoom),
       });
+      setEditingRoom(null);
       fetchRooms();
     }
   };
@@ -66,11 +67,41 @@ const RoomsPage = () => {
         />
         <button onClick={createRoom} className="ml-2 p-2 bg-green-600 rounded">Create</button>
       </div>
+      
+      {editingRoom && (
+        <div className="mb-4 p-4 bg-gray-800 rounded">
+          <h2 className="text-xl mb-2">Edit Room</h2>
+          <input
+            className="p-2 mb-2 rounded bg-gray-700 text-white block"
+            type="text"
+            placeholder="Name"
+            value={editingRoom.name || ""}
+            onChange={(e) => setEditingRoom({ ...editingRoom, name: e.target.value })}
+          />
+          <input
+            className="p-2 mb-2 rounded bg-gray-700 text-white block"
+            type="text"
+            placeholder="Description"
+            value={editingRoom.description || ""}
+            onChange={(e) => setEditingRoom({ ...editingRoom, description: e.target.value })}
+          />
+          <input
+            className="p-2 mb-2 rounded bg-gray-700 text-white block"
+            type="number"
+            placeholder="Capacity"
+            value={editingRoom.capacity || 0}
+            onChange={(e) => setEditingRoom({ ...editingRoom, capacity: Number(e.target.value) })}
+          />
+          <button onClick={saveEdit} className="mr-2 p-2 bg-green-600 rounded">Save</button>
+          <button onClick={() => setEditingRoom(null)} className="p-2 bg-red-600 rounded">Cancel</button>
+        </div>
+      )}
+
       <ul>
         {rooms.map((room: any) => (
           <li key={room._id} className="mb-2">
             <span>{room.name}</span>
-            <button onClick={() => updateRoom(room._id)} className="ml-2 p-1 bg-yellow-600 rounded">Update</button>
+            <button onClick={() => setEditingRoom(room)} className="ml-2 p-1 bg-yellow-600 rounded">Update</button>
             <button onClick={() => deleteRoom(room._id)} className="ml-2 p-1 bg-red-600 rounded">Delete</button>
           </li>
         ))}

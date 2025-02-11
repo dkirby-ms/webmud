@@ -4,6 +4,7 @@ import styles from './actionPanel.module.css';
 
 interface ActionPanelProps {
     messages: string[];
+    className: string;
 }
 
 export default function ActionPanel({ messages }: ActionPanelProps) {
@@ -12,8 +13,8 @@ export default function ActionPanel({ messages }: ActionPanelProps) {
             <div
                 style={{
                     display: 'grid',
-                    gridTemplateColumns: '1fr 2fr 1fr',
-                    gridTemplateRows: '1fr 2fr 1fr',
+                    gridTemplateColumns: '2fr 3fr 2fr',
+                    gridTemplateRows: '3fr 5fr 3fr',
                     gap: '8px',
                 }}
             >
