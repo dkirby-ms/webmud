@@ -10,12 +10,9 @@ export class WorldRepository {
   }
 
   async getWorld(name: string): Promise<WithId<Document> | null> {
-    // Try to find the world then upsert if not found.
-    const result = await this.worlds.findOneAndUpdate(
-      { name },
-      { $setOnInsert: { name } },
-      { returnDocument: "after" }
+    const result = await this.worlds.findOne(
+      { name }
     );
-    return result?.value;
+    return result;
   }
 }

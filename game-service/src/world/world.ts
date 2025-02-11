@@ -1,41 +1,32 @@
+import { Repositories } from "../db/index.js";
+import { Db, Collection, ObjectId, WithId, Document } from "mongodb";
+
 interface Entity {
     update?(): void;
 }
 
 export class World {
     name: string;
-    entities: Entity[];
-    rooms: Record<string, any>;
+    id: string;
+    repositories: Repositories
+    rooms: WithId<Document>[] = [];
 
-    constructor(name: string, db: any /* unused db parameter, adjust as needed */) {
+    constructor(doc: WithId<Document>, repositories: Repositories) {
         // first check if world exists or not. 
-        
-        this.name = name;
-        this.entities = [];
-        this.rooms = {};
-    }
-
-    addEntity(entity: Entity): void {
-        this.entities.push(entity);
-    }
-
-    removeEntity(entity: Entity): void {
-        this.entities = this.entities.filter(e => e !== entity);
-    }
-
-    addRoom(roomName: string, roomData: any): void {
-        this.rooms[roomName] = roomData;
-    }
-
-    getRoom(roomName: string): any {
-        return this.rooms[roomName];
-    }
-
-    update(): void {
-        this.entities.forEach(entity => {
-            if (typeof entity.update === 'function') {
-                entity.update();
-            }
+        this.name = doc.name
+        this.id = doc._id.toHexString();
+        this.repositories = repositories;
+        this.loadRooms().then((rooms) => {
+            this.rooms = rooms;
         });
+        }
+
+        private loadRooms(): Promise<WithId<Document>[]> {
+            return this.repositories.roomRepository.listRoomsForWorld(this.id);
+        }
+
+    private loadEntities(): void {
+        // load entities from db
     }
+
 }

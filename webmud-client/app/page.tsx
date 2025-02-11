@@ -24,6 +24,7 @@ export default async function webMUDClient() {
       <GameServiceProvider>
         <div className="flex">
           <div className="flex-grow">
+            <ConnectionBar/>
             <ActionPanel className="bg-gray-800 text-gray-200 p-4 rounded-t" />
             <Tabs.Root defaultValue="world">
               <Tabs.List

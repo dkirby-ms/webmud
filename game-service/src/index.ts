@@ -42,20 +42,20 @@ interface GameServiceStartReturn {
 
 export default class GameService {
     // public members
-    public app: Express;
-    public httpServer: any;
-    public io: Server;
-    public db: any;
-    public logger = logger;
-    public repositories: Repositories = {} as Repositories;
-    
+    protected app: Express;
+    protected httpServer: any;
+    protected io: Server;
+    protected db: any;
+    protected logger = logger;
+    protected repositories: Repositories = {} as Repositories;
+    protected world!: World;
     // private members
     private corsOptions = {
         origin: process.env.CORS_ORIGIN || "*",
         methods: process.env.CORS_METHODS ? process.env.CORS_METHODS.split(",") : ["GET", "POST"]
     };
 
-    constructor() {
+    constructor(name: string) {
         // initialize logger
         logger.add(
             new transports.Console({
@@ -63,7 +63,7 @@ export default class GameService {
               level: process.env.LOG_LEVEL || 'info'
             }),
           );
-   
+
         // create express app
         this.app = express();
         
@@ -124,22 +124,34 @@ export default class GameService {
         logger.info("Starting server instance" + WORLD_NAME);
         logger.debug("Loading game world data");
         
-        // load the top level world object
-        const world = await this.repositories.worldRepository.getWorld(WORLD_NAME);
-        if (world === null) {
+        // load the world data from the database
+        const world_data = await this.repositories.worldRepository.getWorld(WORLD_NAME);
+        if (world_data === null) {
             logger.error(`Failed to load world data for ${WORLD_NAME}`);
             throw new Error(`Failed to load world data for ${WORLD_NAME}`);
         }
         logger.debug("Game world data loaded successfully.");
-        
+
+        // initialize the game world object
+        try {
+            this.world = new World(world_data, this.repositories);
+        } catch (e: any) {
+            logger.error(`Failed to initialize game world: ${e.message}`);
+            throw new Error(`Failed to initialize game world: ${e.message}`);
+        }
+
         // Start the server
         logger.info("Starting server instance with world data: " + WORLD_NAME);
         this.httpServer.listen(SERVICE_PORT, () => {
             this.logger.info(`server listening at ${SERVICE_URL}:${SERVICE_PORT}.`);
         });
 
-        //this.repositories.channelRepository.createPublicChannel(WORLD_NAME, "world_chat", "World Chat", "Public chat for the world.");
+        // game loop
+           // gatherInputs
+           // updateWorldState
+           // sendOutputs
 
+        // return a callback for graceful shutdown
         return { close: this.close.bind(this) };
     }
 

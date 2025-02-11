@@ -63,3 +63,44 @@
 {"level":"info","message":"Starting server instanceRibcage"}
 {"level":"info","message":"Starting server instance with world data: Ribcage"}
 {"level":"info","message":"server listening at http://localhost:28999."}
+{"level":"info","message":"Game service created."}
+{"level":"info","message":"Starting server instanceRibcage"}
+{"level":"info","message":"Starting server instance with world data: Ribcage"}
+{"level":"info","message":"server listening at http://localhost:28999."}
+{"level":"info","message":"Game service created."}
+{"level":"info","message":"Starting server instanceRibcage"}
+{"level":"info","message":"Starting server instance with world data: Ribcage"}
+{"level":"info","message":"server listening at http://localhost:28999."}
+{"level":"info","message":"Game service created."}
+{"level":"info","message":"Starting server instanceRibcage"}
+{"level":"error","message":"Failed to initialize game world: Cannot read properties of undefined (reading 'name')"}
+{"level":"info","message":"Game service created."}
+{"level":"info","message":"Starting server instanceRibcage"}
+{"level":"error","message":"Failed to initialize game world: Cannot read properties of undefined (reading 'name')"}
+{"level":"info","message":"Game service created."}
+{"level":"info","message":"Starting server instanceRibcage"}
+{"level":"error","message":"Failed to initialize game world: Cannot read properties of undefined (reading 'name')"}
+{"level":"info","message":"Game service created."}
+{"level":"info","message":"Starting server instanceRibcage"}
+{"level":"error","message":"Failed to initialize game world: Cannot read properties of undefined (reading 'name')"}
+{"level":"info","message":"Game service created."}
+{"level":"info","message":"Starting server instanceRibcage"}
+{"level":"info","message":"Game service created."}
+{"level":"info","message":"Starting server instanceRibcage"}
+{"level":"info","message":"Game service created."}
+{"level":"info","message":"Starting server instanceRibcage"}
+{"level":"info","message":"Game service created."}
+{"level":"info","message":"Starting server instanceRibcage"}
+{"level":"info","message":"Starting server instance with world data: Ribcage"}
+{"level":"info","message":"server listening at http://localhost:28999."}
+{"level":"info","message":"Game service created."}
+{"level":"info","message":"Game service created."}
+{"level":"info","message":"Starting server instanceRibcage"}
+{"level":"info","message":"Game service created."}
+{"level":"info","message":"Starting server instanceRibcage"}
+{"level":"info","message":"Game service created."}
+{"level":"info","message":"Starting server instanceRibcage"}
+{"level":"info","message":"Game service created."}
+{"level":"info","message":"Starting server instanceRibcage"}
+{"level":"info","message":"Starting server instance with world data: Ribcage"}
+{"level":"info","message":"server listening at http://localhost:28999."}
