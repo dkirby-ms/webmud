@@ -5,9 +5,7 @@ export class PlayerCharacterRepository {
 
   constructor(db: Db) {
     this.characters = db.collection("playerCharacters");
-    // Create a unique index on player_id and an index on worldId for faster lookups.
-    this.characters.createIndex({ player_id: 1 }, { unique: true });
-    this.characters.createIndex({ worldId: 1 });
+
   }
 
   // Fetch a character by its player_id

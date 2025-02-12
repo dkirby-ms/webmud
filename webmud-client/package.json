@@ -26,6 +26,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "lucide-react": "^0.274.0",
+    "mongodb": "^6.13.0",
     "next": "latest",
     "next-auth": "beta",
     "radix-ui": "^1.1.3",

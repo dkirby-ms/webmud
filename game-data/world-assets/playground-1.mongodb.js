@@ -12,6 +12,33 @@
 // Select the database to use.
 use('game-service');
 
+// character skills are the base abilities of a character
+const characterSkills = [
+    {
+        "skill_id": "skill-001",
+        "name": "Fighting",
+        "description": "The ability to fight with weapons and fists.",
+    },
+    {
+        "skill_id": "skill-002",
+        "name": "Stealth",
+        "description": "The ability to move unseen and unheard.",
+    },
+    {
+        "skill_id": "skill-003",
+        "name": "Dodging",
+        "description": "The ability to avoid attacks and traps.",
+    }
+]
+
+characterSkills.forEach(skill => {
+    db.getCollection('characterSkills').updateOne(
+        { skill_id: skill.skill_id },
+        { $set: skill },
+        { upsert: true }
+    );
+});
+
 // character races are the base "species" of a character
 const characterSpecies = [
     {
@@ -94,7 +121,29 @@ const playerCharactersData = [
         "playerCharacterId": "pc-002",
         "userId": "7ced8fcb-85c6-47b4-ad6b-715e9fddbfa9",
         "name": "Gren",
-        "race": "race-003"
+        "race": "race-003",
+        "attributes": {
+            "strength": 12,
+            "dexterity": 14,
+            "constitution": 10,
+            "intelligence": 16,
+            "wisdom": 10,
+            "charisma": 14
+        }
+    },
+    {
+        "playerCharacterId": "pc-003",
+        "userId": "7xxxxxxxxxxxxxxxxxxxxx",
+        "name": "DummyCharNoSelect",
+        "race": "race-003",
+        "attributes": {
+            "strength": 12,
+            "dexterity": 14,
+            "constitution": 10,
+            "intelligence": 16,
+            "wisdom": 10,
+            "charisma": 14
+        }
     }
 ];
 
@@ -137,7 +186,7 @@ channelsData.forEach(channel => {
 
 const roomsData = [
     {
-        "worldId": "67a7f0748ffb2594d8436b55",
+        "worldId": "67acd8f200a5cddd297a2fcd",
         "room_id": "room-002",
         "name": "Hallway",
         "description": "A long, narrow corridor with flickering lights, lined with portraits of past inhabitants.",
@@ -168,7 +217,7 @@ const roomsData = [
         }
     },
     {
-        "worldId": "67a7f0748ffb2594d8436b55",
+        "worldId": "67acd8f200a5cddd297a2fcd",
         "room_id": "room-003",
         "name": "Mysterious Study",
         "description": "A room filled with ancient texts and artifacts, where every shadow hints at hidden secrets.",
@@ -191,7 +240,7 @@ const roomsData = [
         }
     },
     {
-        "worldId": "67a7f0748ffb2594d8436b55-001",
+        "worldId": "67acd8f200a5cddd297a2fcd",
         "room_id": "room-001",
         "name": "Dank Office",
         "description": "A dusty, dimly-lit room filled with old books and mysterious artifacts. There is a window with a view to a small courtyard.",
@@ -242,6 +291,21 @@ entitiesData.forEach(entity => {
     db.getCollection('entities').updateOne(
         { mob_id: entity.mob_id },
         { $set: entity },
+        { upsert: true }
+    );
+});
+
+const worldsData = [
+    {
+        "name": "Ribcage",
+        "description": "A city in the void between the planes.",
+    }
+]
+
+worldsData.forEach(world => {
+    db.getCollection('worlds').updateOne(
+        { name: world.name },
+        { $set: world },
         { upsert: true }
     );
 });

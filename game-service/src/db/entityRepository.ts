@@ -5,8 +5,6 @@ export class EntityRepository {
 
     constructor(db: Db) {
         this.entities = db.collection("entities");
-        this.entities.createIndex({ entity_id: 1 }, { unique: true });
-        this.entities.createIndex({ worldId: 1 });
     }  
 
     async getEntity(entityId: string): Promise<WithId<Document> | null> {

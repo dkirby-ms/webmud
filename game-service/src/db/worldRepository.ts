@@ -6,7 +6,6 @@ export class WorldRepository {
 
   constructor(db: Db) {
     this.worlds = db.collection("worlds");
-    this.worlds.createIndex({ name: 1 }, { unique: true });
   }
 
   async getWorld(name: string): Promise<WithId<Document> | null> {

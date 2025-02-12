@@ -14,7 +14,7 @@ export default function ConnectionBar() {
   // monitor the server list if user is authenticated
   useEffect(() => {
     if (status === 'authenticated') {
-      axios.get('/api/servers')
+      axios.get('/api/dbservice/gameServers')
         .then(res => setServers(res.data))
         .catch(err => console.error('Error fetching servers:', err));
     }

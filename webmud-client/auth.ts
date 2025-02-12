@@ -1,10 +1,22 @@
 import NextAuth from "next-auth"
 import AzureADB2C from "next-auth/providers/azure-ad-b2c"
-import type { NextAuthConfig } from "next-auth"
+import type { NextAuthConfig, DefaultSession } from "next-auth"
 
 const BUFFER_TIME = 5 * 60;
 
 const azureAdB2cTokentUrl = `https://${process.env.AZURE_AD_B2C_TENANT_ID}.b2clogin.com/${process.env.AZURE_AD_B2C_TENANT_ID}.onmicrosoft.com/${process.env.AZURE_AD_B2C_PRIMARY_USER_FLOW}/oauth2/v2.0/token`;
+
+interface Session {
+  user: {
+    objectId: string;
+    /**
+     * By default, TypeScript merges new interface properties and overwrites existing ones.
+     * In this case, the default session user properties will be overwritten,
+     * with the new ones defined above. To keep the default session user properties,
+     * you need to add them back into the newly declared interface.
+     */
+  } & DefaultSession["user"]
+}
 
 async function refreshAccessToken(token: any) {
   try {
@@ -62,6 +74,7 @@ export const config = {
       client: {
         token_endpoint_auth_method: 'none',
       },
+
     })),
     
   ],
@@ -79,6 +92,7 @@ export const config = {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         token.tokenExpiresAt = account.expires_at;
+        token.id = account.providerAccountId;
       }
     
       if (Date.now() / 1000 < (token.tokenExpiresAt as number) - BUFFER_TIME) {
@@ -87,11 +101,16 @@ export const config = {
     
       return refreshAccessToken(token);
     },
-    async session({ session, token }) {
+    async session({ session, token, user }) {
+      // `session.user.address` is now a valid property, and will be type-checked
+      // in places like `useSession().data.user` or `auth().user`
       return {
         ...session,
-        accessToken: token.accessToken,
-      };
+        userId: token.id,
+        user: {
+          ...session.user,
+        },
+      }
     },
   },
 } satisfies NextAuthConfig

@@ -5,9 +5,6 @@ export class RoomRepository {
 
   constructor(db: Db) {
     this.rooms = db.collection("rooms");
-    // Create a unique index on room_id and an index for worldId for faster lookups.
-    this.rooms.createIndex({ room_id: 1 }, { unique: true });
-    this.rooms.createIndex({ worldId: 1 });
   }
 
   // Fetch a room by its room_id

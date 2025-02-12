@@ -6,6 +6,9 @@ import { MessageRepository } from "./messageRepository.js";
 import { WorldRepository } from "./worldRepository.js";
 import { RoomRepository } from "./roomRepository.js";
 import { EntityRepository } from "./entityRepository.js";
+import { PlayerCharacterRepository } from "./playerCharacterRepository.js";
+import { CharacterSpeciesRepository } from "./characterSpeciesRepository.js";
+import { CharacterSkillsRepository } from "./characterSkillsRepository.js";
 
 export interface Repositories {
   userRepository: UserRepository;
@@ -14,6 +17,9 @@ export interface Repositories {
   worldRepository: WorldRepository;
   roomRepository: RoomRepository;
   entityRepository: EntityRepository;
+  playerCharacterRepository: PlayerCharacterRepository;
+  characterSpeciesRepository: CharacterSpeciesRepository;
+  characterSkillsRepository: CharacterSkillsRepository;
 }
 
 export function createRepositories(db: Db): Repositories {
@@ -24,5 +30,8 @@ export function createRepositories(db: Db): Repositories {
     worldRepository: new WorldRepository(db),
     roomRepository: new RoomRepository(db),
     entityRepository: new EntityRepository(db),
+    playerCharacterRepository: new PlayerCharacterRepository(db),
+    characterSpeciesRepository: new CharacterSpeciesRepository(db),
+    characterSkillsRepository: new CharacterSkillsRepository(db),
   };
 }
