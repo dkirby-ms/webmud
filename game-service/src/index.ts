@@ -140,16 +140,15 @@ export default class GameService {
             throw new Error(`Failed to initialize game world: ${e.message}`);
         }
 
-        // Start the server
-        logger.info("Starting server instance with world data: " + WORLD_NAME);
+        // Start the http server
         this.httpServer.listen(SERVICE_PORT, () => {
             this.logger.info(`server listening at ${SERVICE_URL}:${SERVICE_PORT}.`);
         });
-
-        // game loop
-           // gatherInputs
-           // updateWorldState
-           // sendOutputs
+        
+        // Start the game world
+        logger.debug("Starting server instance with world data: " + WORLD_NAME);
+        this.world.start();
+        logger.debug(`Server instance started with world data: ${WORLD_NAME}`);
 
         // return a callback for graceful shutdown
         return { close: this.close.bind(this) };

@@ -5,6 +5,7 @@ import { ChannelRepository } from "./channelRepository.js";
 import { MessageRepository } from "./messageRepository.js";
 import { WorldRepository } from "./worldRepository.js";
 import { RoomRepository } from "./roomRepository.js";
+import { EntityRepository } from "./entityRepository.js";
 
 export interface Repositories {
   userRepository: UserRepository;
@@ -12,6 +13,7 @@ export interface Repositories {
   messageRepository: MessageRepository;
   worldRepository: WorldRepository;
   roomRepository: RoomRepository;
+  entityRepository: EntityRepository;
 }
 
 export function createRepositories(db: Db): Repositories {
@@ -20,6 +22,7 @@ export function createRepositories(db: Db): Repositories {
     channelRepository: new ChannelRepository(db),
     messageRepository: new MessageRepository(db),
     worldRepository: new WorldRepository(db),
-    roomRepository: new RoomRepository(db)
+    roomRepository: new RoomRepository(db),
+    entityRepository: new EntityRepository(db),
   };
 }
