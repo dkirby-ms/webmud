@@ -12,7 +12,8 @@
 // Select the database to use.
 use('game-service');
 
-const characterRacesData = [
+// character races are the base "species" of a character
+const characterSpecies = [
     {
         "race_id": "race-001",
         "name": "Human",
@@ -66,8 +67,8 @@ const characterRacesData = [
     }
 ];
 
-characterRacesData.forEach(race => {
-    db.getCollection('characterRaces').updateOne(
+characterSpecies.forEach(race => {
+    db.getCollection('characterSpecies').updateOne(
         { race_id: race.race_id },
         { $set: race },
         { upsert: true }
@@ -153,7 +154,7 @@ const roomsData = [
                 "description": "A door leading back to the Dank Office.",
                 "door": {
                     "locked": false,
-                    "key_id": null 
+                    "key_id": null
                 }
             },
             "east": {
@@ -218,6 +219,29 @@ roomsData.forEach(room => {
     db.getCollection('rooms').updateOne(
         { room_id: room.room_id },
         { $set: room },
+        { upsert: true }
+    );
+});
+
+// entities represent the state and location of an instance of a mob in the game world
+const entitiesData = [
+    {
+        "world_id": "67a7f0748ffb2594d8436b55",
+        "room_id": "67a8127c506208690c7cccdf",
+        "mob_id": "xxxxxxxxxxxxxxyyyyyyyyy1234y",
+        "state": {
+            // status object needs refining
+            "health": 100,
+            "mana": 100,
+            "stamina": 100
+        }
+    }
+]
+
+entitiesData.forEach(entity => {
+    db.getCollection('entities').updateOne(
+        { mob_id: entity.mob_id },
+        { $set: entity },
         { upsert: true }
     );
 });
