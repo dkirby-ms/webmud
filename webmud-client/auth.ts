@@ -106,6 +106,7 @@ export const config = {
       // in places like `useSession().data.user` or `auth().user`
       return {
         ...session,
+        accessToken: token.accessToken,
         userId: token.id,
         user: {
           ...session.user,
