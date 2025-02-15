@@ -6,6 +6,7 @@ import { Theme } from "@radix-ui/themes";
 import { Suspense } from "react";
 import NavBar from "@/components/layout/navbar";
 import { SessionProvider } from "next-auth/react"
+import Footer from "@/components/layout/footer";
 import { auth } from "@/auth"
 
 const geistSans = Geist({
@@ -37,18 +38,20 @@ export default async function RootLayout({
     }
   }
   return (
+    <SessionProvider basePath={"/auth"} session={session}>
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      ><Theme appearance="dark" radius="small" accentColor="red" grayColor="gray">
-        <SessionProvider basePath={"/auth"} session={session}>
-        <Suspense fallback={<div>Loading...</div>}>
-          <NavBar />
-        </Suspense>
-        {children}
-        </SessionProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <Theme appearance="dark" radius="small" accentColor="red" grayColor="gray">
+        <div />
+          <Suspense fallback="...">
+            <NavBar />
+          </Suspense>
+          <main>
+            {children}
+          </main>
         </Theme>
       </body>
     </html>
+    </SessionProvider>
   );
 }

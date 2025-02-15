@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import useScroll from "@/lib/hooks/use-scroll";
 import { useSession } from 'next-auth/react';
-import { SignInButton } from "@/components/home/signin-button";
-import { UserAvatar } from "@/components/home/user-avatar";
+import { SignInButton } from "@/components/shared/signin_button";
+import { UserAvatar } from "@/components/home/user_avatar";
 import { Flex } from "@radix-ui/themes";
 
 export default function NavBar() {
@@ -34,7 +34,7 @@ export default function NavBar() {
                 { status !== 'authenticated' ? ( 
                     <SignInButton/>
                 ) : (
-                    <Flex gap="2"><UserAvatar></UserAvatar></Flex>
+                    <Flex gap="1"><UserAvatar></UserAvatar></Flex>
                 )}
             </div>
         </div >
