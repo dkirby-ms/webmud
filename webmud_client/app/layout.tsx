@@ -3,6 +3,10 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "@radix-ui/themes/styles.css";
 import { Theme } from "@radix-ui/themes";
+import { Suspense } from "react";
+import NavBar from "@/components/layout/navbar";
+import { SessionProvider } from "next-auth/react"
+import { auth } from "@/auth"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,18 +23,30 @@ export const metadata: Metadata = {
   description: "a next-gen but old-school MUD",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+  if (session?.user) {
+    session.user = {
+      name: session.user.name,
+      email: session.user.email,
+      id: session.user.id,
+    }
+  }
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       ><Theme appearance="dark" radius="small" accentColor="red" grayColor="gray">
+        <SessionProvider basePath={"/auth"} session={session}>
+        <Suspense fallback={<div>Loading...</div>}>
+          <NavBar />
+        </Suspense>
         {children}
-        
+        </SessionProvider>
         </Theme>
       </body>
     </html>
