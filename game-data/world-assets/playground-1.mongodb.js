@@ -107,6 +107,7 @@ const playerCharactersData = [
         "userId": "7ced8fcb-85c6-47b4-ad6b-715e9fddbfa9",
         "name": "Saitcho",
         "species": "species-001",
+        "playerLevel": 1,
         "attributes": {
             "strength": 12,
             "dexterity": 14,
@@ -120,6 +121,7 @@ const playerCharactersData = [
         "userId": "7ced8fcb-85c6-47b4-ad6b-715e9fddbfa9",
         "name": "Gren",
         "species": "species-003",
+        "playerLevel": 1,
         "attributes": {
             "strength": 12,
             "dexterity": 14,
@@ -133,6 +135,7 @@ const playerCharactersData = [
         "userId": "7xxxxxxxxxxxxxxxxxxxxx",
         "name": "DummyCharNoSelect",
         "species": "species-003",
+        "playerLevel": 1,
         "attributes": {
             "strength": 12,
             "dexterity": 14,

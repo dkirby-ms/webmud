@@ -2,14 +2,10 @@
 import * as React from "react";
 import { auth } from "@/auth";
 import { Flex, Text } from "@radix-ui/themes";
+import { StartMenu } from "@/components/home/StartMenu";
+
 export default async function Home() {
 const session = await auth(); 
-
-if (!session) return null
-
-let data = await fetch('/api/db/playerCharacters')
-let playerCharacters = await data.json()
-
 
   return (
     <>
@@ -20,7 +16,7 @@ let playerCharacters = await data.json()
         justify="center"
         style={{ minHeight: "100vh" }}
       >
-        { if }
+        <StartMenu />
       </Flex>
   </>
   );

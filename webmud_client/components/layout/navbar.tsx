@@ -5,7 +5,7 @@ import Link from "next/link";
 import useScroll from "@/lib/hooks/use-scroll";
 import { useSession } from 'next-auth/react';
 import { SignInButton } from "@/components/shared/signin_button";
-import { UserAvatar } from "@/components/home/user_avatar";
+import { UserAvatar } from "@/components/home/UserAvatar";
 import { Flex } from "@radix-ui/themes";
 
 export default function NavBar() {
