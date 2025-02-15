@@ -2,10 +2,16 @@ import React from 'react';
 import { auth } from "@/auth";
 import { Card, Flex, Text, Box, Avatar } from "@radix-ui/themes";
 
-export const PlayerCharacterCard = ({ playerCharacter } ) => {
+interface PlayerCharacter {
+    name: string;
+    speciesName: string;
+    playerLevel: number;
+}
+
+export const PlayerCharacterCard = ({ playerCharacter }: { playerCharacter: PlayerCharacter } ) => {
     
     return (
-        <Box maxWidth="240px">
+        <Box minWidth="180px">
             <Card>
                 <Flex gap="3" align="center">
                     <Avatar
