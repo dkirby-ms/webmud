@@ -15,17 +15,17 @@ use('game-service');
 // character skills are the base abilities of a character
 const characterSkills = [
     {
-        "skill_id": "skill-001",
+        "_id": "skill-001",
         "name": "Fighting",
         "description": "The ability to fight with weapons and fists.",
     },
     {
-        "skill_id": "skill-002",
+        "_id": "skill-002",
         "name": "Stealth",
         "description": "The ability to move unseen and unheard.",
     },
     {
-        "skill_id": "skill-003",
+        "_id": "skill-003",
         "name": "Dodging",
         "description": "The ability to avoid attacks and traps.",
     }
@@ -33,7 +33,7 @@ const characterSkills = [
 
 characterSkills.forEach(skill => {
     db.getCollection('characterSkills').updateOne(
-        { skill_id: skill.skill_id },
+        { _id: skill._id },
         { $set: skill },
         { upsert: true }
     );
@@ -42,7 +42,7 @@ characterSkills.forEach(skill => {
 // character races are the base "species" of a character
 const characterSpecies = [
     {
-        "race_id": "race-001",
+        "_id": "species-001",
         "name": "Human",
         "description": "Versatile and ambitious.",
         "default_attributes": {
@@ -59,7 +59,7 @@ const characterSpecies = [
         "base_speed": 1.0
     },
     {
-        "race_id": "race-002",
+        "_id": "species-002",
         "name": "Tiefling",
         "description": "Part fiend, part human with a knack for minor magicks.",
         "default_attributes": {
@@ -76,7 +76,7 @@ const characterSpecies = [
         "base_speed": 1.1
     },
     {
-        "race_id": "race-003",
+        "_id": "species-003",
         "name": "Githyanki",
         "description": "Lithe and lean with innate psionic abilities.",
         "default_attributes": {
@@ -96,7 +96,7 @@ const characterSpecies = [
 
 characterSpecies.forEach(race => {
     db.getCollection('characterSpecies').updateOne(
-        { race_id: race.race_id },
+        { _id: race._id },
         { $set: race },
         { upsert: true }
     );
@@ -104,10 +104,9 @@ characterSpecies.forEach(race => {
 
 const playerCharactersData = [
     {
-        "playerCharacterId": "pc-001",
         "userId": "7ced8fcb-85c6-47b4-ad6b-715e9fddbfa9",
         "name": "Saitcho",
-        "race": "race-001",
+        "species": "species-001",
         "attributes": {
             "strength": 12,
             "dexterity": 14,
@@ -118,10 +117,9 @@ const playerCharactersData = [
         }
     },
     {
-        "playerCharacterId": "pc-002",
         "userId": "7ced8fcb-85c6-47b4-ad6b-715e9fddbfa9",
         "name": "Gren",
-        "race": "race-003",
+        "species": "species-003",
         "attributes": {
             "strength": 12,
             "dexterity": 14,
@@ -132,10 +130,9 @@ const playerCharactersData = [
         }
     },
     {
-        "playerCharacterId": "pc-003",
         "userId": "7xxxxxxxxxxxxxxxxxxxxx",
         "name": "DummyCharNoSelect",
-        "race": "race-003",
+        "species": "species-003",
         "attributes": {
             "strength": 12,
             "dexterity": 14,
@@ -149,7 +146,7 @@ const playerCharactersData = [
 
 playerCharactersData.forEach(playerCharacter => {
     db.getCollection('playerCharacters').updateOne(
-        { playerCharacterId: playerCharacter.playerCharacterId },
+        { name: playerCharacter.name },
         { $set: playerCharacter },
         { upsert: true }
     );
@@ -157,19 +154,16 @@ playerCharactersData.forEach(playerCharacter => {
 
 const channelsData = [
     {
-        "channel_id": "world-001",
         "name": "World",
         "description": "The main world channel for all players.",
         "is_default": true
     },
     {
-        "channel_id": "ooc-001",
         "name": "Out of Character",
         "description": "A channel for out of character discussions.",
         "is_default": false
     },
     {
-        "channel_id": "imm-001",
         "name": "Immortals",
         "description": "A channel for immortal discussions.",
         "is_default": false
@@ -178,7 +172,7 @@ const channelsData = [
 
 channelsData.forEach(channel => {
     db.getCollection('channels').updateOne(
-        { channel_id: channel.channel_id },
+        { name: channel.name },
         { $set: channel },
         { upsert: true }
     );
@@ -187,7 +181,7 @@ channelsData.forEach(channel => {
 const roomsData = [
     {
         "worldId": "67acd8f200a5cddd297a2fcd",
-        "room_id": "room-002",
+        "_id": "room-002",
         "name": "Hallway",
         "description": "A long, narrow corridor with flickering lights, lined with portraits of past inhabitants.",
         "properties": {
@@ -218,7 +212,7 @@ const roomsData = [
     },
     {
         "worldId": "67acd8f200a5cddd297a2fcd",
-        "room_id": "room-003",
+        "_id": "room-003",
         "name": "Mysterious Study",
         "description": "A room filled with ancient texts and artifacts, where every shadow hints at hidden secrets.",
         "properties": {
@@ -241,7 +235,7 @@ const roomsData = [
     },
     {
         "worldId": "67acd8f200a5cddd297a2fcd",
-        "room_id": "room-001",
+        "_id": "room-001",
         "name": "Dank Office",
         "description": "A dusty, dimly-lit room filled with old books and mysterious artifacts. There is a window with a view to a small courtyard.",
         "properties": {
@@ -266,7 +260,7 @@ const roomsData = [
 
 roomsData.forEach(room => {
     db.getCollection('rooms').updateOne(
-        { room_id: room.room_id },
+        { _id: room._id },
         { $set: room },
         { upsert: true }
     );
