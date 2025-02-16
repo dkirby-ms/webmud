@@ -297,10 +297,27 @@ entitiesData.forEach(entity => {
 
 const worldsData = [
     {
-        "name": "Ribcage",
-        "description": "A city in the void between the planes.",
-        "url": "http://localhost:28999"
-    }
+        "name": "webMUD Test server",
+        "description": "Official development server for webMUD.",
+        "url": "http://localhost:28999",
+        "properties": {
+            "max_players": 10,
+            "is_public": false,
+            "is_active": true,
+            "is_development": true
+        }
+    },
+    {
+        "name": "webMUD prod",
+        "description": "Planned production server for webMUD (not active)",
+        "url": "http://webmud.com:28999",
+        "properties": {
+            "max_players": 10000,
+            "is_public": true,
+            "is_active": false,
+            "is_development": false
+        }
+    },
 ]
 
 worldsData.forEach(world => {
