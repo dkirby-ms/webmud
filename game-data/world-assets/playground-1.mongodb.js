@@ -45,6 +45,7 @@ const characterSpecies = [
         "_id": "species-001",
         "name": "Human",
         "description": "Versatile and ambitious.",
+        "imageUrl": "human_low.jpg",
         "default_attributes": {
             "base_stats": {
                 "strength": 12,
@@ -61,6 +62,7 @@ const characterSpecies = [
     {
         "_id": "species-002",
         "name": "Tiefling",
+        "imageUrl": "human_low.jpg",
         "description": "Part fiend, part human with a knack for minor magicks.",
         "default_attributes": {
             "base_stats": {
@@ -78,6 +80,7 @@ const characterSpecies = [
     {
         "_id": "species-003",
         "name": "Githyanki",
+        "imageUrl": "human_low.jpg",
         "description": "Lithe and lean with innate psionic abilities.",
         "default_attributes": {
             "base_stats": {

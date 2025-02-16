@@ -2,7 +2,7 @@ import NextAuth from "next-auth"
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
 import AzureADB2C from "next-auth/providers/azure-ad-b2c"
 import type { NextAuthConfig, DefaultSession } from "next-auth"
-import client from "./lib/db"
+import client from "./lib/db.ts.asdfasdf"
 
 const BUFFER_TIME = 5 * 60;
 

@@ -1,21 +1,27 @@
-
-import React from 'react';
-import { auth } from "@/auth";
-import { Flex, Box, Button } from "@radix-ui/themes";
+"use client";
+import { useSession } from "next-auth/react";
+import { useState } from "react";
+import { Flex, Button } from "@radix-ui/themes";
 import { PlayerCharacterList } from "@/components/home/PlayerCharacterList";
+import { CreateCharacterPanel } from "@/components/home/CreateCharacterPanel";
 
-export async function StartMenu() {
+export function StartMenu() {
 
-    const session = await auth() as any;
-    
-    const host = process.env.HOST_URL || "";
+    const { data: session } = useSession();
+    const [showCreate, setShowCreate] = useState(false);
+
     if (!session) return <div>Not authenticated</div>
-    let data = await fetch(`${host}/api/db/playerCharacters?userId=${session.userId}`);
-    let playerCharacters = await data.json()
-    
+
     return (
         <Flex direction="column" gap="3" align="center">
-            <PlayerCharacterList/> 
+            {!showCreate && (
+
+                <PlayerCharacterList />
+            )}
+            {showCreate && <CreateCharacterPanel />}
+            <Button onClick={() => setShowCreate((prev) => !prev)}>
+                {showCreate ? "Back to character list" : "Create new character"}
+            </Button>
         </Flex>
     )
-  }
+}

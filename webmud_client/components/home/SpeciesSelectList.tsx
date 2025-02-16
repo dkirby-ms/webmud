@@ -1,15 +1,15 @@
 import React from 'react';
 import useSWR from 'swr';
 import { Flex } from "@radix-ui/themes";
-import { PlayerCharacterCard } from "@/components/home/PlayerCharacterCard";
+import { CharacterSpeciesCard } from "@/components/home/CharacterSpeciesCard";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
  
-export function PlayerCharacterList() {
+export function SpeciesSelectList() {
 
     const host = process.env.HOST_URL || "";
-    const key = host + "/api/db/playerCharacters";
-    const { data, error, isLoading, isValidating } = useSWR(key, fetcher)
+    const key = host + "/api/db/characterSpecies";
+    const { data, error } = useSWR(key, fetcher)
     if (!data) return <div>Loading...</div>;
 
     // Handle error state
@@ -18,8 +18,8 @@ export function PlayerCharacterList() {
     return (
 
         <Flex gap="1" direction='column' align='center'>
-            {data.map((playerCharacter: any) => (
-                <PlayerCharacterCard key={playerCharacter._id} playerCharacter={playerCharacter} />
+            {data.map((characterSpecies: any) => (
+                <CharacterSpeciesCard key={characterSpecies._id} characterSpecies={characterSpecies} />
             ))}
         </Flex>
     )
