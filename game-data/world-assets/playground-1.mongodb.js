@@ -62,7 +62,7 @@ const characterSpecies = [
     {
         "_id": "species-002",
         "name": "Tiefling",
-        "imageUrl": "human_low.jpg",
+        "imageUrl": "tiefling_low.jpg",
         "description": "Part fiend, part human with a knack for minor magicks.",
         "default_attributes": {
             "base_stats": {
@@ -80,7 +80,7 @@ const characterSpecies = [
     {
         "_id": "species-003",
         "name": "Githyanki",
-        "imageUrl": "human_low.jpg",
+        "imageUrl": "githyanki_low.jpg",
         "description": "Lithe and lean with innate psionic abilities.",
         "default_attributes": {
             "base_stats": {
@@ -299,6 +299,7 @@ const worldsData = [
     {
         "name": "Ribcage",
         "description": "A city in the void between the planes.",
+        "url": "http://localhost:28999"
     }
 ]
 

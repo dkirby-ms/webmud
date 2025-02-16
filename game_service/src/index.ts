@@ -121,7 +121,7 @@ export default class GameService {
     }
 
     public async start(): Promise<GameServiceStartReturn> {
-        logger.info("Starting server instance" + WORLD_NAME);
+        logger.info("Starting server instance " + WORLD_NAME);
         logger.debug("Loading game world data");
         
         // load the world data from the database
