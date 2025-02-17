@@ -13,13 +13,13 @@ export function StartMenu() {
     if (!session) return <div>Not authenticated</div>
 
     return (
-        <Flex direction="column" gap="3" align="center">
+        <Flex direction="column" gap="3" align="start">
             {!showCreate && (
 
                 <PlayerCharacterList />
             )}
             {showCreate && <CreateCharacterPanel />}
-            <Button onClick={() => setShowCreate((prev) => !prev)}>
+            <Button color="indigo" onClick={() => setShowCreate((prev) => !prev)}>
                 {showCreate ? "Back to character list" : "Create new character"}
             </Button>
         </Flex>

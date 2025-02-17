@@ -20,18 +20,12 @@ export function SpeciesSelectList({ onSelect }: SpeciesSelectListProps) {
     if (error) return <div>Failed to load data</div>;
 
     return (
-
-        <Box>
-            <RadioCards.Root defaultValue="1" onValueChange={(value) => onSelect && onSelect(value)}>
-                {data.map((characterSpecies: any) => (
-                    <RadioCards.Item key={characterSpecies._id} value={characterSpecies._id}>
-                        <CharacterSpeciesCard key={characterSpecies._id} characterSpecies={characterSpecies} />
-                    </RadioCards.Item>
-                ))}
-            </RadioCards.Root>
-
-        </Box>
-
-
+        <RadioCards.Root defaultValue="1" onValueChange={(value) => onSelect && onSelect(value)}>
+            {data.map((characterSpecies: any) => (
+                <RadioCards.Item key={characterSpecies._id} value={characterSpecies._id}>
+                    <CharacterSpeciesCard key={characterSpecies._id} characterSpecies={characterSpecies} />
+                </RadioCards.Item>
+            ))}
+        </RadioCards.Root>
     )
 }
