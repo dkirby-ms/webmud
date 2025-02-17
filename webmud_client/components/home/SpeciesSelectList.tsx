@@ -4,8 +4,12 @@ import { Box, RadioCards, Flex } from "@radix-ui/themes";
 import { CharacterSpeciesCard } from "@/components/home/CharacterSpeciesCard";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
- 
-export function SpeciesSelectList() {
+
+interface SpeciesSelectListProps {
+    onSelect?: (value: string) => void;
+  }
+
+export function SpeciesSelectList({ onSelect }: SpeciesSelectListProps) {
 
     const host = process.env.HOST_URL || "";
     const key = host + "/api/db/characterSpecies";
@@ -18,13 +22,11 @@ export function SpeciesSelectList() {
     return (
 
         <Box>
-            <RadioCards.Root defaultValue="1">
+            <RadioCards.Root defaultValue="1" onValueChange={(value) => onSelect && onSelect(value)}>
                 {data.map((characterSpecies: any) => (
                     <RadioCards.Item key={characterSpecies._id} value={characterSpecies._id}>
-                    
-                <CharacterSpeciesCard key={characterSpecies._id} characterSpecies={characterSpecies} />
-
-                </RadioCards.Item>
+                        <CharacterSpeciesCard key={characterSpecies._id} characterSpecies={characterSpecies} />
+                    </RadioCards.Item>
                 ))}
             </RadioCards.Root>
 
