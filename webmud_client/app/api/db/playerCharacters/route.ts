@@ -18,14 +18,25 @@ export async function GET(request: NextRequest) {
     const characters = await db.collection("playerCharacters").aggregate([
       { $match: { userId: userId } },
       { $lookup: {
-          from: "characterSpecies",
-          localField: "species",
-          foreignField: "_id",
-          as: "speciesData"
+        from: "characterSpecies",
+        localField: "species",
+        foreignField: "_id",
+        as: "speciesData"
       }},
       { $unwind: "$speciesData" },
       { $addFields: { speciesName: "$speciesData.name" } },
-      { $project: { speciesData: 0 } }
+      { $project: { speciesData: 0 } },
+      { $lookup: {
+        from: "worlds",
+        let: { worldId: "$worldId" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$_id", { $toObjectId: "$$worldId" }] } } }
+        ],
+        as: "worldData"
+      }},
+      { $unwind: "$worldData" },
+      { $addFields: { worldName: "$worldData.name" } },
+      { $project: { worldData: 0 } }
     ]).toArray();
     return Response.json(characters);
   } catch (error: any) {

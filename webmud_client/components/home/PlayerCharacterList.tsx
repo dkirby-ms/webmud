@@ -46,26 +46,27 @@ export function PlayerCharacterList({ onSelect }: PlayerCharacterListProps) {
             </Box>
             
             {selectedCharId && (
-                <Box>
-                    <Card size="2">
-                        <Text as="p" size="3">
-                            <Strong>Name</Strong>&nbsp;{data.find((playerCharacter: any) => playerCharacter._id === selectedCharId)?.name}
+                <Flex>
+                    <Card size="4">
+                        <Flex gap="5" direction="column" align="center" a >
+                        <Text size="4">
+                            <Strong>{data.find((playerCharacter: any) => playerCharacter._id === selectedCharId)?.name}</Strong>
                         </Text>
-                        <Text as="p" size="3">
-                            <Strong>Species</Strong>&nbsp;{data.find((playerCharacter: any) => playerCharacter._id === selectedCharId)?.speciesName}
+                        <Flex direction="column" align="center" gap="2">
+                        <Text size="3">
+                            Level&nbsp;{data.find((playerCharacter: any) => playerCharacter._id === selectedCharId)?.playerLevel}&nbsp;{data.find((playerCharacter: any) => playerCharacter._id === selectedCharId)?.speciesName}
                         </Text>
-                        <Text as="p" size="3">
-                            <Strong>Level</Strong>&nbsp;{data.find((playerCharacter: any) => playerCharacter._id === selectedCharId)?.level}
-                        </Text>
-                        <Text as="p" size="3">
-                            <Strong>Location</Strong>&nbsp;Home
+                        <Text size="2" color="gray">
+                            {data.find((playerCharacter: any) => playerCharacter._id === selectedCharId)?.worldName}
                         </Text>
                         <Flex gap="2" justify="end">
-                            <Button color="green">Connect</Button>
-                            <Button>Delete</Button>
+                            <Button color="green" variant="solid">Connect</Button>
+                            <Button variant="soft">Delete</Button>
+                            </Flex>
+                        </Flex>
                         </Flex>
                     </Card>
-                </Box>
+                </Flex>
             )}
         </Flex>
     )

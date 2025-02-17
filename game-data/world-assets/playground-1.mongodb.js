@@ -108,6 +108,7 @@ characterSpecies.forEach(race => {
 const playerCharactersData = [
     {
         "userId": "7ced8fcb-85c6-47b4-ad6b-715e9fddbfa9",
+        "worldId": "67b1ff97bfd2ac9c9a8a546b",
         "name": "Saitcho",
         "species": "species-001",
         "playerLevel": 1,
@@ -122,6 +123,7 @@ const playerCharactersData = [
     },
     {
         "userId": "7ced8fcb-85c6-47b4-ad6b-715e9fddbfa9",
+        "worldId": "67b1ff97bfd2ac9c9a8a546b",
         "name": "Gren",
         "species": "species-003",
         "playerLevel": 1,
@@ -136,6 +138,7 @@ const playerCharactersData = [
     },
     {
         "userId": "7xxxxxxxxxxxxxxxxxxxxx",
+        "worldId": "67b1ff97bfd2ac9c9a8a546b",
         "name": "DummyCharNoSelect",
         "species": "species-003",
         "playerLevel": 1,

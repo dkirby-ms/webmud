@@ -14,6 +14,7 @@ export const PlayerCharacterCard = ({ playerCharacter }: { playerCharacter: Play
             <Card>
                 <Flex gap="3" align="center">
                     <Avatar
+                        color="amber"
                         size="3"
                         radius="full"
                         fallback={playerCharacter.name.charAt(0)}

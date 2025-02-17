@@ -7,7 +7,7 @@ export async function createCharacter(formData: FormData) {
   // Get the form fields
   const species = formData.get("species")?.toString();
   const name = formData.get("name")?.toString();
-  const world = formData.get("world")?.toString();
+  const worldId = formData.get("world")?.toString();
   const session = await auth();
   const userId = session?.userId;
   // Server-side validation
@@ -21,7 +21,7 @@ export async function createCharacter(formData: FormData) {
   if (!name?.match(/^[A-Za-z]+$/)) {
     throw new Error("Name must contain only letters and no spaces.");
   }
-  if (!species || !world) {
+  if (!species || !worldId) {
     throw new Error("Species and world are required.");
   }
 
@@ -33,7 +33,7 @@ export async function createCharacter(formData: FormData) {
     const newCharacter = await db.collection("playerCharacters").insertOne({
       species,
       name,
-      world,
+      worldId,
       userId,
       level: 1,
       createdAt: new Date(),
