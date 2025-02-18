@@ -11,11 +11,13 @@ interface GameServiceContextProps {
     disconnect: () => void;
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 const GameServiceContext = createContext<GameServiceContextProps>({
     socket: null,
     serverAddress: '',
     connectionStatus: 'disconnected',
-    connect: () => {},
+    connect: (server: string) => {},
     disconnect: () => {},
 });
 
@@ -27,6 +29,9 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
     
     // create a socket and connect to the specified game service uri 
     const connect = (server: string) => {
+        // indicate connection attempt
+        setConnectionStatus('connecting');
+
         const newSocket = io(server, {
             auth: {
                 token: session?.accessToken

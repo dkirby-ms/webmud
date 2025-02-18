@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         as: "worldData"
       }},
       { $unwind: "$worldData" },
-      { $addFields: { worldName: "$worldData.name" } },
+      { $addFields: { worldName: "$worldData.name", worldUrl: "$worldData.url" } },
       { $project: { worldData: 0 } }
     ]).toArray();
     return Response.json(characters);

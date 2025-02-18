@@ -3,15 +3,17 @@ import useSWR from 'swr';
 import { Flex, RadioCards, Box, Card, Button, Text, Strong } from "@radix-ui/themes";
 import { PlayerCharacterCard } from "@/components/home/PlayerCharacterCard";
 import { useState } from "react";
+import { useGameService } from "@/contexts/GameServiceContext"; // ensure this path is correct
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 interface PlayerCharacterListProps {
     onSelect?: (value: string) => void;
+    onConnect?: (url: string) => void; // added callback prop for connect action
 }
 
-export function PlayerCharacterList({ onSelect }: PlayerCharacterListProps) {
-    
+export function PlayerCharacterList({ onSelect, onConnect }: PlayerCharacterListProps) {
+    const { socket, serverAddress, connectionStatus, connect, disconnect } = useGameService();
     const host = process.env.HOST_URL || "";
     const key = host + "/api/db/playerCharacters";
     const { data, error } = useSWR(key, fetcher)
@@ -48,7 +50,7 @@ export function PlayerCharacterList({ onSelect }: PlayerCharacterListProps) {
             {selectedCharId && (
                 <Flex>
                     <Card size="4">
-                        <Flex gap="5" direction="column" align="center" a >
+                        <Flex gap="5" direction="column" align="center" >
                         <Text size="4">
                             <Strong>{data.find((playerCharacter: any) => playerCharacter._id === selectedCharId)?.name}</Strong>
                         </Text>
@@ -60,7 +62,7 @@ export function PlayerCharacterList({ onSelect }: PlayerCharacterListProps) {
                             {data.find((playerCharacter: any) => playerCharacter._id === selectedCharId)?.worldName}
                         </Text>
                         <Flex gap="2" justify="end">
-                            <Button color="green" variant="solid">Connect</Button>
+                            <Button color="green" variant="solid" onClick={() => onConnect && onConnect(data.find((playerCharacter: any) => playerCharacter._id === selectedCharId).worldUrl)}>Connect</Button>
                             <Button variant="soft">Delete</Button>
                             </Flex>
                         </Flex>

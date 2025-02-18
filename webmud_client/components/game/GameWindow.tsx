@@ -9,13 +9,14 @@ import { StatusPanel } from "@/components/game/StatusPanel";
 export function GameWindow() {
 
     const { data: session } = useSession();
-    const [showCreate, setShowCreate] = useState(false);
 
     if (!session) return <div>Not authenticated</div>
 
     return (
-        <Flex>
-            <Box>GAME WINDOW</Box>
-        </Flex>
+            <Flex align="center" gap="3" height="100%" width="100%" justify={"center"}>
+                <ActionPanel />
+                <ChatPanel />
+                <StatusPanel />
+            </Flex>
     )
 };
