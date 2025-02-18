@@ -14,15 +14,16 @@ export function UserAvatar() {
     signOut(); // signin using next-auth with configured AADB2C provider
   };
   return (
-    
+
     <Popover.Root>
       <Popover.Trigger>
+        <Box>
           <Avatar
             size="2"
-
-            fallback={initials || "-"} 
+            fallback={initials || "-"}
             radius="full"
           />
+        </Box>
       </Popover.Trigger>
       <Popover.Content width="360px">
         <Flex gap="2">

@@ -5,11 +5,8 @@ import { Flex, Button } from "@radix-ui/themes";
 import { PlayerCharacterList } from "@/components/home/PlayerCharacterList";
 import { CreateCharacterPanel } from "@/components/home/CreateCharacterPanel";
 
-interface StartMenuProps {
-    onConnect?: (url: string) => void;
-}
 
-export function StartMenu({ onConnect }: StartMenuProps) {
+export function StartMenu() {
 
     const { data: session } = useSession();
     const [showCreate, setShowCreate] = useState(false);
@@ -19,7 +16,7 @@ export function StartMenu({ onConnect }: StartMenuProps) {
     return (
         <Flex direction="column" gap="3" align="start">
             {!showCreate && (
-                <PlayerCharacterList onConnect={onConnect} />
+                <PlayerCharacterList />
             )}
             {showCreate && <CreateCharacterPanel />}
             <Button color="indigo" onClick={() => setShowCreate((prev) => !prev)}>

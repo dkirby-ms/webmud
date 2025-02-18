@@ -62,7 +62,18 @@ export function PlayerCharacterList({ onSelect, onConnect }: PlayerCharacterList
                             {data.find((playerCharacter: any) => playerCharacter._id === selectedCharId)?.worldName}
                         </Text>
                         <Flex gap="2" justify="end">
-                            <Button color="green" variant="solid" onClick={() => onConnect && onConnect(data.find((playerCharacter: any) => playerCharacter._id === selectedCharId).worldUrl)}>Connect</Button>
+                            <Button 
+                                color="green" 
+                                variant="solid" 
+                                onClick={() =>
+                                    connect(
+                                        data.find((playerCharacter: any) => playerCharacter._id === selectedCharId)
+                                          .worldUrl
+                                    )
+                                }
+                            >
+                                Connect
+                            </Button>
                             <Button variant="soft">Delete</Button>
                             </Flex>
                         </Flex>
