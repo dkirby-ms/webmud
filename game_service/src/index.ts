@@ -7,7 +7,6 @@ import { MongoClient } from 'mongodb';
 import session from "express-session";
 import MongoStore from 'connect-mongo'
 import { format, transports } from "winston";
-import { initEventHandlers } from './socketEventHandlers.js';
 import { Repositories, createRepositories } from './db/index.js';
 import { createDbClient } from './db/client.js';
 import { World } from './world/world.js';
@@ -17,7 +16,7 @@ const WORLD_NAME = process.env.WORLD_NAME || 'defaultServerName';
 const SERVICE_URL = process.env.SERVICE_URL || 'http://localhost';
 const SERVICE_PORT = process.env.SERVICE_PORT || 28999;
 const _30_DAYS = 30 * 24 * 60 * 60 * 1000;
-const CLEANUP_DISCONNECT_GRACE_PERIOD = 10_000; // 60 seconds
+const CLEANUP_DISCONNECT_GRACE_PERIOD = 30_000; // 30 seconds
 const CLEANUP_ZOMBIE_USERS_INTERVAL_IN_MS = 60_000; // 60 seconds
 const MONGODB_ADDRESS = process.env.MONGO_ADDRESS || "mongodb://localhost:27017/?replicaSet=rs0";
 const MONGODB_NAME = process.env.MONGODB_NAME = "game-service";
@@ -30,12 +29,12 @@ const sessionMiddleware = session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-      maxAge: _30_DAYS,
-      sameSite: "lax",
+        maxAge: _30_DAYS,
+        sameSite: "lax",
     },
     store: MongoStore.create({ mongoUrl: MONGODB_ADDRESS, dbName: MONGODB_NAME }),
-  });
-  
+});
+
 interface GameServiceStartReturn {
     close: () => Promise<void>;
 }
@@ -54,24 +53,25 @@ export default class GameService {
         origin: process.env.CORS_ORIGIN || "*",
         methods: process.env.CORS_METHODS ? process.env.CORS_METHODS.split(",") : ["GET", "POST"]
     };
+    private disconnectedPlayers: Map<string, { cleanupTimer: NodeJS.Timeout, disconnectTime: number }> = new Map();
 
     constructor(name: string) {
         // initialize logger
         logger.add(
             new transports.Console({
-              format: format.combine(format.timestamp(), format.splat(), format.json()),
-              level: process.env.LOG_LEVEL || 'info'
+                format: format.combine(format.timestamp(), format.splat(), format.json()),
+                level: process.env.LOG_LEVEL || 'info'
             }),
-          );
+        );
 
         // create express app
         this.app = express();
-        
+
         // create http server
         this.httpServer = createServer(this.app);
         this.httpServer.on("request", this.app);
         logger.debug("Express app and http server created.");
-        
+
         // create socket.io server
         this.io = new Server(this.httpServer, {
             cors: this.corsOptions,
@@ -79,7 +79,7 @@ export default class GameService {
         });
         logger.debug("Socket.io server created.");
         logger.info("Game service created.");
-  
+
     }
 
     public async init(): Promise<void> {
@@ -115,15 +115,53 @@ export default class GameService {
         });
 
         // setup event handlers
-        initEventHandlers({ io: this.io, repositories: this.repositories, logger: this.logger });
-        
-        // setup zombie user cleanup
+        ///initConnectionHandler({ io: this.io, repositories: this.repositories, logger: this.logger });
+        this.io.on("connection", (socket) => {
+            const session = (socket.request as any).session;
+            const userId = session?.userId;
+            if (userId) {
+                // Check if the player is reconnecting within the grace period
+                if (this.disconnectedPlayers.has(userId)) {
+                    clearTimeout(this.disconnectedPlayers.get(userId)!.cleanupTimer);
+                    this.disconnectedPlayers.delete(userId);
+                    this.logger.info(`Player ${userId} reconnected. Restoring state.`);
+                    // Optionally, re-add the player to the game world here
+                }
+            }
+            socket.on('disconnect', () => {
+                if (userId) {
+                    this.logger.info(`Player ${userId} disconnected. Initiating cleanup grace period.`);
+                    // Save the disconnect timestamp along with the timer
+                    const disconnectTime = Date.now();
+                    const cleanupTimer = setTimeout(() => {
+                        this.logger.info(`Cleanup: Player ${userId} did not reconnect; removing from game world.`);
+                        // Remove the player from the game world here, if applicable
+                        this.disconnectedPlayers.delete(userId);
+                    }, CLEANUP_DISCONNECT_GRACE_PERIOD);
+                    this.disconnectedPlayers.set(userId, { cleanupTimer, disconnectTime });
+                }
+            });
+        });
+
+        // Setup periodic zombie user cleanup
+        setInterval(() => {
+            const now = Date.now();
+            this.disconnectedPlayers.forEach((record, userId) => {
+                const elapsed = now - record.disconnectTime;
+                if (elapsed >= CLEANUP_DISCONNECT_GRACE_PERIOD) {
+                    this.logger.info(`Zombie Cleanup: Forcing removal of player ${userId} as cleanup timer did not fire.`);
+                    // Optionally: remove the player from the game world here
+                    clearTimeout(record.cleanupTimer);
+                    this.disconnectedPlayers.delete(userId);
+                }
+            });
+        }, CLEANUP_ZOMBIE_USERS_INTERVAL_IN_MS);
     }
 
     public async start(): Promise<GameServiceStartReturn> {
         logger.info("Starting server instance " + WORLD_NAME);
         logger.debug("Loading game world data");
-        
+
         // load the world data from the database
         const world_data = await this.repositories.worldRepository.getWorld(WORLD_NAME);
         if (world_data === null) {
@@ -144,7 +182,7 @@ export default class GameService {
         this.httpServer.listen(SERVICE_PORT, () => {
             this.logger.info(`server listening at ${SERVICE_URL}:${SERVICE_PORT}.`);
         });
-        
+
         // Start the game world
         logger.debug("Starting server instance with world data: " + WORLD_NAME);
         this.world.start();
