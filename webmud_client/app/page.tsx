@@ -7,13 +7,15 @@ import { GameServiceProvider, useGameService } from "@/contexts/GameServiceConte
 
 export default function Home() {
   const [inGame, setInGame] = useState(false);
-  const { connect } = useGameService();
 
+  const handleConnect = (url: string) => {
+    setInGame(true);
+  }
   return (
     <GameServiceProvider>
       <Flex align="center" direction="column" gap="4" justify="center" style={{ minHeight: "100vh" }}>
         {!inGame ? (
-          <StartMenu />
+          <StartMenu onConnect={handleConnect} />
         ) : (
           <GameWindow />
         )}

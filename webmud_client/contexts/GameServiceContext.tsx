@@ -1,5 +1,5 @@
 "use client"
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { useSession } from "next-auth/react";
 
@@ -9,9 +9,9 @@ interface GameServiceContextProps {
     connectionStatus: string;
     connect: (server: string) => void;
     disconnect: () => void;
+    registerHandler: (event: string, handler: (data: any) => void) => void;
+    unregisterHandler: (event: string, handler: (data: any) => void) => void;
 }
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const GameServiceContext = createContext<GameServiceContextProps>({
     socket: null,
@@ -19,6 +19,8 @@ const GameServiceContext = createContext<GameServiceContextProps>({
     connectionStatus: 'disconnected',
     connect: (server: string) => {},
     disconnect: () => {},
+    registerHandler: () => {},
+    unregisterHandler: () => {},
 });
 
 export const GameServiceProvider = ({ children }: { children: React.ReactNode }) => {
@@ -27,6 +29,27 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
     const [connectionStatus, setConnectionStatus] = useState<string>('disconnected');
     const { data: session, status } = useSession();
     
+    // Create a registry for event handlers.
+    const eventHandlers = useRef<Map<string, Set<(data: any) => void>>>(new Map());
+
+    const registerHandler = (event: string, handler: (data: any) => void) => {
+        if (!eventHandlers.current.has(event)) {
+            eventHandlers.current.set(event, new Set());
+        }
+        eventHandlers.current.get(event)?.add(handler);
+        // Automatically bind to socket if available.
+        if (socket) {
+            socket.on(event, handler);
+        }
+    };
+
+    const unregisterHandler = (event: string, handler: (data: any) => void) => {
+        eventHandlers.current.get(event)?.delete(handler);
+        if (socket) {
+            socket.off(event, handler);
+        }
+    };
+
     // create a socket and connect to the specified game service uri 
     const connect = (server: string) => {
         // indicate connection attempt
@@ -42,6 +65,10 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
             setSocket(newSocket); // store the socket in the context state
             setServerAddress(server);
             setConnectionStatus('connected');
+            // Bind all registered events to the new socket.
+            eventHandlers.current.forEach((handlers, event) => {
+                handlers.forEach(handler => newSocket.on(event, handler));
+            });
         });
         newSocket.on('connect_error', (err: any) => {
             console.log('Connection error connecting to server:', server, err);
@@ -78,7 +105,7 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
     }, [socket]);
 
     return (
-        <GameServiceContext.Provider value={{ socket, serverAddress, connectionStatus, connect, disconnect }}>
+        <GameServiceContext.Provider value={{ socket, serverAddress, connectionStatus, connect, disconnect, registerHandler, unregisterHandler }}>
             {children}
         </GameServiceContext.Provider>
     );

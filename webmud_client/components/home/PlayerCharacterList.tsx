@@ -7,21 +7,22 @@ import { useGameService } from "@/contexts/GameServiceContext"; // ensure this p
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-interface PlayerCharacterListProps {
-    onSelect?: (value: string) => void;
-    onConnect?: (url: string) => void; // added callback prop for connect action
-}
-
-export function PlayerCharacterList({ onSelect, onConnect }: PlayerCharacterListProps) {
+export function PlayerCharacterList({ onConnect }: { onConnect: (url: string) => void }) {
     const { socket, serverAddress, connectionStatus, connect, disconnect } = useGameService();
     const host = process.env.HOST_URL || "";
     const key = host + "/api/db/playerCharacters";
-    const { data, error } = useSWR(key, fetcher)
-    const [ selectedCharId, setSelectedCharId ] = useState<string | null>(null);
+    const { data, error } = useSWR(key, fetcher);
+    const [selectedCharId, setSelectedCharId] = useState<string | null>(null);
     
     const handleSelect = (value: string) => {
         setSelectedCharId(value);
-        if (onSelect) onSelect(value);
+    };
+
+    const handleConnect = (url: string) => {
+        connect(
+            data.find((playerCharacter: any) => playerCharacter._id === selectedCharId).worldUrl
+        );
+        onConnect(url);
     };
 
     React.useEffect(() => {
@@ -66,7 +67,7 @@ export function PlayerCharacterList({ onSelect, onConnect }: PlayerCharacterList
                                 color="green" 
                                 variant="solid" 
                                 onClick={() =>
-                                    connect(
+                                    handleConnect(
                                         data.find((playerCharacter: any) => playerCharacter._id === selectedCharId)
                                           .worldUrl
                                     )

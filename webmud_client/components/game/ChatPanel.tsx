@@ -9,7 +9,7 @@ export function ChatPanel() {
 
     const { data: session } = useSession();
     const [showCreate, setShowCreate] = useState(false);
-    const { socket, serverAddress, connectionStatus, connect, disconnect } = useGameService();
+    const { socket, serverAddress, connectionStatus, connect, disconnect, registerHandler, unregisterHandler } = useGameService();
     const [messages, setMessages] = useState<string[]>([]);
     const [input, setInput] = useState('');
     const messageEndRef = useRef<HTMLDivElement>(null);
@@ -32,6 +32,21 @@ export function ChatPanel() {
             socket.off('message', handleIncomingMessage);
         };
     }, [socket]);
+
+    // New effect to handle "message:ack" event
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleAck = (data: any) => {
+            console.log('Received message:ack with data:', data);
+            // ...handle ack data...
+        };
+
+        registerHandler("message:ack", handleAck);
+        return () => {
+            unregisterHandler("message:ack", handleAck);
+        }
+    }, [socket, registerHandler, unregisterHandler]);
 
     const handleSendMessage = () => {
         if (input.trim() && socket) {
