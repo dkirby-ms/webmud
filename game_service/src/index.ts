@@ -10,7 +10,7 @@ import { format, transports } from "winston";
 import { Repositories, createRepositories } from './db/index.js';
 import { createDbClient } from './db/client.js';
 import { World } from './world/world.js';
-
+import { MessageTypes } from './taxonomy.js';
 
 const WORLD_NAME = process.env.WORLD_NAME || 'defaultServerName';
 const SERVICE_URL = process.env.SERVICE_URL || 'http://localhost';
@@ -172,7 +172,7 @@ export default class GameService {
 
         // initialize the game world object
         try {
-            this.world = new World(world_data, this.repositories);
+            this.world = new World(world_data, this.repositories, this.io);
         } catch (e: any) {
             logger.error(`Failed to initialize game world: ${e.message}`);
             throw new Error(`Failed to initialize game world: ${e.message}`);
@@ -185,7 +185,11 @@ export default class GameService {
 
         // Start the game world
         logger.debug("Starting server instance with world data: " + WORLD_NAME);
-        this.world.start();
+        try {
+            this.world.start();
+        } catch (e: any) {
+            logger.error(`Failed to start game world: ${e.message}`);
+        }
         logger.debug(`Server instance started with world data: ${WORLD_NAME}`);
 
         // return a callback for graceful shutdown

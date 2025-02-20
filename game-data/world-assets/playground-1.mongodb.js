@@ -275,29 +275,6 @@ roomsData.forEach(room => {
     );
 });
 
-// entities represent the state and location of an instance of a mob in the game world
-const entitiesData = [
-    {
-        "world_id": "67a7f0748ffb2594d8436b55",
-        "room_id": "67a8127c506208690c7cccdf",
-        "mob_id": "xxxxxxxxxxxxxxyyyyyyyyy1234y",
-        "state": {
-            // status object needs refining
-            "health": 100,
-            "mana": 100,
-            "stamina": 100
-        }
-    }
-]
-
-entitiesData.forEach(entity => {
-    db.getCollection('entities').updateOne(
-        { mob_id: entity.mob_id },
-        { $set: entity },
-        { upsert: true }
-    );
-});
-
 const worldsData = [
     {
         "name": "webMUD Test server",
