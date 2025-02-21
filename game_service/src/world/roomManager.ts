@@ -1,4 +1,6 @@
 import { Redis } from 'ioredis';
+import { Document, WithId } from "mongodb";
+import { Repositories } from '../db/index.js';
 
 export interface Room {
     id: string;
@@ -9,12 +11,19 @@ export interface Room {
 
 export class RoomManager {
     private redis: Redis;
-    private roomsKey = 'rooms';
+    private roomsKey = 'room';
+    protected rooms: WithId<Document>[] = [];
+    protected repositories: Repositories = {} as Repositories;
 
-    constructor(redis: Redis) {
+    constructor(repositories: Repositories, redis: Redis) {
+        this.repositories = repositories;
         this.redis = redis;
     }
 
+    public async loadRoomsFromWorldId(worldId: string): Promise<void> {
+        this.rooms = await this.repositories.roomRepository.listRoomsForWorld(worldId);
+
+    }
     // Add a room to the manager.
     async addRoom(room: Room): Promise<void> {
         const existing = await this.redis.hget(this.roomsKey, room.id);

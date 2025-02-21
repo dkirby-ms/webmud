@@ -12,7 +12,7 @@ export class EntityRepository {
     }
 
     async listEntitiesForWorld(worldId: string): Promise<WithId<Document>[]> {
-        return await this.entities.find({ worldId }).toArray();
+        return await this.entities.find({ world_id: worldId }).toArray();
     }
 
     async createEntity(entity: {

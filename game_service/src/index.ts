@@ -114,8 +114,7 @@ export default class GameService {
             }
         });
 
-        // setup event handlers
-        ///initConnectionHandler({ io: this.io, repositories: this.repositories, logger: this.logger });
+        // setup connection handler
         this.io.on("connection", (socket) => {
             const session = (socket.request as any).session;
             const userId = session?.userId;
@@ -127,6 +126,8 @@ export default class GameService {
                     this.logger.info(`Player ${userId} reconnected. Restoring state.`);
                     // Optionally, re-add the player to the game world here
                 }
+                // add the player to the game world
+                this.world.addPlayer(userId, socket);
             }
             socket.on('disconnect', () => {
                 if (userId) {
@@ -136,6 +137,7 @@ export default class GameService {
                     const cleanupTimer = setTimeout(() => {
                         this.logger.info(`Cleanup: Player ${userId} did not reconnect; removing from game world.`);
                         // Remove the player from the game world here, if applicable
+                        this.world.removePlayer(userId);
                         this.disconnectedPlayers.delete(userId);
                     }, CLEANUP_DISCONNECT_GRACE_PERIOD);
                     this.disconnectedPlayers.set(userId, { cleanupTimer, disconnectTime });

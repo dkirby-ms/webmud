@@ -16,7 +16,7 @@ use('game-service');
 // entities represent the state and location of an instance of a mob in the game world
 const entitiesData = [
     {
-        "world_id": "67a7f0748ffb2594d8436b55",
+        "world_id": "67b1ff97bfd2ac9c9a8a546b",
         "room_id": "67a8127c506208690c7cccdf",
         "entity_pk": "12345656exampleObjectId",
         "entity_type": "mob",
@@ -50,23 +50,6 @@ const entitiesData = [
             "timestamp": new Date()
         },
     },
-    {
-        "world_id": "67a7f0748ffb2594d8436b55",
-        "room_id": "67a8127c506208690c7cccdf",
-        "entity_pk": "12345656exampleObjectId",
-        "entity_type": "item",
-        "state": {
-            "type": "weapon",
-            "weight": 1, // inherits from item type but can be modified by in game effects
-            "value": 1, // inherits from item type but can be modified by in game effects
-            "effects": [], // future use
-            "unique_attributes": [], // future use
-        },
-        "lastAction": {
-            "action": "idle",
-            "timestamp": new Date()
-        },
-    }
 ]
 
 entitiesData.forEach(entity => {

@@ -1,42 +1,46 @@
 import { Redis } from "ioredis";
-import { ObjectId } from "mongodb";
+import { ObjectId, WithId, Document } from "mongodb";
+import { Repositories } from '../db/index.js';
+import { Socket } from "socket.io";
 
 export class EntityManager {
     private redis: Redis;
-    private entities: ObjectId[] = [];
+    protected repositories: Repositories = {} as Repositories;
+    protected entities: WithId<Document>[]
+    protected worldId: string;
 
-    constructor(redis: Redis) {
+    constructor(worldId: string, repositories: Repositories, redis: Redis) {
+        this.worldId = worldId;
         this.redis = redis;
-        this.entities = [];    
+        this.repositories = repositories;
+        this.entities = [];
     }
 
-    // Set the location for an entity (player, mob aka NPC, or item)
-    public async setLocation(entityId: string, roomId: string): Promise<void> {
-        // using a Redis key pattern for clarity (e.g., location:entity:<id>)
-        await this.redis.hset(`location:entity:${entityId}`, "roomId", roomId);
-        // Optionally add to a set keyed by room (for fast lookups):
-        await this.redis.sadd(`room:${roomId}:entities`, entityId);
+    public async loadEntitiesFromWorldId(worldId: string): Promise<void> {
+        const entities = await this.repositories.entityRepository.listEntitiesForWorld(worldId);
+        this.entities = entities;
     }
 
-    // Get the location for an entity
-    public async getLocation(entityId: string): Promise<string | null> {
-        return await this.redis.hget(`location:entity:${entityId}`, "roomId");
+    public async createPlayerEntity(playerId: ObjectId, socket: Socket): Promise<void> {
+        // Create a new player entity and add it to the entities array
+        const player = await this.repositories.playerCharacterRepository.getCharacterByWorldId(playerId.toHexString(), this.worldId);
+        if (player)
+            this.entities.push(player);
+        else
+            throw new Error(`Player not found: ${playerId.toHexString()}`);
     }
 
-    // Remove an entity’s location (for cleanup)
-    public async removeLocation(entityId: string): Promise<void> {
-        // Remove from the room set first
-        const roomId = await this.getLocation(entityId);
-        if (roomId) {
-            await this.redis.srem(`room:${roomId}:entities`, entityId);
-        }
-        await this.redis.del(`location:entity:${entityId}`);
+    public async removePlayerEntity(playerId: ObjectId): Promise<void> {
+        const player = this.entities.find(e => e.player_id === playerId.toHexString());
+        if (!player)
+            throw new Error(`Player not found: ${playerId.toHexString()}`);
+        // socket.rooms.something... need to remove the player from all socket.io rooms???
+
+        // Remove the player entity from the entities array
+        this.entities = this.entities.filter(e => e.player_id !== playerId.toHexString());
+
     }
 
-    // Optionally, list all entities in a room
-    public async listEntitiesInRoom(roomId: string): Promise<string[]> {
-        return await this.redis.smembers(`room:${roomId}:entities`);
-    }
-
+    
     // Periodic flush/backup can be implemented here
 }

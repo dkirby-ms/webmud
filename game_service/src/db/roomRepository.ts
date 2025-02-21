@@ -14,7 +14,7 @@ export class RoomRepository {
 
   // List all rooms belonging to a given world.
   async listRoomsForWorld(worldId: string): Promise<WithId<Document>[]> {
-    return await this.rooms.find({ worldId }).toArray();
+    return await this.rooms.find({ world_id: worldId }).toArray();
   }
 
   // Create a new room document.

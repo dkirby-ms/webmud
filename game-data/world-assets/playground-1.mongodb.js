@@ -108,7 +108,7 @@ characterSpecies.forEach(race => {
 const playerCharactersData = [
     {
         "userId": "7ced8fcb-85c6-47b4-ad6b-715e9fddbfa9",
-        "worldId": "67b1ff97bfd2ac9c9a8a546b",
+        "world_id": "67b1ff97bfd2ac9c9a8a546b",
         "name": "Saitcho",
         "species": "species-001",
         "playerLevel": 1,
@@ -123,7 +123,7 @@ const playerCharactersData = [
     },
     {
         "userId": "7ced8fcb-85c6-47b4-ad6b-715e9fddbfa9",
-        "worldId": "67b1ff97bfd2ac9c9a8a546b",
+        "world_id": "67b1ff97bfd2ac9c9a8a546b",
         "name": "Gren",
         "species": "species-003",
         "playerLevel": 1,
@@ -138,7 +138,7 @@ const playerCharactersData = [
     },
     {
         "userId": "7xxxxxxxxxxxxxxxxxxxxx",
-        "worldId": "67b1ff97bfd2ac9c9a8a546b",
+        "world_id": "67b1ff97bfd2ac9c9a8a546b",
         "name": "DummyCharNoSelect",
         "species": "species-003",
         "playerLevel": 1,
@@ -189,7 +189,7 @@ channelsData.forEach(channel => {
 
 const roomsData = [
     {
-        "worldId": "67acd8f200a5cddd297a2fcd",
+        "world_id": "67b1ff97bfd2ac9c9a8a546b",
         "_id": "room-002",
         "name": "Hallway",
         "description": "A long, narrow corridor with flickering lights, lined with portraits of past inhabitants.",
@@ -220,7 +220,7 @@ const roomsData = [
         }
     },
     {
-        "worldId": "67acd8f200a5cddd297a2fcd",
+        "world_id": "67b1ff97bfd2ac9c9a8a546b",
         "_id": "room-003",
         "name": "Mysterious Study",
         "description": "A room filled with ancient texts and artifacts, where every shadow hints at hidden secrets.",
@@ -243,7 +243,7 @@ const roomsData = [
         }
     },
     {
-        "worldId": "67acd8f200a5cddd297a2fcd",
+        "world_id": "67b1ff97bfd2ac9c9a8a546b",
         "_id": "room-001",
         "name": "Dank Office",
         "description": "A dusty, dimly-lit room filled with old books and mysterious artifacts. There is a window with a view to a small courtyard.",
@@ -279,7 +279,7 @@ const worldsData = [
     {
         "name": "webMUD Test server",
         "description": "Official development server for webMUD.",
-        "url": "http://localhost:28999",
+        "url": "http://192.168.2.148:28999",
         "properties": {
             "max_players": 10,
             "is_public": false,

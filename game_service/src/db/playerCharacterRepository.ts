@@ -8,9 +8,9 @@ export class PlayerCharacterRepository {
 
   }
 
-  // Fetch a character by its player_id
-  async getCharacter(playerId: string): Promise<WithId<Document> | null> {
-    return await this.characters.findOne({ player_id: playerId });
+  // Fetch a character by its player_id and worldId
+  async getCharacterByWorldId(playerId: string, worldId: string): Promise<WithId<Document> | null> {
+    return await this.characters.findOne({ player_id: playerId, world_id: worldId }) as WithId<Document>;
   }
 
   // List all characters belonging to a given world.

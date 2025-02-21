@@ -3,6 +3,9 @@ import { ObjectId, WithId, Document } from "mongodb";
 import { Socket, Server } from "socket.io";
 import { SocketRooms } from "../taxonomy.js";
 import { GameLoopService } from "./gameLoopService.js";
+import { RoomManager } from "./roomManager.js";
+import { EntityManager } from "./entityManager.js";
+import { Redis } from "ioredis";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
@@ -15,8 +18,9 @@ export class World {
     id: string;
     repositories: Repositories;
     socketServer: Server;
-    rooms: WithId<Document>[] = [];
     players: { playerId: ObjectId; socket: Socket }[] = [];
+    roomManager: RoomManager;
+    entityManager: EntityManager;
 
 
     constructor(doc: WithId<Document>, repositories: Repositories, socketServer: Server) {
@@ -26,20 +30,33 @@ export class World {
         this.repositories = repositories;
         this.socketServer = socketServer;
 
-    }
-
-    private loadRooms(): Promise<WithId<Document>[]> {
-        return this.repositories.roomRepository.listRoomsForWorld(this.id);
+        const redis = new Redis(REDIS_URL);
+        this.entityManager = new EntityManager(this.id, repositories, redis);
+        this.roomManager = new RoomManager(repositories, redis);
+        
     }
 
     public addPlayer(player: ObjectId, socket: Socket): void {
-        this.players.push({ playerId: player, socket: socket });
+        // add a check to see if the player is reconnecting and if so replace the socket in the players array
+        const existingPlayer = this.players.find(p => p.playerId.toHexString() === player.toHexString());
+        if (existingPlayer) {
+            existingPlayer.socket = socket;
+            return;
+        } else { 
+            this.players.push({ playerId: player, socket: socket });
+        }
+        
         // join the global world channel, then place the player in the world and join the appropriate channels (socket.io rooms)
         socket.join(SocketRooms.world.CHANNEL_NAME);
+        this.entityManager.createPlayerEntity(player, socket);
     }
 
     public removePlayer(player: ObjectId): void {
         this.players = this.players.filter(p => p.playerId.toHexString() !== player.toHexString());
+        const playerEntity = this.players.find(p => p.playerId.toHexString() === player.toHexString());
+        if (playerEntity) {
+            this.entityManager.removePlayerEntity(player);
+        }
     }
 
     public async start(): Promise<void> {
@@ -47,27 +64,14 @@ export class World {
         const tickRate = 1000 / 20; // 20 ticks per second
 
         // Instantiate and start the dedicated game loop service
-        const gameLoopService = new GameLoopService(tickRate);
+        const gameLoopService = new GameLoopService(tickRate, this.id, this.entityManager, this.roomManager, this.socketServer);
+        try {
+            await gameLoopService.init();
+        } catch (err) {
+            console.error(`Error initializing game loop service: ${err}`);
+            return;
+        }
         gameLoopService.start();
     }
     
-    // Optionally, you may update this method to call updates from the entity manager,
-    // if your EntityManager is extended to support per-tick updates.
-    private updateEntities(): void {
-        // With the entities now managed by EntityManager, you might iterate over stored entity IDs
-        // and update relevant data. For example:
-        // const entityIds = this.entityManager.getAllEntityIds();
-        // entityIds.forEach(id => { ... perform per-tick logic ... });
-    }
-    
-    private processGameEvents(): void {
-        // Process queued events, trigger interactions, run NPC AI, etc.
-    }
-    
-    private broadcastWorldState(): void {
-        // Send updates to players via socket.io.
-        this.socketServer.to(SocketRooms.world.CHANNEL_NAME).emit("gameStateUpdate", {
-            // ... include a summary of the world state ...
-        });
-    }
 }
