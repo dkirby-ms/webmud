@@ -57,7 +57,7 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
         
         const newSocket = io(server, {
             auth: {
-                token: session?.accessToken,
+                token: (session as any)?.accessToken,
             },
         }); 
         newSocket.on('connect', () => {
