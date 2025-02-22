@@ -1,6 +1,6 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Express } from 'express';
 import { Server } from 'socket.io';
-import { createServer } from 'http';
+import { createServer } from 'node:http';
 import cors from 'cors';
 import { logger, validateJwt } from './util.js'
 import session from "express-session";
@@ -9,6 +9,7 @@ import { format, transports } from "winston";
 import { Repositories, createRepositories } from './db/index.js';
 import { createDbClient } from './db/client.js';
 import { World } from './world/world.js';
+import { createAdminRouter } from './admin.js';
 
 const WORLD_NAME = process.env.WORLD_NAME || 'defaultServerName';
 const SERVICE_URL = process.env.SERVICE_URL || 'http://localhost';
@@ -66,7 +67,7 @@ export default class GameService {
 
         // create http server
         this.httpServer = createServer(this.app);
-        this.httpServer.on("request", this.app);
+        //this.httpServer.on("request", this.app);
         logger.debug("Express app and http server created.");
 
         // create socket.io server
@@ -90,11 +91,13 @@ export default class GameService {
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
         this.app.use(sessionMiddleware);
-        this.io.engine.use(sessionMiddleware);
-        // Mount the admin API for socket debugging
+        
         logger.debug("Express app and socket.io server configured with middlewares to support sessions, cors, json, and urlencoded.");
 
-        // setup auth
+        // Setup admin router for debugging
+        this.app.use('/admin', createAdminRouter(this.io));
+
+        // setup auth and access token validator
         this.io.use(async (socket, next) => {
             const token = socket.handshake.auth.token;
             const session = (socket.request as any).session;
@@ -143,6 +146,19 @@ export default class GameService {
                 }
             });
         });
+
+        // //Mount the admin API for socket debugging
+        // this.app.get('/admin/sockets', (req: Request, res: Response) => {
+        //     // Getting all connected sockets from the default namespace ("/")
+        //     const sockets = Array.from(this.io.of("/").sockets.values()).map(socket => ({
+        //         id: socket.id,
+        //         // you may want to add additional details from the socket's handshake or session if available
+        //         session: (socket.request as any).session,
+        //         handshake: socket.handshake,
+        //     }));
+        //     res.json(sockets);
+        //     return;
+        // });
 
         // Setup periodic zombie user cleanup
         setInterval(() => {

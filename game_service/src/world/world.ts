@@ -29,7 +29,7 @@ export class World {
         redis.connect().catch(console.error); // initiate connection
 
         // Define the tick rate (in milliseconds)
-        const tickRate = 1000 / 20; // 20 ticks per second
+        const tickRate = 100000 / 20; // 20 ticks per second
 
         // Instantiate and start the dedicated game loop service
         this.loop = new GameLoopService(tickRate, this.id, this.socketServer, this.repositories);
