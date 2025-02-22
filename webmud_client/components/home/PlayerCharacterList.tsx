@@ -8,7 +8,7 @@ import { useGameService } from "@/contexts/GameServiceContext"; // ensure this p
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export function PlayerCharacterList({ onConnect }: { onConnect: (url: string) => void }) {
-    const { socket, serverAddress, connectionStatus, connect, disconnect } = useGameService();
+    const { connect } = useGameService();
     const host = process.env.HOST_URL || "";
     const key = host + "/api/db/playerCharacters";
     const { data, error } = useSWR(key, fetcher);
@@ -19,6 +19,7 @@ export function PlayerCharacterList({ onConnect }: { onConnect: (url: string) =>
     };
 
     const handleConnect = (url: string) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const selectedChar = data.find((playerCharacter: any) => playerCharacter._id === selectedCharId);
         connect(selectedChar.worldUrl, selectedChar._id);
         onConnect(url);

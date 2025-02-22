@@ -9,7 +9,7 @@ export const GET = auth(async (req) => {
       const db = client.db(process.env.MONGODB_NAME as string);
       const species = await db.collection("characterSpecies").find({}).toArray();
       return Response.json(species);
-    } catch (error) {
+    } catch {
       return Response.json({ error: "Failed to fetch species" }, { status: 500 });
     } finally {
       await client.close();
@@ -17,4 +17,4 @@ export const GET = auth(async (req) => {
   }
 
   return Response.json({ message: "Not authenticated" }, { status: 401 })
-}) as any
+})

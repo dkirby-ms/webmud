@@ -1,13 +1,12 @@
 "use client"
 import { Avatar } from "@radix-ui/themes"
 import { signOut, useSession } from "next-auth/react";
-import { Popover, Flex, TextArea, Text, Box, Checkbox, Button } from "@radix-ui/themes";
+import { Popover, Flex, Text, Box, Button } from "@radix-ui/themes";
 
 export function UserAvatar() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   if (!session) return null
   const username = session.user?.name || session.user?.email
-  const avatar = session.user?.image
   const initials = username?.split(" ").map((n) => n[0]).join("").toUpperCase()
   const userId = session.userId
   const handleLogout = () => {

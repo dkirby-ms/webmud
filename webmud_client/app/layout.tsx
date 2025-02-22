@@ -6,7 +6,6 @@ import { Theme } from "@radix-ui/themes";
 import { Suspense } from "react";
 import NavBar from "@/components/layout/navbar";
 import { SessionProvider } from "next-auth/react"
-import Footer from "@/components/layout/footer";
 import { auth } from "@/auth"
 
 const geistSans = Geist({

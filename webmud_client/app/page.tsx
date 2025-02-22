@@ -3,12 +3,12 @@ import React, { useState } from "react";
 import { Flex } from "@radix-ui/themes";
 import { StartMenu } from "@/components/home/StartMenu";
 import { GameWindow } from "@/components/game/GameWindow";
-import { GameServiceProvider, useGameService } from "@/contexts/GameServiceContext"; // ensure this path is correct
+import { GameServiceProvider } from "@/contexts/GameServiceContext"; // ensure this path is correct
 
 export default function Home() {
   const [inGame, setInGame] = useState(false);
 
-  const handleConnect = (url: string) => {
+  const handleConnect = () => {
     setInGame(true);
   }
   return (

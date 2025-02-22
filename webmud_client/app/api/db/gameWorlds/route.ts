@@ -11,4 +11,4 @@ export const GET = auth(async (req) => {
   }
 
   return Response.json({ message: "Not authenticated" }, { status: 401 })
-}) as any
+})

@@ -1,15 +1,15 @@
 "use client";
 import { useSession } from "next-auth/react";
 import { useState, useEffect, useRef } from "react";
-import { Flex, Box } from "@radix-ui/themes";
+import { Flex } from "@radix-ui/themes";
 import { useGameService } from "@/contexts/GameServiceContext.js";
-import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom';
+import { StickToBottom } from 'use-stick-to-bottom';
 
 export function ChatPanel() {
 
     const { data: session } = useSession();
     const { socket, globalChatMessages } = useGameService();
-    const [messages, setMessages] = useState<string[]>([]);
+
     const [input, setInput] = useState('');
     const messageEndRef = useRef<HTMLDivElement>(null);
 
@@ -21,8 +21,6 @@ export function ChatPanel() {
         if (input.trim() && socket) {
             // Emit the message to the server
             socket.emit('chat:send', input);
-            //setMessages([...messages, input]);
-            setMessages(prev => [...prev, input]);
             setInput('');
         }
     };

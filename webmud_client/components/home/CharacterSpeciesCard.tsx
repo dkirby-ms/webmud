@@ -1,5 +1,6 @@
 import React from 'react';
-import { Card, Flex, Text, Box, Inset, Strong } from "@radix-ui/themes";
+import { Card, Text, Box, Inset, Strong } from "@radix-ui/themes";
+import Image from "next/image"
 
 interface CharacterSpecies {
     name: string;
@@ -13,7 +14,7 @@ export const CharacterSpeciesCard = ({ characterSpecies }: { characterSpecies: C
             <Box maxWidth="200px">
                 <Card size="1">
                     <Inset clip="padding-box" side="top" pb="current">
-                        <img
+                        <Image
                             src={`/${characterSpecies.imageUrl}`}
                             alt="Species portrait"
                             style={{

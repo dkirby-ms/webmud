@@ -12,7 +12,7 @@ export function CreateCharacterPanel() {
   const [world, setWorld] = useState("");
   const [characterName, setCharacterName] = useState("");
   const [error, setError] = useState("");
-  const { data, status } = useSession();
+  const { status } = useSession();
 
   // Client-side validation on form submission
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {

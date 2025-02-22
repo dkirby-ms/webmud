@@ -1,6 +1,6 @@
 import React from 'react';
 import useSWR from 'swr';
-import { Box, RadioCards, Flex } from "@radix-ui/themes";
+import { RadioCards } from "@radix-ui/themes";
 import { CharacterSpeciesCard } from "@/components/home/CharacterSpeciesCard";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());

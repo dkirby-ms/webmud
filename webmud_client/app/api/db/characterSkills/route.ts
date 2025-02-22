@@ -9,7 +9,9 @@ export const GET = auth(async (req) => {
       const db = client.db(process.env.MONGODB_NAME as string);
       const species = await db.collection("characterSkills").find({}).toArray();
       return Response.json(species);
-    } catch (error: any) {
+    } 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    catch (error: any) {
       return Response.json({ error: error.message }, { status: 500 });
     } finally {
       await client.close();
@@ -17,4 +19,4 @@ export const GET = auth(async (req) => {
   }
 
   return Response.json({ message: "Not authenticated" }, { status: 401 })
-}) as any
+})
