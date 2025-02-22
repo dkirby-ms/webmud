@@ -10,6 +10,7 @@ import { Repositories, createRepositories } from './db/index.js';
 import { createDbClient } from './db/client.js';
 import { World } from './world/world.js';
 import { createAdminRouter } from './admin.js';
+import { registerSocketConnectionHandlers } from './socketHandlers.js';
 
 const WORLD_NAME = process.env.WORLD_NAME || 'defaultServerName';
 const SERVICE_URL = process.env.SERVICE_URL || 'http://localhost';
@@ -121,49 +122,30 @@ export default class GameService {
             const session = (socket.request as any).session;
             const userId = session?.userId;
 
-            // socket.data
             socket.data.userId = userId;
             socket.data.playerCharacterId = session.playerCharacterId;
             
             if (userId) {
-                // Check if the player is reconnecting within the grace period
                 if (this.disconnectedPlayers.has(userId)) {
                     clearTimeout(this.disconnectedPlayers.get(userId)!.cleanupTimer);
                     this.disconnectedPlayers.delete(userId);
                     this.logger.info(`Player ${userId} reconnected. Restoring state.`);
                     // Optionally, re-add the player to the game world here
                 }
-                // add the player to the game world
                 this.world.loop.reconnectPlayer(userId, socket);
             }
             
-            // setup connectPlayer eventHandler
-            socket.on('connectPlayer', async (playerCharacterId: string) => {
-                // check if the player is actually connecting with their own character
-                const playerCharacter = await this.repositories.playerCharacterRepository.getCharacterById(playerCharacterId);
-                if (playerCharacter?.userId !== userId) 
-                    throw new Error("Player is not authorized to connect with this character.");
-                
-                socket.data.timeConnected = Date.now();
-                socket.data.playerCharacterId = playerCharacterId;
-                this.logger.info(`Player ${userId} connected with character ${playerCharacterId}`);
-                this.world.loop.addPlayer(userId, playerCharacterId, socket);        
+            // Delegate socket event registration to the dedicated module
+            registerSocketConnectionHandlers(socket, {
+                io: this.io,
+                logger: this.logger,
+                repositories: this.repositories,
+                world: this.world,
+                disconnectedPlayers: this.disconnectedPlayers,
+                CLEANUP_DISCONNECT_GRACE_PERIOD: CLEANUP_DISCONNECT_GRACE_PERIOD,
             });
-
-            socket.on('disconnect', () => {
-                if (userId) {
-                    this.logger.info(`Player ${userId} disconnected. Initiating cleanup grace period.`);
-                    // Save the disconnect timestamp along with the timer
-                    const disconnectTime = Date.now();
-                    const cleanupTimer = setTimeout(() => {
-                        this.logger.info(`Cleanup: Player ${userId} did not reconnect; removing from game world.`);
-                        // Remove the player from the game world here, if applicable
-                        this.world.loop.removePlayer(userId);
-                        this.disconnectedPlayers.delete(userId);
-                    }, CLEANUP_DISCONNECT_GRACE_PERIOD);
-                    this.disconnectedPlayers.set(userId, { cleanupTimer, disconnectTime });
-                }
-            });
+            
+            // ...existing code for other event handlers...
         });
 
 

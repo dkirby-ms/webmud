@@ -1,5 +1,5 @@
 import { ajv } from "../util.js";
-import type {Server as SocketIOServer, Socket } from "socket.io";
+import type { Socket } from "socket.io";
 import { Repositories } from "../db/index.js";
 
 const validate = ajv.compile({

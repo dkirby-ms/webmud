@@ -24,21 +24,21 @@ addFormats.default(ajv);
 
 export { ajv };
 
-export function channelRoom(channelId: string) {
-  return `channel:${channelId}`;
-}
+// export function channelRoom(channelId: string) {
+//   return `channel:${channelId}`;
+// }
 
-export function userRoom(userId: string) {
-  return `user:${userId}`;
-}
+// export function userRoom(userId: string) {
+//   return `user:${userId}`;
+// }
 
-export function sessionRoom(sessionId: string) {
-  return `session:${sessionId}`;
-}
+// export function sessionRoom(sessionId: string) {
+//   return `session:${sessionId}`;
+// }
 
-export function userStateRoom(userId: string) {
-  return `user_state:${userId}`;
-}
+// export function userStateRoom(userId: string) {
+//   return `user_state:${userId}`;
+// }
 
 const { data } = await axios.get(
   process.env.AUTH_AZURE_AD_OPENID_CONFIG || "http://jwt.ms/"

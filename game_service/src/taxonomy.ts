@@ -1,21 +1,14 @@
-// "rooms" are socket.io mechanisms that allow for the creation of separate channels for sending messages to one or more clients. In webMUD 
-export const SocketRooms = {
-    world: {
-        CHANNEL_NAME: "world",
-        CHANNEL_DESCRIPTION: "Channel for sending non-chat global messages and alerts",
-    },
-    global_chat: {
-        CHANNEL_NAME: "global_chat",
-        CHANNEL_DESCRIPTION: "Channel for sending global chat messages to all users",
-    }
-}
+export interface ChatMessage {
+    content: string;
+    senderName: string;
+    channel: string;
+  }
 
 export const MessageTypes = {
     chat: {
-        SEND_MESSAGE: "chat:send_message",
-        MESSAGE_RECEIVED: "chat:message_received",
-        JOIN_ROOM: "chat:join_room",
-        LEAVE_ROOM: "chat:leave_room",
+        SEND_MESSAGE: "chat:send",
+        SENT_MESSAGE: "chat:sent",
+        MESSAGE_ACK: "chat:ack",
     },
     game: {
         PLAYER_JOIN: "game:player_join",

@@ -1,4 +1,4 @@
-import { ajv, channelRoom } from "../util.js";
+import { ajv } from "../util.js";
 
 const validate = ajv.compile({
   type: "object",
@@ -10,8 +10,8 @@ const validate = ajv.compile({
   additionalProperties: false,
 });
 
-export function typingMessage({ socket, db }) {
-  return async (payload) => {
+export function typingMessage({ socket, db }: { socket: any; db: any }) {
+  return async (payload: any): Promise<void> => {
     if (!validate(payload)) {
       return;
     }
@@ -25,10 +25,10 @@ export function typingMessage({ socket, db }) {
       return;
     }
 
-    socket.to(channelRoom(payload.channelId)).emit("message:typing", {
-      userId: socket.userId,
-      channelId: payload.channelId,
-      isTyping: payload.isTyping,
-    });
+    // socket.to(channelRoom(payload.channelId)).emit("message:typing", {
+    //   userId: socket.userId,
+    //   channelId: payload.channelId,
+    //   isTyping: payload.isTyping,
+    // });
   };
 }

@@ -9,8 +9,7 @@ interface GameServiceContextProps {
     connectionStatus: string;
     connect: (server: string, playerCharacterId: string) => void;
     disconnect: () => void;
-    registerHandler: (event: string, handler: (data: any) => void) => void;
-    unregisterHandler: (event: string, handler: (data: any) => void) => void;
+    globalChatMessages: string[];
 }
 
 const GameServiceContext = createContext<GameServiceContextProps>({
@@ -19,37 +18,16 @@ const GameServiceContext = createContext<GameServiceContextProps>({
     connectionStatus: 'disconnected',
     connect: (server: string, playerCharacterId: string) => {},
     disconnect: () => {},
-    registerHandler: () => {},
-    unregisterHandler: () => {},
+    globalChatMessages: [],
 });
 
 export const GameServiceProvider = ({ children }: { children: React.ReactNode }) => {
     const [socket, setSocket] = useState<Socket | null>(null);
     const [serverAddress, setServerAddress] = useState<string>('');
     const [connectionStatus, setConnectionStatus] = useState<string>('disconnected');
+    const [globalChatMessages, setGlobalChatMessages] = useState<string[]>([]);
     const { data: session, status } = useSession();
     
-    // Create a registry for event handlers.
-    const eventHandlers = useRef<Map<string, Set<(data: any) => void>>>(new Map());
-
-    const registerHandler = (event: string, handler: (data: any) => void) => {
-        if (!eventHandlers.current.has(event)) {
-            eventHandlers.current.set(event, new Set());
-        }
-        eventHandlers.current.get(event)?.add(handler);
-        // Automatically bind to socket if available.
-        if (socket) {
-            socket.on(event, handler);
-        }
-    };
-
-    const unregisterHandler = (event: string, handler: (data: any) => void) => {
-        eventHandlers.current.get(event)?.delete(handler);
-        if (socket) {
-            socket.off(event, handler);
-        }
-    };
-
     // create a socket and connect to the specified game service uri 
     const connect = (server: string, playerCharacterId: string) => {
         // indicate connection attempt
@@ -65,10 +43,7 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
             setSocket(newSocket); // store the socket in the context state
             setServerAddress(server);
             setConnectionStatus('connected');
-            // Bind all registered events to the new socket.
-            eventHandlers.current.forEach((handlers, event) => {
-                handlers.forEach(handler => newSocket.on(event, handler));
-            });
+
             newSocket.emit('connectPlayer', playerCharacterId);
         });
         newSocket.on('connect_error', (err: any) => {
@@ -82,6 +57,11 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
             setSocket(null);
             setServerAddress('');
             setConnectionStatus('disconnected');
+        });
+
+        newSocket.on("chat:sent", (message) => {
+            const formattedMessage = `${message.senderName}: ${message.content}`;
+            setGlobalChatMessages(prev => [...prev, formattedMessage]);
         });
     }
 
@@ -106,7 +86,7 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
     }, [socket]);
 
     return (
-        <GameServiceContext.Provider value={{ socket, serverAddress, connectionStatus, connect, disconnect, registerHandler, unregisterHandler }}>
+        <GameServiceContext.Provider value={{ socket, serverAddress, connectionStatus, connect, disconnect, globalChatMessages }}>
             {children}
         </GameServiceContext.Provider>
     );
