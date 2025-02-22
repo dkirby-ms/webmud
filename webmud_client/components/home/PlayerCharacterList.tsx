@@ -19,8 +19,8 @@ export function PlayerCharacterList({ onConnect }: { onConnect: (url: string) =>
     };
 
     const handleConnect = (url: string) => {
-        const selectedChar = data.find((playerCharacter: any) => playerCharacter._id === selectedCharId).worldUrl;
-        connect(selectedChar.worldUrl, selectedChar.playerCharacterId);
+        const selectedChar = data.find((playerCharacter: any) => playerCharacter._id === selectedCharId);
+        connect(selectedChar.worldUrl, selectedChar._id);
         onConnect(url);
     };
 

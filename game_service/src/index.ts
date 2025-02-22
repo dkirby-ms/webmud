@@ -91,6 +91,7 @@ export default class GameService {
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
         this.app.use(sessionMiddleware);
+        this.io.engine.use(sessionMiddleware);
         
         logger.debug("Express app and socket.io server configured with middlewares to support sessions, cors, json, and urlencoded.");
 
@@ -119,46 +120,52 @@ export default class GameService {
         this.io.on("connection", (socket) => {
             const session = (socket.request as any).session;
             const userId = session?.userId;
-            const playerCharacterId = session.playerCharacterId;
-            if (userId && playerCharacterId) {
+
+            // socket.data
+            socket.data.userId = userId;
+            socket.data.playerCharacterId = session.playerCharacterId;
+            
+            if (userId) {
                 // Check if the player is reconnecting within the grace period
-                if (this.disconnectedPlayers.has(playerCharacterId)) {
-                    clearTimeout(this.disconnectedPlayers.get(playerCharacterId)!.cleanupTimer);
-                    this.disconnectedPlayers.delete(playerCharacterId);
-                    this.logger.info(`Player ${userId} with character ${playerCharacterId} reconnected. Restoring state.`);
+                if (this.disconnectedPlayers.has(userId)) {
+                    clearTimeout(this.disconnectedPlayers.get(userId)!.cleanupTimer);
+                    this.disconnectedPlayers.delete(userId);
+                    this.logger.info(`Player ${userId} reconnected. Restoring state.`);
                     // Optionally, re-add the player to the game world here
                 }
                 // add the player to the game world
-                this.world.loop.addPlayer(userId, playerCharacterId, socket);
+                this.world.loop.reconnectPlayer(userId, socket);
             }
+            
+            // setup connectPlayer eventHandler
+            socket.on('connectPlayer', async (playerCharacterId: string) => {
+                // check if the player is actually connecting with their own character
+                const playerCharacter = await this.repositories.playerCharacterRepository.getCharacterById(playerCharacterId);
+                if (playerCharacter?.userId !== userId) 
+                    throw new Error("Player is not authorized to connect with this character.");
+                
+                socket.data.timeConnected = Date.now();
+                socket.data.playerCharacterId = playerCharacterId;
+                this.logger.info(`Player ${userId} connected with character ${playerCharacterId}`);
+                this.world.loop.addPlayer(userId, playerCharacterId, socket);        
+            });
+
             socket.on('disconnect', () => {
                 if (userId) {
-                    this.logger.info(`Player ${userId} with character ${playerCharacterId} disconnected. Initiating cleanup grace period.`);
+                    this.logger.info(`Player ${userId} disconnected. Initiating cleanup grace period.`);
                     // Save the disconnect timestamp along with the timer
                     const disconnectTime = Date.now();
                     const cleanupTimer = setTimeout(() => {
-                        this.logger.info(`Cleanup: Player ${userId} did not reconnect; removing ${playerCharacterId} from game world.`);
+                        this.logger.info(`Cleanup: Player ${userId} did not reconnect; removing from game world.`);
                         // Remove the player from the game world here, if applicable
-                        this.world.loop.removePlayer(playerCharacterId);
-                        this.disconnectedPlayers.delete(playerCharacterId);
+                        this.world.loop.removePlayer(userId);
+                        this.disconnectedPlayers.delete(userId);
                     }, CLEANUP_DISCONNECT_GRACE_PERIOD);
                     this.disconnectedPlayers.set(userId, { cleanupTimer, disconnectTime });
                 }
             });
         });
 
-        // //Mount the admin API for socket debugging
-        // this.app.get('/admin/sockets', (req: Request, res: Response) => {
-        //     // Getting all connected sockets from the default namespace ("/")
-        //     const sockets = Array.from(this.io.of("/").sockets.values()).map(socket => ({
-        //         id: socket.id,
-        //         // you may want to add additional details from the socket's handshake or session if available
-        //         session: (socket.request as any).session,
-        //         handshake: socket.handshake,
-        //     }));
-        //     res.json(sockets);
-        //     return;
-        // });
 
         // Setup periodic zombie user cleanup
         setInterval(() => {

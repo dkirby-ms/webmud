@@ -103,14 +103,13 @@ export const config = {
       return refreshAccessToken(token);
     },
     async session({ session, token }) {
-      // `session.user.address` is now a valid property, and will be type-checked
-      // in places like `useSession().data.user` or `auth().user`
       return {
         ...session,
         accessToken: token.accessToken,
         refreshToken: token.refreshToken,
         tokenExpiresAt: token.tokenExpiresAt,
         userId: token.id,
+        playerCharacterId: "", // empty until the user actually connects to a server
         user: {
           ...session.user,
         },

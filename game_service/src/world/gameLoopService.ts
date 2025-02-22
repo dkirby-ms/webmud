@@ -60,25 +60,33 @@ export class GameLoopService {
     }
 
     public addPlayer(userId: string, playerCharacterId: string, socket: Socket): void {
-        // add a check to see if the player is reconnecting and if so replace the socket in the players array
-        const existingPlayer = this.players.find(p => p.userId === userId);
-        if (existingPlayer) {
-            existingPlayer.socket = socket;
-        } else { 
-            this.players.push({ userId: userId, playerCharacterId: playerCharacterId, socket: socket });
-        }
+        // const existingPlayer = this.players.find(p => p.userId === userId);
+        // if (existingPlayer) {
+        //     existingPlayer.socket = socket;
+        // } else { 
+        //     this.players.push({ userId: userId, playerCharacterId: playerCharacterId, socket: socket });
+        // }
         
-        // create player entity in state/redis
-        //this.joinPlayerToRooms(player, socket);
-        this.entityManager.addPlayerEntity(playerCharacterId, socket);
+        // // create player entity in state/redis
+        // //this.joinPlayerToRooms(player, socket);
+        // this.entityManager.addPlayerEntity(playerCharacterId, socket);
     }
 
-    public removePlayer(playerCharacterId: string): void {
-        this.players = this.players.filter(p => p.playerCharacterId !== playerCharacterId);
-        const playerEntity = this.players.find(p => p.playerCharacterId === playerCharacterId);
-        if (playerEntity) {
-            this.entityManager.removePlayerEntity(playerCharacterId);
-        }
+    public reconnectPlayer(userId: string, socket: Socket): void {
+        // add a check to see if the player is reconnecting and if so replace the socket in the players array
+
+
+    }
+
+    public removePlayer(userId: string): void {
+
+        // update this to remove player by UserId and not playerCharacterId
+        
+        // this.players = this.players.filter(p => p.playerCharacterId !== playerCharacterId);
+        // const playerEntity = this.players.find(p => p.playerCharacterId === playerCharacterId);
+        // if (playerEntity) {
+        //     this.entityManager.removePlayerEntity(playerCharacterId);
+        // }
     }
 
     // private joinPlayerToRooms(playerId: ObjectId, socket: Socket): void {

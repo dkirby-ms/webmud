@@ -1,4 +1,4 @@
-import { Db, Collection, WithId, Document } from "mongodb";
+import { Db, Collection, WithId, Document, ObjectId } from "mongodb";
 
 export class PlayerCharacterRepository {
   private characters: Collection;
@@ -14,7 +14,7 @@ export class PlayerCharacterRepository {
   }
 
   async getCharacterById(playerId: string): Promise<WithId<Document> | null> {
-    return await this.characters.findOne({ player_id: playerId }) as WithId<Document>;
+    return await this.characters.findOne({ _id: new ObjectId(playerId) }) as WithId<Document>;
   }
 
   // List all characters belonging to a given world.
@@ -24,6 +24,7 @@ export class PlayerCharacterRepository {
 
   // Create a new character document.
   async createCharacter(character: {
+    user_id: string
     player_id: string;
     name: string;
     description: string;

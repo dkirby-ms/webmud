@@ -58,7 +58,6 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
         const newSocket = io(server, {
             auth: {
                 token: session?.accessToken,
-                playerCharacterId: playerCharacterId,
             },
         }); 
         newSocket.on('connect', () => {
@@ -70,6 +69,7 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
             eventHandlers.current.forEach((handlers, event) => {
                 handlers.forEach(handler => newSocket.on(event, handler));
             });
+            newSocket.emit('connectPlayer', playerCharacterId);
         });
         newSocket.on('connect_error', (err: any) => {
             console.log('Connection error connecting to server:', server, err);
