@@ -3,14 +3,12 @@ import { Server } from 'socket.io';
 import { createServer } from 'http';
 import cors from 'cors';
 import { logger, validateJwt } from './util.js'
-import { MongoClient } from 'mongodb';
 import session from "express-session";
 import MongoStore from 'connect-mongo'
 import { format, transports } from "winston";
 import { Repositories, createRepositories } from './db/index.js';
 import { createDbClient } from './db/client.js';
 import { World } from './world/world.js';
-import { MessageTypes } from './taxonomy.js';
 
 const WORLD_NAME = process.env.WORLD_NAME || 'defaultServerName';
 const SERVICE_URL = process.env.SERVICE_URL || 'http://localhost';
@@ -20,7 +18,6 @@ const CLEANUP_DISCONNECT_GRACE_PERIOD = 30_000; // 30 seconds
 const CLEANUP_ZOMBIE_USERS_INTERVAL_IN_MS = 60_000; // 60 seconds
 const MONGODB_ADDRESS = process.env.MONGO_ADDRESS || "mongodb://localhost:27017/?replicaSet=rs0";
 const MONGODB_NAME = process.env.MONGODB_NAME = "game-service";
-const MONGO_SOCKET_ADAPTER_COLLECTION = process.env.MONGO_SOCKET_ADAPTER_COLLECTION || "socket.io-adapter";
 const SESSION_SECRET = process.env.SESSION_SECRET || "lolsecret42134213d2dcczq1";
 
 const sessionMiddleware = session({
@@ -94,6 +91,7 @@ export default class GameService {
         this.app.use(express.urlencoded({ extended: true }));
         this.app.use(sessionMiddleware);
         this.io.engine.use(sessionMiddleware);
+        // Mount the admin API for socket debugging
         logger.debug("Express app and socket.io server configured with middlewares to support sessions, cors, json, and urlencoded.");
 
         // setup auth
@@ -118,27 +116,28 @@ export default class GameService {
         this.io.on("connection", (socket) => {
             const session = (socket.request as any).session;
             const userId = session?.userId;
-            if (userId) {
+            const playerCharacterId = session.playerCharacterId;
+            if (userId && playerCharacterId) {
                 // Check if the player is reconnecting within the grace period
-                if (this.disconnectedPlayers.has(userId)) {
-                    clearTimeout(this.disconnectedPlayers.get(userId)!.cleanupTimer);
-                    this.disconnectedPlayers.delete(userId);
-                    this.logger.info(`Player ${userId} reconnected. Restoring state.`);
+                if (this.disconnectedPlayers.has(playerCharacterId)) {
+                    clearTimeout(this.disconnectedPlayers.get(playerCharacterId)!.cleanupTimer);
+                    this.disconnectedPlayers.delete(playerCharacterId);
+                    this.logger.info(`Player ${userId} with character ${playerCharacterId} reconnected. Restoring state.`);
                     // Optionally, re-add the player to the game world here
                 }
                 // add the player to the game world
-                this.world.addPlayer(userId, socket);
+                this.world.loop.addPlayer(userId, playerCharacterId, socket);
             }
             socket.on('disconnect', () => {
                 if (userId) {
-                    this.logger.info(`Player ${userId} disconnected. Initiating cleanup grace period.`);
+                    this.logger.info(`Player ${userId} with character ${playerCharacterId} disconnected. Initiating cleanup grace period.`);
                     // Save the disconnect timestamp along with the timer
                     const disconnectTime = Date.now();
                     const cleanupTimer = setTimeout(() => {
-                        this.logger.info(`Cleanup: Player ${userId} did not reconnect; removing from game world.`);
+                        this.logger.info(`Cleanup: Player ${userId} did not reconnect; removing ${playerCharacterId} from game world.`);
                         // Remove the player from the game world here, if applicable
-                        this.world.removePlayer(userId);
-                        this.disconnectedPlayers.delete(userId);
+                        this.world.loop.removePlayer(playerCharacterId);
+                        this.disconnectedPlayers.delete(playerCharacterId);
                     }, CLEANUP_DISCONNECT_GRACE_PERIOD);
                     this.disconnectedPlayers.set(userId, { cleanupTimer, disconnectTime });
                 }

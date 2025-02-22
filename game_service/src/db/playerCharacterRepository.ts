@@ -13,6 +13,10 @@ export class PlayerCharacterRepository {
     return await this.characters.findOne({ player_id: playerId, world_id: worldId }) as WithId<Document>;
   }
 
+  async getCharacterById(playerId: string): Promise<WithId<Document> | null> {
+    return await this.characters.findOne({ player_id: playerId }) as WithId<Document>;
+  }
+
   // List all characters belonging to a given world.
   async listCharactersForUser(userId: string): Promise<WithId<Document>[]> {
     return await this.characters.find({ userId }).toArray();

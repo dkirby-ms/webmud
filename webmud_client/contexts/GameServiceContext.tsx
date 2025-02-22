@@ -7,7 +7,7 @@ interface GameServiceContextProps {
     socket: Socket | null;
     serverAddress: string;
     connectionStatus: string;
-    connect: (server: string) => void;
+    connect: (server: string, playerCharacterId: string) => void;
     disconnect: () => void;
     registerHandler: (event: string, handler: (data: any) => void) => void;
     unregisterHandler: (event: string, handler: (data: any) => void) => void;
@@ -17,7 +17,7 @@ const GameServiceContext = createContext<GameServiceContextProps>({
     socket: null,
     serverAddress: '',
     connectionStatus: 'disconnected',
-    connect: (server: string) => {},
+    connect: (server: string, playerCharacterId: string) => {},
     disconnect: () => {},
     registerHandler: () => {},
     unregisterHandler: () => {},
@@ -51,13 +51,14 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
     };
 
     // create a socket and connect to the specified game service uri 
-    const connect = (server: string) => {
+    const connect = (server: string, playerCharacterId: string) => {
         // indicate connection attempt
         setConnectionStatus('connecting');
-
+        
         const newSocket = io(server, {
             auth: {
-                token: session?.accessToken
+                token: session?.accessToken,
+                playerCharacterId: playerCharacterId,
             },
         }); 
         newSocket.on('connect', () => {
