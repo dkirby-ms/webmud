@@ -10,7 +10,6 @@ export const GET = auth(async (req) => {
       const species = await db.collection("characterSkills").find({}).toArray();
       return Response.json(species);
     } 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     catch (error: any) {
       return Response.json({ error: error.message }, { status: 500 });
     } finally {

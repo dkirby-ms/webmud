@@ -3,9 +3,6 @@ import { MongoClient } from "mongodb";
 import { auth } from "@/auth";
 
 export async function GET() {
-  //const searchParams = request.nextUrl.searchParams
-  //const userId = searchParams.get('userId')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const session = await auth() as any;
   const userId = session.userId;
   if (!session) return Response.json({ error: "Not authenticated" }, { status: 401 });

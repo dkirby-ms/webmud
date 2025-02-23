@@ -19,7 +19,6 @@ export function PlayerCharacterList({ onConnect }: { onConnect: (url: string) =>
     };
 
     const handleConnect = (url: string) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const selectedChar = data.find((playerCharacter: any) => playerCharacter._id === selectedCharId);
         connect(selectedChar.worldUrl, selectedChar._id);
         onConnect(url);
