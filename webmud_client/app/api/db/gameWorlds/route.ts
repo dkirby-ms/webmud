@@ -1,8 +1,9 @@
 import { auth } from "auth"
 import { MongoClient } from "mongodb";
-
-export const GET = auth(async (req) => {
-  if (req.auth) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function  GET(request: NextRequest) {
+  const authSession = await auth();
+  if (authSession) {
     const client = new MongoClient(process.env.MONGODB_ADDRESS as string);
     await client.connect();
     const db = client.db(process.env.MONGODB_NAME as string);
@@ -11,4 +12,4 @@ export const GET = auth(async (req) => {
   }
 
   return Response.json({ message: "Not authenticated" }, { status: 401 })
-})
+}

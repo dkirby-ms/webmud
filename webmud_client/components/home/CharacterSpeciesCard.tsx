@@ -17,11 +17,11 @@ export const CharacterSpeciesCard = ({ characterSpecies }: { characterSpecies: C
                         <Image
                             src={`/${characterSpecies.imageUrl}`}
                             alt="Species portrait"
+                            width={130}
+                            height={130}
                             style={{
                                 display: "block",
                                 objectFit: "cover",
-                                width: "100%",
-                                height: 100,
                                 backgroundColor: "var(--gray-5)",
                             }}
                         />

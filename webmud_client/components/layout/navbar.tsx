@@ -10,7 +10,7 @@ import { Flex } from "@radix-ui/themes";
 
 export default function NavBar() {
     const scrolled = useScroll(50);
-    const { data: status } = useSession();
+    const { status: status } = useSession();
     
     return (
         <>

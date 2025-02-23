@@ -1,7 +1,7 @@
 "use server";
-import { connectToDatabase } from "@/lib/db"; // adjust to your DB helper
+import { connectToDatabase } from "../lib/db"; // adjust to your DB helper
 import { auth } from "@/auth";  
-import { logger } from "@/lib/utils";
+import { logger } from "../lib/utils";
 
 export async function createCharacter(formData: FormData) {
   // Get the form fields

@@ -1,6 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import ms from "ms";
 import { createLogger, format, transports } from "winston";
 
 export const logger = createLogger({
@@ -16,11 +15,23 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// New helper to format duration in milliseconds into a more readable string
+function formatDuration(milliseconds: number): string {
+  const seconds = Math.floor(milliseconds / 1000);
+  if (seconds < 60) return `${seconds} seconds`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  if (minutes < 60) return `${minutes} minutes ${remainingSeconds} seconds`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return `${hours} hours ${remainingMinutes} minutes`;
+}
+
 export const timeAgo = (timestamp: Date, timeOnly?: boolean): string => {
   if (!timestamp) return "never";
-  return `${ms(Date.now() - new Date(timestamp).getTime())}${
-    timeOnly ? "" : " ago"
-  }`;
+  const diff = Date.now() - new Date(timestamp).getTime();
+  const duration = formatDuration(diff);
+  return timeOnly ? duration : `${duration} ago`;
 };
 
 export async function fetcher<JSON = any>(

@@ -17,7 +17,9 @@ export function StartMenu({ onConnect }: { onConnect: (url: string) => void }) {
             {!showCreate && (
                 <PlayerCharacterList onConnect={onConnect} />
             )}
-            {showCreate && <CreateCharacterPanel />}
+            {showCreate && (
+                <CreateCharacterPanel onCreated={() => setShowCreate(false)} />
+            )}
             <Button color="indigo" onClick={() => setShowCreate((prev) => !prev)}>
                 {showCreate ? "Back to character list" : "Create new character"}
             </Button>
