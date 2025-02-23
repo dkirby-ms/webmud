@@ -2,7 +2,7 @@
 import { useSession } from "next-auth/react";
 import { useState, useEffect, useRef } from "react";
 import { Flex } from "@radix-ui/themes";
-import { useGameService } from "@/contexts/GameServiceContext";
+import { useGameService } from "../../contexts/GameServiceContext.tsx";
 import { StickToBottom } from 'use-stick-to-bottom';
 
 export function ChatPanel() {

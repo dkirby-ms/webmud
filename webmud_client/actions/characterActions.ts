@@ -1,7 +1,7 @@
 "use server";
-import { connectToDatabase } from "../lib/db"; // adjust to your DB helper
-import { auth } from "@/auth";  
-import { logger } from "../lib/utils";
+import { connectToDatabase } from "../lib/db.ts"; // adjust to your DB helper
+import { auth } from "../auth.ts";  
+import { logger } from "../lib/utils.ts";
 
 export async function createCharacter(formData: FormData) {
   // Get the form fields

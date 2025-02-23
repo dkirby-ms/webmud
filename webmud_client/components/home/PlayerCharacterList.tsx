@@ -1,9 +1,9 @@
 import React from 'react';
 import useSWR from 'swr';
 import { Flex, RadioCards, Box, Card, Button, Text, Strong } from "@radix-ui/themes";
-import { PlayerCharacterCard } from "@/components/home/PlayerCharacterCard";
+import { PlayerCharacterCard } from "./PlayerCharacterCard.tsx";
 import { useState } from "react";
-import { useGameService } from "@/contexts/GameServiceContext"; // ensure this path is correct
+import { useGameService } from "../../contexts/GameServiceContext.tsx"; // ensure this path is correct
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 

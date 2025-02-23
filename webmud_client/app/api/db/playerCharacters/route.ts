@@ -1,6 +1,6 @@
 import { type NextRequest } from 'next/server';
 import { MongoClient } from "mongodb";
-import { auth } from "@/auth";
+import { auth } from "../../../../auth.ts"
 
 export async function GET() {
   const session = await auth() as any;

@@ -1,6 +1,6 @@
-import { auth } from "auth"
+import { auth } from "../../../../auth.ts"
 import { MongoClient } from "mongodb";
-import { NextResponse } from "next/server"
+import { NextResponse } from 'next/server'
  
 //export const dynamic = 'force-static' // cache the response
 //export const dynamic = 'force-dynamic' // don't cache the response

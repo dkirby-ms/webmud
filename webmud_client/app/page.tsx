@@ -1,9 +1,9 @@
 "use client";
 import React, { useState } from "react";
 import { Flex } from "@radix-ui/themes";
-import { StartMenu } from "@/components/home/StartMenu";
-import { GameWindow } from "@/components/game/GameWindow";
-import { GameServiceProvider } from "@/contexts/GameServiceContext"; // ensure this path is correct
+import { StartMenu } from "../components/home/StartMenu.tsx";
+import { GameWindow } from "../components/game/GameWindow.tsx";
+import { GameServiceProvider } from "../contexts/GameServiceContext.tsx"; // ensure this path is correct
 
 export default function Home() {
   const [inGame, setInGame] = useState(false);

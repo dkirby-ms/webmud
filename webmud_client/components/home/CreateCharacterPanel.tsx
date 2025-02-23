@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { Flex, Button, TextField } from "@radix-ui/themes";
-import { SpeciesSelectList } from "@/components/home/SpeciesSelectList";
-import { CharCreateWorldSelect } from "@/components/home/CharCreateWorldSelect";
-import { createCharacter } from "@/actions/characterActions";
+import { SpeciesSelectList } from "./SpeciesSelectList.tsx";
+import { CharCreateWorldSelect } from "./CharCreateWorldSelect.tsx";
+import { createCharacter } from "../../actions/characterActions.ts";
 import { useSession } from "next-auth/react";
 
 interface CreateCharacterPanelProps {

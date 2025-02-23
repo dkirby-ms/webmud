@@ -2,8 +2,8 @@
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { Flex, Button } from "@radix-ui/themes";
-import { PlayerCharacterList } from "@/components/home/PlayerCharacterList";
-import { CreateCharacterPanel } from "@/components/home/CreateCharacterPanel";
+import { PlayerCharacterList } from "./PlayerCharacterList.tsx";
+import { CreateCharacterPanel } from "./CreateCharacterPanel.tsx";
 
 export function StartMenu({ onConnect }: { onConnect: (url: string) => void }) {
 

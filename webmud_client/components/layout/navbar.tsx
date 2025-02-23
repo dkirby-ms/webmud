@@ -2,10 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import useScroll from "@/lib/hooks/use-scroll";
+import useScroll from "../../lib/hooks/use-scroll.ts";
 import { useSession } from 'next-auth/react';
-import { SignInButton } from "@/components/shared/SignInButton";
-import { UserAvatar } from "@/components/home/UserAvatar";
+import { SignInButton } from "../../components/shared/SignInButton.tsx";
+import { UserAvatar } from "../../components/home/UserAvatar.tsx";
 import { Flex } from "@radix-ui/themes";
 
 export default function NavBar() {

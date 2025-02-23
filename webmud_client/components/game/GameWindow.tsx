@@ -1,9 +1,9 @@
 "use client";
 import { useSession } from "next-auth/react";
 import { Flex, Box } from "@radix-ui/themes";
-import { ChatPanel } from "@/components/game/ChatPanel";
-import { ActionPanel } from "@/components/game/ActionPanel";
-import { StatusPanel } from "@/components/game/StatusPanel";
+import { ChatPanel } from "./ChatPanel.tsx";
+import { ActionPanel } from "./ActionPanel.tsx";
+import { StatusPanel } from "./StatusPanel.tsx";
 
 export function GameWindow() {
 

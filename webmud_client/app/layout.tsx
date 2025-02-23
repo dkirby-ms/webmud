@@ -4,9 +4,9 @@ import "./globals.css";
 import "@radix-ui/themes/styles.css";
 import { Theme } from "@radix-ui/themes";
 import { Suspense } from "react";
-import NavBar from "@/components/layout/navbar";
+import NavBar from "../components/layout/navbar.tsx";
 import { SessionProvider } from "next-auth/react"
-import { auth } from "@/auth"
+import { auth } from "../auth.ts"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

@@ -1,5 +1,6 @@
-import { auth } from "auth"
+import { auth } from "../../../../auth.ts"
 import { MongoClient } from "mongodb";
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function  GET(request: NextRequest) {
   const authSession = await auth();
