@@ -1,11 +1,11 @@
-import { type NextRequest } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server.js';
 import { MongoClient } from "mongodb";
 import { auth } from "../../../../auth.ts"
 
 export async function GET() {
   const session = await auth() as any;
   const userId = session.userId;
-  if (!session) return Response.json({ error: "Not authenticated" }, { status: 401 });
+  if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   
   
   const client = new MongoClient(process.env.MONGODB_ADDRESS as string);
@@ -36,9 +36,9 @@ export async function GET() {
       { $addFields: { worldName: "$worldData.name", worldUrl: "$worldData.url" } },
       { $project: { worldData: 0 } }
     ]).toArray();
-    return Response.json(characters);
+    return NextResponse.json(characters);
   } catch (error: any) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   } finally {
     await client.close();
   }
@@ -46,7 +46,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const session = await auth() as any;
-  if (!session) return Response.json({ error: "Not authenticated" }, { status: 401 });
+  if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   const userId = session.userId;
 
   const data = await request.json();
@@ -58,9 +58,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await db.collection("playerCharacters").insertOne(data);
-    return Response.json({ insertedId: result.insertedId });
+    return NextResponse.json({ insertedId: result.insertedId });
   } catch (error: any) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   } finally {
     await client.close();
   }

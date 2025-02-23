@@ -1,6 +1,6 @@
 import { auth } from "../../../../auth.ts"
 import { MongoClient } from "mongodb";
-import { NextResponse } from "next/server"
+import { NextResponse, NextRequest } from "next/server.js"
  
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(request: NextRequest) {

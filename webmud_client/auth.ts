@@ -1,22 +1,10 @@
 import NextAuth from "next-auth"
 import AzureADB2C from "next-auth/providers/azure-ad-b2c"
-import type { NextAuthConfig, DefaultSession } from "next-auth"
+import type { NextAuthConfig } from "next-auth"
 
 const BUFFER_TIME = 5 * 60;
 
 const azureAdB2cTokentUrl = `https://${process.env.AZURE_AD_B2C_TENANT_ID}.b2clogin.com/${process.env.AZURE_AD_B2C_TENANT_ID}.onmicrosoft.com/${process.env.AZURE_AD_B2C_PRIMARY_USER_FLOW}/oauth2/v2.0/token`;
-
-interface Session {
-  user: {
-    objectId: string;
-    /**
-     * By default, TypeScript merges new interface properties and overwrites existing ones.
-     * In this case, the default session user properties will be overwritten,
-     * with the new ones defined above. To keep the default session user properties,
-     * you need to add them back into the newly declared interface.
-     */
-  } & DefaultSession["user"]
-}
 
 async function refreshAccessToken(token: any) {
   try {
@@ -55,13 +43,10 @@ export const config = {
   },
   // adapter: MongoDBAdapter(client),
   providers: [
-    AzureADB2C(({
+    AzureADB2C({
       id: 'azure-ad-b2c',
       name: 'Azure AD B2C',
-      //tenantId: process.env.AZURE_AD_B2C_TENANT_ID as string,
       clientId: process.env.AZURE_AD_B2C_CLIENT_ID as string,
-      // clientSecret: process.env.AZURE_AD_B2C_CLIENT_SECRET as string,
-      //primaryUserFlow: process.env.AZURE_AD_B2C_PRIMARY_USER_FLOW,
       issuer: `https://${process.env.AZURE_AD_B2C_TENANT_ID}.b2clogin.com/${process.env.AZURE_AD_B2C_TENANT_GUID}/v2.0/`,
       wellKnown: `https://${process.env.AZURE_AD_B2C_TENANT_ID}.b2clogin.com/${process.env.AZURE_AD_B2C_TENANT_ID}.onmicrosoft.com/${process.env.AZURE_AD_B2C_PRIMARY_USER_FLOW}/v2.0/.well-known/openid-configuration`,
       authorization: {
@@ -76,17 +61,12 @@ export const config = {
         token_endpoint_auth_method: 'none',
       },
 
-    })),
+    }),
     
   ],
   basePath: "/auth",
   callbacks: {
-    async authorized({ request, auth }) {
-      const { pathname } = request.nextUrl
-      if (pathname === "/middleware-example") return !!auth
-      return true
-    },
-    async jwt({ token, trigger, session, account }) {
+    async jwt({ token, trigger, session, account }: { token: any, trigger?: string, session?: any, account?: any }) {
       if (trigger === "update") token.name = session.user.name;
     
       if (account?.access_token) {
@@ -102,14 +82,13 @@ export const config = {
     
       return refreshAccessToken(token);
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: any, token: any }) {
       return {
         ...session,
         accessToken: token.accessToken,
         refreshToken: token.refreshToken,
         tokenExpiresAt: token.tokenExpiresAt,
         userId: token.id,
-        playerCharacterId: "", // empty until the user actually connects to a server
         user: {
           ...session.user,
         },
