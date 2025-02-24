@@ -93,7 +93,7 @@ export default class GameService {
         this.app.use(express.urlencoded({ extended: true }));
         this.app.use(sessionMiddleware);
         this.io.engine.use(sessionMiddleware);
-        
+
         logger.debug("Express app and socket.io server configured with middlewares to support sessions, cors, json, and urlencoded.");
 
         // Setup admin router for debugging
@@ -124,27 +124,29 @@ export default class GameService {
 
             socket.data.userId = userId;
             socket.data.playerCharacterId = session.playerCharacterId;
-            
+
             if (userId) {
                 if (this.disconnectedPlayers.has(userId)) {
                     clearTimeout(this.disconnectedPlayers.get(userId)!.cleanupTimer);
                     this.disconnectedPlayers.delete(userId);
                     this.logger.info(`Player ${userId} reconnected. Restoring state.`);
                     // Optionally, re-add the player to the game world here
+                    //this.world.loop.reconnectPlayer(userId, socket.data.playerCharacterId, socket);
                 }
-                this.world.loop.reconnectPlayer(userId, socket);
+                //this.world.loop.addPlayer(userId, socket.data.playerCharacterId, socket);
+                // Delegate socket event registration to the dedicated module
+                registerSocketConnectionHandlers(socket, {
+                    io: this.io,
+                    logger: this.logger,
+                    repositories: this.repositories,
+                    world: this.world,
+                    disconnectedPlayers: this.disconnectedPlayers,
+                    CLEANUP_DISCONNECT_GRACE_PERIOD: CLEANUP_DISCONNECT_GRACE_PERIOD,
+                });
             }
-            
-            // Delegate socket event registration to the dedicated module
-            registerSocketConnectionHandlers(socket, {
-                io: this.io,
-                logger: this.logger,
-                repositories: this.repositories,
-                world: this.world,
-                disconnectedPlayers: this.disconnectedPlayers,
-                CLEANUP_DISCONNECT_GRACE_PERIOD: CLEANUP_DISCONNECT_GRACE_PERIOD,
-            });
-            
+
+
+
             // ...existing code for other event handlers...
         });
 
@@ -165,29 +167,25 @@ export default class GameService {
     }
 
     public async start(): Promise<GameServiceStartReturn> {
-        logger.info("Starting server instance " + WORLD_NAME);
-        logger.debug("Loading game world data");
+        logger.debug("Starting server instance " + WORLD_NAME);
+        logger.debug("Loading game world metadata");
 
         // load the world data from the database
         const world_data = await this.repositories.worldRepository.getWorld(WORLD_NAME);
         if (world_data === null) {
-            logger.error(`Failed to load world data for ${WORLD_NAME}`);
-            throw new Error(`Failed to load world data for ${WORLD_NAME}`);
+            logger.error(`Failed to load world metadata for ${WORLD_NAME}`);
+            throw new Error(`Failed to load world metadata for ${WORLD_NAME}`);
         }
-        logger.debug("Game world data loaded successfully.");
+        logger.debug("Game world metadata loaded successfully.");
 
         // initialize the game world object
         try {
             this.world = new World(world_data, this.repositories, this.io);
+            await this.world.init();
         } catch (e: any) {
             logger.error(`Failed to initialize game world: ${e.message}`);
             throw new Error(`Failed to initialize game world: ${e.message}`);
         }
-
-        // Start the http server
-        this.httpServer.listen(SERVICE_PORT, () => {
-            this.logger.info(`server listening at ${SERVICE_URL}:${SERVICE_PORT}.`);
-        });
 
         // Start the game world
         logger.debug("Starting server instance with world data: " + WORLD_NAME);
@@ -196,7 +194,13 @@ export default class GameService {
         } catch (e: any) {
             logger.error(`Failed to start game world: ${e.message}`);
         }
-        logger.debug(`Server instance started with world data: ${WORLD_NAME}`);
+        logger.info(`Server instance started with world data: ${WORLD_NAME}`);
+
+        // Start the http server
+        this.httpServer.listen(SERVICE_PORT, () => {
+            this.logger.info(`server listening at ${SERVICE_URL}:${SERVICE_PORT}.`);
+        });
+
 
         // return a callback for graceful shutdown
         return { close: this.close.bind(this) };

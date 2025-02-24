@@ -63,6 +63,10 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
             const formattedMessage = `${message.senderName}: ${message.content}`;
             setGlobalChatMessages(prev => [...prev, formattedMessage]);
         });
+
+        newSocket.on("game:state", (gameState) => {
+            console.log('GameService provider received game state:', gameState);
+        }   );
     }
 
     const disconnect = () => {

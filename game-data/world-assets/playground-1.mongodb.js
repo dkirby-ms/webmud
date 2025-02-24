@@ -119,6 +119,9 @@ const playerCharactersData = [
             "intelligence": 16,
             "wisdom": 10,
             "charisma": 14
+        },
+        "saved_state": {
+            "location": "room-002",
         }
     },
     {
@@ -134,6 +137,9 @@ const playerCharactersData = [
             "intelligence": 16,
             "wisdom": 10,
             "charisma": 14
+        },
+        "saved_state": {
+            "location": "room-002",
         }
     },
     {
@@ -149,6 +155,9 @@ const playerCharactersData = [
             "intelligence": 16,
             "wisdom": 10,
             "charisma": 14
+        },
+        "saved_state": {
+            "location": "room-002",
         }
     }
 ];
