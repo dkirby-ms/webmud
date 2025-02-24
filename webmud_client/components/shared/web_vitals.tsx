@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import CountingNumbers from "@/components/shared/counting_numbers";
+import CountingNumbers from "./counting_numbers";
 
 export default function WebVitals() {
   return (
