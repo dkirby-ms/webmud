@@ -10,7 +10,7 @@ import { NextResponse, NextRequest } from 'next/server.js'
 export async function GET(request: NextRequest) {
   const authSession = await auth();
   if (authSession) {
-    const client = new MongoClient(process.env.MONGODB_ADDRESS as string);
+    const client = new MongoClient(process.env.MONGODB_URI as string);
     try { 
       await client.connect();
       const db = client.db(process.env.MONGODB_NAME as string);

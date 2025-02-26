@@ -18,7 +18,7 @@ const SERVICE_PORT = process.env.SERVICE_PORT || 28999;
 const _30_DAYS = 30 * 24 * 60 * 60 * 1000;
 const CLEANUP_DISCONNECT_GRACE_PERIOD = 30_000; // 30 seconds
 const CLEANUP_ZOMBIE_USERS_INTERVAL_IN_MS = 60_000; // 60 seconds
-const MONGODB_ADDRESS = process.env.MONGO_ADDRESS || "mongodb://localhost:27017/?replicaSet=rs0";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/?replicaSet=rs0";
 const MONGODB_NAME = process.env.MONGODB_NAME = "game-service";
 const SESSION_SECRET = process.env.SESSION_SECRET || "lolsecret42134213d2dcczq1";
 
@@ -31,7 +31,7 @@ const sessionMiddleware = session({
         maxAge: _30_DAYS,
         sameSite: "lax",
     },
-    store: MongoStore.create({ mongoUrl: MONGODB_ADDRESS, dbName: MONGODB_NAME }),
+    store: MongoStore.create({ mongoUrl: MONGODB_URI, dbName: MONGODB_NAME }),
 });
 
 interface GameServiceStartReturn {
@@ -83,7 +83,8 @@ export default class GameService {
 
     public async init(): Promise<void> {
         // initialize database
-        const { client: mongoClient, db: db } = await createDbClient(MONGODB_ADDRESS);
+        logger.debug(`Initializing mongodb client connection to ${MONGODB_URI}.`);
+        const { client: mongoClient, db: db } = await createDbClient(MONGODB_URI);
         this.db = db;
         this.repositories = createRepositories(db);
 

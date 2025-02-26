@@ -1,5 +1,5 @@
 # Stage 1: Build the web client using Node.js
-FROM node:23-alpine
+FROM node:23
 
 WORKDIR /app
 
@@ -11,6 +11,6 @@ COPY . .
 
 RUN npm run build
 
-EXPOSE 3000
+EXPOSE 28999
 
 CMD ["npm", "start"]

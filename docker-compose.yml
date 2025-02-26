@@ -18,6 +18,10 @@ services:
       - mongo-data:/data/db
     restart:
       unless-stopped
+    networks:
+      default:
+        aliases:
+          - mongodb
 
   redis:
     image: redis:latest
@@ -27,8 +31,59 @@ services:
     volumes:
       - redis-data:/data
     restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - redis
 
+  # webmud_client:
+  #   image: saitcho/webmud_client:latest
+  #   container_name: webmud-client
+  #   ports:
+  #     - "3000:3000"
+  #   env_file:
+  #     - ./webmud_client/.env
+  #   environment:
+  #     - MONGODB_URI=mongodb://mongodb:27017/?directConnection=true&replicaSet=rs0
+  #     - REDIS_URL=redis://redis:6379
+  #   depends_on:
+  #     - mongodb
+  #     - redis
+  #   networks:
+  #     default:
   
+  # game_service:
+  #   image: saitcho/game_service:latest
+  #   container_name: game-service
+  #   ports:
+  #     - "28999:28999"
+  #   env_file:
+  #     - ./game_service/.env
+  #   environment:
+  #     - MONGODB_URI=mongodb://mongodb:27017/?directConnection=true&replicaSet=rs0
+  #     - REDIS_URL=redis://redis:6379
+  #   depends_on:
+  #     mongodb:
+  #       condition: service_healthy
+  #     redis: 
+  #       condition: service_started
+  #   networks:
+  #     - default
+  
+  # nginx:
+  #   image: nginx:latest
+  #   ports:
+  #     - 80:80
+  #     - 443:443
+  #   restart: always
+  #   volumes:
+  #     - ./nginx/conf/:/etc/nginx/conf.d/:ro
+  #     - ./certbot/www/:/var/www/certbot/:ro
+  # certbot:
+  #   image: certbot/certbot:latest
+  #   volumes:
+  #     - ./certbot/www/:/var/www/certbot/:rw
+  #     - ./certbot/conf/:/etc/letsencrypt/:rw
 
   # mqtt:
   #   image: eclipse-mosquitto:latest
@@ -42,43 +97,13 @@ services:
   #   restart: 
   #     unless-stopped
 
-  # auth-service:
-  #   build:
-  #     context: ./auth-service
-  #   container_name: webmud-auth-service
-  #   ports:
-  #     - "3005:3005"
-  #   environment:
-  #     - AZURE_B2C_TENANT_NAME=${AZURE_B2C_TENANT_NAME}
-  #     - AZURE_B2C_USER_FLOW=${AZURE_B2C_USER_FLOW}
-  #     - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
-  #     - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
-  #   depends_on:
-  #     - mongodb
-
-  # character-service:
-  #   build:
-  #     context: ./character-service
-  #   container_name: webmud-character-service
-  #   ports:
-  #     - "3001:3001"
-  #   depends_on:
-  #     - mongodb
-  #     - mqtt
-  
-  # game-service:
-  #   build:
-  #     context: ./game-service
-  #   container_name: webmud-game-service
-  #   ports:
-  #     - "28999:28999"
-  #   depends_on:
-  #     - mongodb
-  #     - mqtt
-
 volumes:
   mongo-data:
   config:
   data:
   log:
   redis-data:
+
+networks:
+  default:
+    driver: bridge

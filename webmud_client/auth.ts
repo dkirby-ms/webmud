@@ -1,6 +1,7 @@
 import NextAuth from "next-auth"
 import AzureADB2C from "next-auth/providers/azure-ad-b2c"
 import type { NextAuthConfig } from "next-auth"
+import { TreesIcon } from "lucide-react";
 
 const BUFFER_TIME = 5 * 60;
 
@@ -64,6 +65,7 @@ export const config = {
     }),
     
   ],
+  trustHost: true,
   basePath: "/auth",
   callbacks: {
     async jwt({ token, trigger, session, account }: { token: any, trigger?: string, session?: any, account?: any }) {
