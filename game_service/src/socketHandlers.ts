@@ -23,7 +23,7 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 	const io = deps.io;
     const messageDb = repositories.messageRepository;
 
-	socket.on('connectPlayer', async (playerCharacterId: string) => {
+	socket.on(MessageTypes.game.PLAYER_JOIN, async (playerCharacterId: string) => {
 		// ...existing code for connectPlayer...
 		const playerCharacter = await repositories.playerCharacterRepository.getCharacterById(playerCharacterId);
 		if (playerCharacter?.userId !== userId) {

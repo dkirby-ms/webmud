@@ -105,16 +105,21 @@ export default class GameService {
             const token = socket.handshake.auth.token;
             const session = (socket.request as any).session;
             if (!token) {
-                return next(new Error("Authentication error - access token not found"));
+                // Inform the client that no token was provided
+                const error = new Error("Authentication error - access token not found");
+                (error as any).code = "NO_TOKEN";
+                return next(error);
             }
             try {
                 const payload = await validateJwt(token);
                 session.userId = payload.sub;
-                //socket.userId = payload.sub;
-                session.userFriendlyName = payload.name
+                session.userFriendlyName = payload.name;
                 next();
             } catch (e) {
-                return next(new Error("Authentication error - invalid access token"));
+                // Instead of a generic error, add a custom error code
+                const error = new Error("Authentication error - token expired or invalid");
+                (error as any).code = "TOKEN_EXPIRED";
+                return next(error);
             }
         });
 

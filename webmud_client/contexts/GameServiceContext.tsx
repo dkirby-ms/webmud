@@ -26,6 +26,7 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
     const [serverAddress, setServerAddress] = useState<string>('');
     const [connectionStatus, setConnectionStatus] = useState<string>('disconnected');
     const [globalChatMessages, setGlobalChatMessages] = useState<string[]>([]);
+    const [gameState, setGameState] = useState<any>({});
     const { data: session, status } = useSession();
     
     // create a socket and connect to the specified game service uri 
@@ -44,7 +45,7 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
             setServerAddress(server);
             setConnectionStatus('connected');
 
-            newSocket.emit('connectPlayer', playerCharacterId);
+            newSocket.emit('game:player_join', playerCharacterId);
         });
         newSocket.on('connect_error', (err: any) => {
             console.log('Connection error connecting to server:', server, err);
@@ -64,9 +65,10 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
             setGlobalChatMessages(prev => [...prev, formattedMessage]);
         });
 
-        newSocket.on("game:state", (gameState) => {
-            console.log('GameService provider received game state:', gameState);
-        }   );
+        newSocket.on("game:state_update", (gameState) => {
+            //console.log('GameService provider received game state:', gameState);
+            setGameState(gameState);
+        });
     }
 
     const disconnect = () => {

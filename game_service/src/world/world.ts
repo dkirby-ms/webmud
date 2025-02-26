@@ -3,20 +3,11 @@ import { Socket, Server } from "socket.io";
 import { logger } from '../util.js'
 import { createClient, RedisClientType } from 'redis';
 import { WithId, Document } from 'mongodb';
+import { Entity, EntityState } from './entity.js';
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const enum RoomType {
     Room = 'room'
-}
-
-interface Entity {
-    id?: string;
-    dbRecord: Object;
-    pkid: string;
-    type: string;
-    lastUpdate: number;
-    location: string; // room id
-    //update?(): void;
 }
 
 interface Room {
@@ -123,15 +114,34 @@ export class World {
         //logger.debug(`Game loop tick at ${new Date().toISOString()}`);
 
         // For example:
-        // gatherInputs();
-        // processGameEvents();
+        this.gatherInputs();
+        this.updateWorldState();
         this.broadcastWorldState();
     }
 
-    private broadcastWorldState(): void {
-        // Broadcast the world state to all connected players
-        // For example:
+    private gatherInputs(): void {
+        // gather inputs from all connected players
+        // for each player, gather the input
+        for (const player of this.players) {
+            // gather the input from the player
+            
+        }
+    }
+
+    private updateWorldState(): void {
+        // update the world state
+        // for each room, update the state
 
     }
+
+    private broadcastWorldState(): void {
+        // broadcast the world state to all connected players
+        // for each player, send the updated state
+         {
+            // send the updated state to the player
+           // player.socket.emit('game:state_update', playerState);
+        }
+    }
+
 
 }
