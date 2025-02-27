@@ -1,4 +1,4 @@
-name: webmud_client Docker Image CI
+name: game_service Docker Image CI
 
 on:
   push:
@@ -15,11 +15,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build ./webmud_client/ --file ./webmud_client/Dockerfile --tag saitchocr.azurecr.io/webmud_client:$(date +%s)
+      run: docker build ./game_service/ --file ./game_service/Dockerfile --tag saitchocr.azurecr.io/game_service:$(date +%s)
 
     - name: Log in to Azure Container Registry
       run: az acr login --name saitchocr --username saitchocr --password ${{ secrets.REGISTRY_SECRET }}
 
     - name: Push the Docker image
-      run: docker push saitchocr.azurecr.io/webmud_client:$(date +%s)
+      run: docker push saitchocr.azurecr.io/game_service:$(date +%s)
 
