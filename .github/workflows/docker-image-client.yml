@@ -15,4 +15,4 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build ./webmud_client/ --file Dockerfile --tag saitchocr.azurecr.io/webmud_client:$(date +%s)
+      run: docker build ./webmud_client/ --file ./webmud_client/Dockerfile --tag saitchocr.azurecr.io/webmud_client:$(date +%s)

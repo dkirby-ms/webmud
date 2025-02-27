@@ -8,11 +8,11 @@ export function ActionPanel() {
 
     const { data: session } = useSession();
     const { gameState } = useGameService();
-    if (!session) return <div>Not authenticated</div>
-    
     useEffect(() => {
         // Subscribe to the game state
     }, [gameState]);
+
+    if (!session) return <div>Not authenticated</div>
 
     if (!gameState) return <div>Loading...</div>
 
