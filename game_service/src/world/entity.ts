@@ -3,14 +3,15 @@ export interface EntityState {
     roomDescription: string;
     health: number;
     maxHealth: number;
+    location: string;
 }
 
 export interface Entity {
     id?: string;
     dbRecord: Object;
     pkid: string;
+    userId?: string;
     type: string; // e.g., "player", "npc", etc.
     lastUpdate: number;
-    location: string; // room id
     state?: EntityState; // for players or NPCs that need additional state data
 }

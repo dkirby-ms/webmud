@@ -12,7 +12,7 @@ const enum RoomType {
 
 interface Room {
     id: string;
-    dbRecord: Object;
+    dbRecord: Document;
     type: RoomType;
     lastUpdate: number;
     //update?(): void;
@@ -55,7 +55,6 @@ export class World {
                     pkid: record.entity_pk,
                     type: record.entity_type,
                     lastUpdate: Date.now(),
-                    location: record.location,
                 };
                 this.entities.push(entity);
             }
@@ -96,16 +95,43 @@ export class World {
     public addPlayer(userId: string, playerCharacter: any, socket: Socket): void {
         // Add the player to the world
         this.players.push({ userId, playerCharacter, socket });
+
+        const playerEntity: Entity = {
+            dbRecord: playerCharacter,
+            pkid: playerCharacter._id,
+            type: "player",
+            lastUpdate: Date.now(),
+            state: playerCharacter.saved_state,
+            userId: userId,
+        };
+        this.entities.push(playerEntity);
+        this.movePlayer(playerEntity.pkid, playerCharacter.saved_state.location);
     }
 
-
     public removePlayer(userId: string): void {
-        // Remove the player from the world
-        const player = this.players.find(p => p.userId === userId);
-        if (!player) {
-            return;
-        }
+        // Remove the player from the socket connections.
         this.players = this.players.filter(p => p.userId !== userId);
+        // Also remove the corresponding player entity.
+        this.entities = this.entities.filter(entity => entity.pkid !== userId);
+    }
+
+    public movePlayer(playerCharacterId: string, location: string): void {
+        // lookup the location in the rooms array
+        const room = this.rooms.find(r => r.id === location);
+        if (!room) {
+            throw new Error(`Room not found for location ${location}`);
+        }
+        // Move the player to the specified location
+           
+        const entity = this.entities.find(e => e.pkid === playerCharacterId);
+        if (entity !== undefined) {
+            entity.state!.location = location;
+            entity.state!.room = room.dbRecord.name;
+            entity.state!.roomDescription = room.dbRecord.description;
+        } else {
+            throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
+        }
+        
     }
 
     private tick(): void {
@@ -131,17 +157,21 @@ export class World {
     private updateWorldState(): void {
         // update the world state
         // for each room, update the state
-
+        
     }
 
     private broadcastWorldState(): void {
         // broadcast the world state to all connected players
         // for each player, send the updated state
-         {
-            // send the updated state to the player
-           // player.socket.emit('game:state_update', playerState);
+        for (const entity of this.entities) {
+            if (entity.type === "player") {
+                // send the updated state to the player
+                const socket = this.players.find(p => p.userId === entity.userId)?.socket;
+                if (socket) {
+                    socket.emit('game:state_update', entity.state);
+                }
+            }
         }
     }
-
 
 }

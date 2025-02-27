@@ -10,6 +10,7 @@ interface GameServiceContextProps {
     connect: (server: string, playerCharacterId: string) => void;
     disconnect: () => void;
     globalChatMessages: string[];
+    gameState: any;
 }
 
 const GameServiceContext = createContext<GameServiceContextProps>({
@@ -19,6 +20,7 @@ const GameServiceContext = createContext<GameServiceContextProps>({
     connect: (server: string, playerCharacterId: string) => {},
     disconnect: () => {},
     globalChatMessages: [],
+    gameState: {},
 });
 
 export const GameServiceProvider = ({ children }: { children: React.ReactNode }) => {
@@ -92,7 +94,7 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
     }, [socket]);
 
     return (
-        <GameServiceContext.Provider value={{ socket, serverAddress, connectionStatus, connect, disconnect, globalChatMessages }}>
+        <GameServiceContext.Provider value={{ socket, serverAddress, connectionStatus, connect, disconnect, globalChatMessages, gameState }}>
             {children}
         </GameServiceContext.Provider>
     );

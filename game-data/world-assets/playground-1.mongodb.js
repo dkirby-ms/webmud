@@ -122,6 +122,8 @@ const playerCharactersData = [
         },
         "saved_state": {
             "location": "room-002",
+            "health": 100,
+            "max_health": 100,
         }
     },
     {
@@ -140,6 +142,8 @@ const playerCharactersData = [
         },
         "saved_state": {
             "location": "room-002",
+            "health": 100,
+            "max_health": 100,
         }
     },
     {
@@ -158,6 +162,8 @@ const playerCharactersData = [
         },
         "saved_state": {
             "location": "room-002",
+            "health": 100,
+            "max_health": 100,
         }
     }
 ];
