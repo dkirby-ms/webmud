@@ -28,7 +28,7 @@ export function ActionPanel() {
                 <Box>
                     <StickToBottom className="h-[50vh] relative" resize="smooth" initial="smooth">
                         <StickToBottom.Content className="flex flex-col gap-4">
-                            {gameState.gameMessages.map((msg, index) => (
+                            {gameState.gameMessages.map((msg: string, index: string) => (
                                 <div key={index}>
                                     {msg}
                                 </div>
