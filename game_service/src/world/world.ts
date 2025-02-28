@@ -96,7 +96,7 @@ export class World {
         // Add the player to the world
         this.players.push({ userId, playerCharacter, socket });
 
-        const playerEntity: Entity = {
+        let playerEntity: Entity = {
             dbRecord: playerCharacter,
             pkid: playerCharacter._id,
             type: "player",
@@ -104,6 +104,20 @@ export class World {
             state: playerCharacter.saved_state,
             userId: userId,
         };
+        if (!playerEntity.state) {
+            playerEntity.state = {
+                room: "",
+                roomDescription: "",
+                health: 100,
+                maxHealth: 100,
+                location: "",
+                gameMessages: [],
+            };
+        }
+        if (!playerEntity.state.gameMessages) {
+            playerEntity.state.gameMessages = [];
+        }
+        playerEntity.state.gameMessages.push("You have joined the world of " + this.name);
         this.entities.push(playerEntity);
         this.movePlayer(playerEntity.pkid, playerCharacter.saved_state.location);
     }
@@ -128,6 +142,7 @@ export class World {
             entity.state!.location = location;
             entity.state!.room = room.dbRecord.name;
             entity.state!.roomDescription = room.dbRecord.description;
+            entity.state!.gameMessages?.push("You have moved to " + room.dbRecord.name);
         } else {
             throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
         }
@@ -167,7 +182,11 @@ export class World {
             if (entity.type === "player") {
                 // send the updated state to the player
                 const socket = this.players.find(p => p.userId === entity.userId)?.socket;
-                if (socket) {
+                if (socket && entity.state) {
+                    const newMessages: string[] = [];
+                    // check for new game messages
+                    //newMessages.push("tick");
+                    entity.state.gameMessages!.push(...newMessages);
                     socket.emit('game:state_update', entity.state);
                 }
             }

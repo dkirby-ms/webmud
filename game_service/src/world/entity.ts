@@ -4,6 +4,7 @@ export interface EntityState {
     health: number;
     maxHealth: number;
     location: string;
+    gameMessages?: string[];
 }
 
 export interface Entity {

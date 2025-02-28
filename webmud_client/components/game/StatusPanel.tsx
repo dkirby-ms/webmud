@@ -18,7 +18,7 @@ export function StatusPanel() {
 
     return (
         <Flex>
-            <Box>Health: { gameState.health } / { gameState.maxHealth } </Box>
+            <Box>Health: { gameState.health } / { gameState.max_health } </Box>
         </Flex>
     )
 }
