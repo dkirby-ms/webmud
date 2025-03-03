@@ -25,7 +25,7 @@ addFormats.default(ajv);
 export { ajv };
 
 const { data } = await axios.get(
-  process.env.AUTH_AZURE_AD_OPENID_CONFIG || "http://jwt.ms/"
+  process.env.AUTH_ENTRA_ID_OPENID_CONFIG || "http://jwt.ms/"
 );
 
 const client = jwksClient({

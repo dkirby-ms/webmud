@@ -23,12 +23,15 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 	const io = deps.io;
     const messageDb = repositories.messageRepository;
 
+	// on connectPlayer
 	socket.on(MessageTypes.game.PLAYER_JOIN, async (playerCharacterId: string) => {
-		// ...existing code for connectPlayer...
+		
 		const playerCharacter = await repositories.playerCharacterRepository.getCharacterById(playerCharacterId);
 		if (playerCharacter?.userId !== userId) {
 			throw new Error("Player is not authorized to connect with this character.");
 		}
+		// need to implement reconnect logic to avoid dupe players
+
 		socket.data.timeConnected = Date.now();
 		socket.data.playerCharacterId = playerCharacterId;
 		socket.data.playerCharacterName = playerCharacter.name;

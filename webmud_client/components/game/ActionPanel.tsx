@@ -1,7 +1,7 @@
 "use client";
 import { useSession } from "next-auth/react";
 import { useEffect, useRef } from "react";
-import { Flex, Box, Text, Strong } from "@radix-ui/themes";
+import { Flex, Box, Text, Heading, Separator } from "@radix-ui/themes";
 import { useGameService } from "../../contexts/GameServiceContext.tsx";
 import { StickToBottom } from 'use-stick-to-bottom';
 
@@ -22,7 +22,8 @@ export function ActionPanel() {
 
     return (
         <Flex direction="column">
-            <Box><Strong>{gameState.room}</Strong></Box>
+            <Box><Heading size="4">{gameState.room}</Heading></Box>
+            <Separator></Separator>
             <Box><Text>{gameState.roomDescription}</Text></Box>
             {gameState.gameMessages && (
                 <Box>

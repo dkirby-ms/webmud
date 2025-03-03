@@ -122,6 +122,13 @@ export class World {
         this.movePlayer(playerEntity.pkid, playerCharacter.saved_state.location);
     }
 
+    public reconnectPlayer(playerCharacterId: string): void {
+        // Reconnect the player to the world
+        // Lookup the player entity in the entities array
+        const playerEntity = this.entities.find(e => e.pkid === playerCharacterId);
+
+    }
+
     public removePlayer(userId: string): void {
         // Remove the player from the socket connections.
         this.players = this.players.filter(p => p.userId !== userId);

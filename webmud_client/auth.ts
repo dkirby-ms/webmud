@@ -1,15 +1,15 @@
 import NextAuth from "next-auth"
 import AzureADB2C from "next-auth/providers/azure-ad-b2c"
 import type { NextAuthConfig } from "next-auth"
-import { TreesIcon } from "lucide-react";
-
+import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id"
+ 
 const BUFFER_TIME = 5 * 60;
 
-const azureAdB2cTokentUrl = `https://${process.env.AZURE_AD_B2C_TENANT_ID}.b2clogin.com/${process.env.AZURE_AD_B2C_TENANT_ID}.onmicrosoft.com/${process.env.AZURE_AD_B2C_PRIMARY_USER_FLOW}/oauth2/v2.0/token`;
+const azureAdB2cTokenUrl = `https://${process.env.AZURE_AD_B2C_TENANT_ID}.b2clogin.com/${process.env.AZURE_AD_B2C_TENANT_ID}.onmicrosoft.com/${process.env.AZURE_AD_B2C_PRIMARY_USER_FLOW}/oauth2/v2.0/token`;
 
 async function refreshAccessToken(token: any) {
   try {
-    const response = await fetch(azureAdB2cTokentUrl, {
+    const response = await fetch(azureAdB2cTokenUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -62,6 +62,19 @@ export const config = {
         token_endpoint_auth_method: 'none',
       },
 
+    }),
+    MicrosoftEntraID({
+      clientId: process.env.AUTH_MICROSOFT_ENTRA_ID_ID,
+      clientSecret: process.env.AUTH_MICROSOFT_ENTRA_ID_SECRET,
+      issuer: process.env.AUTH_MICROSOFT_ENTRA_ID_ISSUER,
+      token: process.env.AUTH_MICROSOFT_ENTRA_ID_TOKEN,
+      //userinfo: process.env.AUTH_MICROSOFT_ENTRA_ID_USERINFO,
+      authorization: {
+        url: process.env.AUTH_MICROSOFT_ENTRA_ID_AUTHORIZATION_URL,
+        params: {
+          scope: "openid profile email offline_access",
+        },
+      },
     }),
     
   ],

@@ -102,25 +102,32 @@ export default class GameService {
 
         // setup auth and access token validator
         this.io.use(async (socket, next) => {
-            const token = socket.handshake.auth.token;
+            const userId = socket.handshake.auth.userId;
+            const userFriendlyName = socket.handshake.auth.userFriendlyName;
+            const playerCharacterId = socket.handshake.auth.playerCharacterId;
+            // const token = socket.handshake.auth.token;
             const session = (socket.request as any).session;
-            if (!token) {
-                // Inform the client that no token was provided
-                const error = new Error("Authentication error - access token not found");
-                (error as any).code = "NO_TOKEN";
-                return next(error);
-            }
-            try {
-                const payload = await validateJwt(token);
-                session.userId = payload.sub;
-                session.userFriendlyName = payload.name;
-                next();
-            } catch (e) {
-                // Instead of a generic error, add a custom error code
-                const error = new Error("Authentication error - token expired or invalid");
-                (error as any).code = "TOKEN_EXPIRED";
-                return next(error);
-            }
+            session.userId = userId;
+            session.userFriendlyName = userFriendlyName;
+            session.playerCharacterId = playerCharacterId;
+            next();
+            // if (!token) {
+            //     // Inform the client that no token was provided
+            //     const error = new Error("Authentication error - access token not found");
+            //     (error as any).code = "NO_TOKEN";
+            //     return next(error);
+            // }
+            // try {
+            //     const payload = await validateJwt(token);
+            //     session.userId = payload.sub;
+            //     session.userFriendlyName = payload.name;
+            //     next();
+            // } catch (e) {
+            //     // Instead of a generic error, add a custom error code
+            //     const error = new Error("Authentication error - token expired or invalid");
+            //     (error as any).code = "TOKEN_EXPIRED";
+            //     return next(error);
+            // }
         });
 
         // setup connection handler

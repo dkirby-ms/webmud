@@ -13,7 +13,7 @@ export default function Home() {
   }
   return (
     <GameServiceProvider>
-      <Flex align="center" direction="column" gap="4" justify="center" style={{ minHeight: "100vh" }}>
+      <Flex align="center" direction="column" gap="4" justify="center" mt="9" ml="3" style={{ minHeight: "100vh" }}>
         {!inGame ? (
           <StartMenu onConnect={handleConnect} />
         ) : (
