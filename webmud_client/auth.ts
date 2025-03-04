@@ -5,7 +5,8 @@ import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id"
  
 const BUFFER_TIME = 5 * 60;
 
-const azureAdB2cTokenUrl = `https://${process.env.AZURE_AD_B2C_TENANT_ID}.b2clogin.com/${process.env.AZURE_AD_B2C_TENANT_ID}.onmicrosoft.com/${process.env.AZURE_AD_B2C_PRIMARY_USER_FLOW}/oauth2/v2.0/token`;
+const azureAdB2cTokenUrl = `https://bloodwar.ciamlogin.com/7a9da048-83f3-4666-8dbb-8ee824fcb897/oauth2/v2.0/token`;
+const entraIdTokenUrl = ``;
 
 async function refreshAccessToken(token: any) {
   try {
@@ -16,7 +17,7 @@ async function refreshAccessToken(token: any) {
       },
       body: new URLSearchParams({
         grant_type: 'refresh_token',
-        client_id: process.env.AZURE_AD_B2C_CLIENT_ID as string,
+        client_id: process.env.AUTH_MICROSOFT_ENTRA_ID_ID as string,
         refresh_token: token.refreshToken as string,
       }),
     });
@@ -44,25 +45,25 @@ export const config = {
   },
   // adapter: MongoDBAdapter(client),
   providers: [
-    AzureADB2C({
-      id: 'azure-ad-b2c',
-      name: 'Azure AD B2C',
-      clientId: process.env.AZURE_AD_B2C_CLIENT_ID as string,
-      issuer: `https://${process.env.AZURE_AD_B2C_TENANT_ID}.b2clogin.com/${process.env.AZURE_AD_B2C_TENANT_GUID}/v2.0/`,
-      wellKnown: `https://${process.env.AZURE_AD_B2C_TENANT_ID}.b2clogin.com/${process.env.AZURE_AD_B2C_TENANT_ID}.onmicrosoft.com/${process.env.AZURE_AD_B2C_PRIMARY_USER_FLOW}/v2.0/.well-known/openid-configuration`,
-      authorization: {
-        url: `https://${process.env.AZURE_AD_B2C_TENANT_ID}.b2clogin.com/${process.env.AZURE_AD_B2C_TENANT_ID}.onmicrosoft.com/${process.env.AZURE_AD_B2C_PRIMARY_USER_FLOW}/oauth2/v2.0/authorize`,
-        params: {
-          scope: `offline_access openid ${process.env.AZURE_AD_B2C_CLIENT_ID}`,
-        },
-      },
-      token: `https://${process.env.AZURE_AD_B2C_TENANT_ID}.b2clogin.com/${process.env.AZURE_AD_B2C_TENANT_ID}.onmicrosoft.com/${process.env.AZURE_AD_B2C_PRIMARY_USER_FLOW}/oauth2/v2.0/token`,
-      checks: ['pkce'],
-      client: {
-        token_endpoint_auth_method: 'none',
-      },
+    // AzureADB2C({
+    //   id: 'azure-ad-b2c',
+    //   name: 'Azure AD B2C',
+    //   clientId: process.env.AZURE_AD_B2C_CLIENT_ID as string,
+    //   issuer: `https://${process.env.AZURE_AD_B2C_TENANT_ID}.b2clogin.com/${process.env.AZURE_AD_B2C_TENANT_GUID}/v2.0/`,
+    //   wellKnown: `https://${process.env.AZURE_AD_B2C_TENANT_ID}.b2clogin.com/${process.env.AZURE_AD_B2C_TENANT_ID}.onmicrosoft.com/${process.env.AZURE_AD_B2C_PRIMARY_USER_FLOW}/v2.0/.well-known/openid-configuration`,
+    //   authorization: {
+    //     url: `https://${process.env.AZURE_AD_B2C_TENANT_ID}.b2clogin.com/${process.env.AZURE_AD_B2C_TENANT_ID}.onmicrosoft.com/${process.env.AZURE_AD_B2C_PRIMARY_USER_FLOW}/oauth2/v2.0/authorize`,
+    //     params: {
+    //       scope: `offline_access openid ${process.env.AZURE_AD_B2C_CLIENT_ID}`,
+    //     },
+    //   },
+    //   token: `https://${process.env.AZURE_AD_B2C_TENANT_ID}.b2clogin.com/${process.env.AZURE_AD_B2C_TENANT_ID}.onmicrosoft.com/${process.env.AZURE_AD_B2C_PRIMARY_USER_FLOW}/oauth2/v2.0/token`,
+    //   checks: ['pkce'],
+    //   client: {
+    //     token_endpoint_auth_method: 'none',
+    //   },
 
-    }),
+    // }),
     MicrosoftEntraID({
       clientId: process.env.AUTH_MICROSOFT_ENTRA_ID_ID,
       clientSecret: process.env.AUTH_MICROSOFT_ENTRA_ID_SECRET,
