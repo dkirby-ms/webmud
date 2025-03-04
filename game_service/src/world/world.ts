@@ -28,7 +28,8 @@ export class World {
     protected socketServer: Server;
     protected repositories: Repositories;
 
-    protected players: { userId: string, playerCharacter: any, socket: Socket }[] = []; // this stores the active players in the world and their socket connections
+    // Changed from arrays to Maps for efficient lookups.
+    protected players: Map<string, { playerCharacter: any, socket: Socket }> = new Map();
     protected entities: Entity[] = [];
     protected rooms: Room[] = [];
 
@@ -56,6 +57,7 @@ export class World {
                     type: record.entity_type,
                     lastUpdate: Date.now(),
                 };
+                // Changed: push entity into array instead of using Map.
                 this.entities.push(entity);
             }
             logger.info(`Initializing rooms service for world ${this.name}`);
@@ -92,17 +94,17 @@ export class World {
         }
     }
 
-    public addPlayer(userId: string, playerCharacter: any, socket: Socket): void {
-        // Add the player to the world
-        this.players.push({ userId, playerCharacter, socket });
+    public addPlayer(playerCharacterId: string, playerCharacter: any, socket: Socket): void {
+        // Add the player to the world using Map.
+        this.players.set(playerCharacterId, { playerCharacter, socket });
 
         let playerEntity: Entity = {
             dbRecord: playerCharacter,
-            pkid: playerCharacter._id,
+            pkid: playerCharacter._id.toString(),
             type: "player",
             lastUpdate: Date.now(),
             state: playerCharacter.saved_state,
-            userId: userId,
+            userId: playerCharacter.userId,
         };
         if (!playerEntity.state) {
             playerEntity.state = {
@@ -110,7 +112,7 @@ export class World {
                 roomDescription: "",
                 health: 100,
                 maxHealth: 100,
-                location: "",
+                location: "room-001",
                 gameMessages: [],
             };
         }
@@ -122,18 +124,31 @@ export class World {
         this.movePlayer(playerEntity.pkid, playerCharacter.saved_state.location);
     }
 
-    public reconnectPlayer(playerCharacterId: string): void {
-        // Reconnect the player to the world
-        // Lookup the player entity in the entities array
-        const playerEntity = this.entities.find(e => e.pkid === playerCharacterId);
-
+    public reconnectPlayer(playerCharacterId: string, socket: Socket): void {
+        // Changed: use array find instead of Map lookup.
+        const player = this.players.get(playerCharacterId);
+        if (!player) {
+            throw new Error(`Player not found for user ID ${playerCharacterId}`);
+        }
+        player.socket = socket;
+        //const playerEntity = this.entities.find(e => e.pkid === playerCharacterId); // not sure we need to do anything with entities here
     }
 
-    public removePlayer(userId: string): void {
-        // Remove the player from the socket connections.
-        this.players = this.players.filter(p => p.userId !== userId);
-        // Also remove the corresponding player entity.
-        this.entities = this.entities.filter(entity => entity.pkid !== userId);
+    public removePlayer(playerCharacterId: string, options?: {disconnected?: boolean, kicked?: boolean}): void {
+        // Remove player from the Map.
+        if (options) {
+            // INCOMPLETE: Handle options for removing player
+            if (options["disconnected"]) {
+                // INCOMPLETE: Handle disconnected player timing out
+                logger.info(`Player character ${playerCharacterId} removed from game world after grace period expired.`);
+            }
+            if (options["kicked"]) {
+                // INCOMPLETE: Handle player being kicked
+            }
+        }
+        this.players.delete(playerCharacterId);
+        // Changed: filter out the matching entity.
+        this.entities = this.entities.filter(entity => entity.pkid !== playerCharacterId);
     }
 
     public movePlayer(playerCharacterId: string, location: string): void {
@@ -142,8 +157,7 @@ export class World {
         if (!room) {
             throw new Error(`Room not found for location ${location}`);
         }
-        // Move the player to the specified location
-           
+        // Changed: use array find instead of Map lookup.
         const entity = this.entities.find(e => e.pkid === playerCharacterId);
         if (entity !== undefined) {
             entity.state!.location = location;
@@ -153,7 +167,6 @@ export class World {
         } else {
             throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
         }
-        
     }
 
     private tick(): void {
@@ -170,7 +183,7 @@ export class World {
     private gatherInputs(): void {
         // gather inputs from all connected players
         // for each player, gather the input
-        for (const player of this.players) {
+        for (const player of this.players.values()) {
             // gather the input from the player
             
         }
@@ -183,21 +196,19 @@ export class World {
     }
 
     private broadcastWorldState(): void {
-        // broadcast the world state to all connected players
-        // for each player, send the updated state
-        for (const entity of this.entities) {
+        // Broadcast state by iterating over entities Map.
+        this.entities.forEach(entity => {
             if (entity.type === "player") {
-                // send the updated state to the player
-                const socket = this.players.find(p => p.userId === entity.userId)?.socket;
-                if (socket && entity.state) {
+                const player = this.players.get(entity.pkid);
+                if (player && entity.state) {
                     const newMessages: string[] = [];
                     // check for new game messages
                     //newMessages.push("tick");
                     entity.state.gameMessages!.push(...newMessages);
-                    socket.emit('game:state_update', entity.state);
+                    player.socket.emit('game:state_update', entity.state);
                 }
             }
-        }
+        });
     }
 
 }

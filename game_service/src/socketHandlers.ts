@@ -30,27 +30,34 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 		if (playerCharacter?.userId !== userId) {
 			throw new Error("Player is not authorized to connect with this character.");
 		}
-		// need to implement reconnect logic to avoid dupe players
-
 		socket.data.timeConnected = Date.now();
 		socket.data.playerCharacterId = playerCharacterId;
 		socket.data.playerCharacterName = playerCharacter.name;
-		logger.info(`Player ${userId} connected with character ${playerCharacter.name}`);
-		world.addPlayer(userId, playerCharacter, socket);
+		// if the player was disconnected, remove from disconnectedPlayers map
+		if (disconnectedPlayers.has(playerCharacterId))
+		{
+		 	const disconnectedPlayer = disconnectedPlayers.get(playerCharacterId);
+		 	clearTimeout(disconnectedPlayer?.cleanupTimer);
+			const disconnectTime = disconnectedPlayer?.disconnectTime || 0;
+			world.reconnectPlayer(playerCharacterId, socket);
+			disconnectedPlayers.delete(playerCharacterId);
+			logger.info(`Player character ${playerCharacterId} reconnected after ${Date.now() - disconnectTime}ms.`);
+		} else {
+			logger.info(`Player ${userId} connected with character ${playerCharacter.name}`);
+			world.addPlayer(playerCharacterId, playerCharacter, socket);
+		}
 	});
 	
 	socket.on('disconnect', () => {
 		// ...existing code for disconnect...
-		if (userId) {
-			logger.info(`Player ${userId} disconnected. Initiating cleanup grace period.`);
-			const disconnectTime = Date.now();
-			const cleanupTimer = setTimeout(() => {
-				logger.info(`Cleanup: Player ${userId} did not reconnect; removing from game world.`);
-				world.removePlayer(userId);
-				disconnectedPlayers.delete(userId);
-			}, CLEANUP_DISCONNECT_GRACE_PERIOD);
-			disconnectedPlayers.set(userId, { cleanupTimer, disconnectTime });
-		}
+		logger.info(`Player character ${socket.data.playerCharacterId} disconnected. Initiating cleanup grace period.`);
+		const disconnectTime = Date.now();
+		const cleanupTimer = setTimeout(() => {
+			logger.info(`Cleanup: Player character ${socket.data.playerCharacterId} did not reconnect; removing from game world.`);
+			world.removePlayer(socket.data.playerCharacterId, { disconnected: true});
+			disconnectedPlayers.delete(socket.data.playerCharacterId);
+		}, CLEANUP_DISCONNECT_GRACE_PERIOD);
+		disconnectedPlayers.set(socket.data.playerCharacterId, { cleanupTimer, disconnectTime });
 	});
 
 	// when a client sends a chat message -

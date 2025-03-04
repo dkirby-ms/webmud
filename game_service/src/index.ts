@@ -139,15 +139,6 @@ export default class GameService {
             socket.data.playerCharacterId = session.playerCharacterId;
 
             if (userId) {
-                if (this.disconnectedPlayers.has(userId)) {
-                    clearTimeout(this.disconnectedPlayers.get(userId)!.cleanupTimer);
-                    this.disconnectedPlayers.delete(userId);
-                    this.logger.info(`Player ${userId} reconnected. Restoring state.`);
-                    // Optionally, re-add the player to the game world here
-                    //this.world.loop.reconnectPlayer(userId, socket.data.playerCharacterId, socket);
-                }
-                //this.world.loop.addPlayer(userId, socket.data.playerCharacterId, socket);
-                // Delegate socket event registration to the dedicated module
                 registerSocketConnectionHandlers(socket, {
                     io: this.io,
                     logger: this.logger,
@@ -157,10 +148,6 @@ export default class GameService {
                     CLEANUP_DISCONNECT_GRACE_PERIOD: CLEANUP_DISCONNECT_GRACE_PERIOD,
                 });
             }
-
-
-
-            // ...existing code for other event handlers...
         });
 
 
