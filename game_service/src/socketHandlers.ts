@@ -1,6 +1,8 @@
 import { Socket, Server } from 'socket.io';
 import { sentMessage } from "./message/send.js";
 import { MessageTypes } from './taxonomy.js';
+import { _ } from 'ajv';
+import { Command, CommandType, parseCommand } from './commandParser.js';
 
 interface Dependencies {
     // socket server
@@ -21,7 +23,6 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 	const { logger, repositories, world, disconnectedPlayers, CLEANUP_DISCONNECT_GRACE_PERIOD } = deps;
 	const userId = socket.data?.userId;
 	const io = deps.io;
-    const messageDb = repositories.messageRepository;
 
 	// on connectPlayer
 	socket.on(MessageTypes.game.PLAYER_JOIN, async (playerCharacterId: string) => {
@@ -60,12 +61,25 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 		disconnectedPlayers.set(socket.data.playerCharacterId, { cleanupTimer, disconnectTime });
 	});
 
-	// when a client sends a chat message -
-	socket.on(MessageTypes.chat.SEND_MESSAGE, (message) => sentMessage(io, socket, message, "global"));
-
-	
-    //socket.on("message:send", sendMessage(io, socket, mesage);
-    // socket.on("message:send", (message) => {
-	// 	socket.emit(MessageTypes.chat.SENT_MESSAGE, message);
-    // });
+	// when a client sends a command message -
+	socket.on(MessageTypes.command.SEND_COMMAND, (command) => {
+		// parse the command and take the appropriate action
+		const parsedCommand = parseCommand(command);
+		switch (parsedCommand.type) {
+			case CommandType.MOVE:
+				const direction = parsedCommand.args![0];
+				world.movePlayer(socket.data.playerCharacterId, direction);
+				break;
+			case CommandType.SAY:
+				// need to update this to only send to the room the player is in and add additional commands for comms
+				sentMessage(io, socket, parsedCommand.text!, "global");
+				break;
+			case CommandType.ATTACK:
+				//world.attack(socket.data.playerCharacterId, parsedCommand.args[0]);
+				break;
+			case CommandType.UNKNOWN:
+				logger.warn(`Player ${socket.data.playerCharacterId} sent an unknown command: ${command}`);
+				break;
+		}
+	});
 }

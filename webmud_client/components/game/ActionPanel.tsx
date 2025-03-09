@@ -13,7 +13,7 @@ export function ActionPanel() {
 
     useEffect(() => {
         // Subscribe to the game state
-        //messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [gameState]);
 
     if (!session) return <div>Not authenticated</div>
@@ -23,12 +23,17 @@ export function ActionPanel() {
     return (
         <Flex direction="column">
             <Box><Heading size="4">{gameState.room}</Heading></Box>
-            <Separator></Separator>
-            <Box><Text>{gameState.roomDescription}</Text></Box>
+            
+            <Box style={{ minHeight: "100px" }}><Text>{gameState.roomDescription}</Text></Box>
+            <Box><Text>
+            {gameState.roomExits && (
+                <>Exits: {Object.keys(gameState.roomExits).join(", ")}</>
+            )}</Text></Box>
+            <Separator style={{ width: "73vw", position: "relative", left: "50%", transform: "translateX(-50%)" }} />
             {gameState.gameMessages && (
                 <Box>
-                    <StickToBottom className="h-[50vh] relative" resize="smooth" initial="smooth">
-                        <StickToBottom.Content className="flex flex-col gap-4">
+                    <StickToBottom className="h-[35vh] relative" resize="smooth" initial="smooth">
+                        <StickToBottom.Content className="flex flex-col gap-3">
                             {gameState.gameMessages.map((msg: string, index: string) => (
                                 <div key={index}>
                                     {msg}

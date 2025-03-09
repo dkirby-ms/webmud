@@ -4,6 +4,7 @@ import { Flex, Box } from "@radix-ui/themes";
 import { ChatPanel } from "./ChatPanel.tsx";
 import { ActionPanel } from "./ActionPanel.tsx";
 import { StatusPanel } from "./StatusPanel.tsx";
+import { CommandLine } from "./CommandLine.tsx";
 
 export function GameWindow() {
 
@@ -23,8 +24,9 @@ export function GameWindow() {
                 </Box>
             </Flex>
             {/* Bottom section: ChatPanel */}
-            <Flex style={{ borderTop: "1px solid #ccc" }}>
+            <Flex direction="column" style={{ borderTop: "1px solid #ccc" }}>
                 <ChatPanel />
+                <CommandLine />
             </Flex>
         </Flex>
     )
