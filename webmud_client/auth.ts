@@ -1,5 +1,5 @@
 import NextAuth from "next-auth"
-import AzureADB2C from "next-auth/providers/azure-ad-b2c"
+//import AzureADB2C from "next-auth/providers/azure-ad-b2c"
 import type { NextAuthConfig } from "next-auth"
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id"
  

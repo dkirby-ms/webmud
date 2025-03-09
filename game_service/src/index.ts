@@ -14,7 +14,7 @@ import { registerSocketConnectionHandlers } from './socketHandlers.js';
 
 const WORLD_NAME = process.env.WORLD_NAME || 'defaultServerName';
 const SERVICE_URL = process.env.SERVICE_URL || 'http://localhost';
-const SERVICE_PORT = process.env.SERVICE_PORT || 28999;
+const PORT = process.env.PORT || 28999;
 const _30_DAYS = 30 * 24 * 60 * 60 * 1000;
 const CLEANUP_DISCONNECT_GRACE_PERIOD = 30_000; // 30 seconds
 const CLEANUP_ZOMBIE_USERS_INTERVAL_IN_MS = 60_000; // 60 seconds
@@ -197,8 +197,8 @@ export default class GameService {
         logger.info(`Server instance started with world data: ${WORLD_NAME}`);
 
         // Start the http server
-        this.httpServer.listen(SERVICE_PORT, () => {
-            this.logger.info(`server listening at ${SERVICE_URL}:${SERVICE_PORT}.`);
+        this.httpServer.listen(PORT, () => {
+            this.logger.info(`server listening at ${SERVICE_URL}:${PORT}.`);
         });
 
 

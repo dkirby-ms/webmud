@@ -9,8 +9,6 @@ RUN npm install
 
 COPY . .
 
-RUN npx auth secret
-
 RUN npm run build
 
 EXPOSE 28999

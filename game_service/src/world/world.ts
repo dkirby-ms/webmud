@@ -24,7 +24,7 @@ export class World {
     protected timer?: NodeJS.Timeout;
     private readonly tickRate = 1000 / 20; // 20 ticks per second; // 1 second
 
-    protected redis: RedisClientType;
+    //protected redis: RedisClientType;
     protected socketServer: Server;
     protected repositories: Repositories;
 
@@ -39,12 +39,12 @@ export class World {
         this.id = doc._id.toHexString();
         this.repositories = repositories;
         this.socketServer = socketServer;
-        this.redis = createClient({ url: REDIS_URL });
+        //this.redis = createClient({ url: REDIS_URL });
     }
 
     public async init(): Promise<void> {
         // Connect to redis using node-redis
-        await this.redis.connect();
+        //await this.redis.connect();
         // Initialize the game loop service here, e.g., load entities, rooms, etc.
         // For example:
         try {
