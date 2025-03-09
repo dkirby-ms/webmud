@@ -1,6 +1,6 @@
 "use client";
 import { useSession } from "next-auth/react";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Box } from "@radix-ui/themes";
 import { useGameService } from "../../contexts/GameServiceContext.tsx";
 export function CommandLine() {
