@@ -5,6 +5,10 @@ export interface ChatMessage {
   }
 
 export const MessageTypes = {
+    command: {
+        SEND_COMMAND: "command:send",
+        SENT_COMMAND: "command:sent",
+    },
     chat: {
         SEND_MESSAGE: "chat:send",
         SENT_MESSAGE: "chat:sent",

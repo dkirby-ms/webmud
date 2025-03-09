@@ -42,10 +42,12 @@ export default async function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Theme appearance="dark" radius="small" accentColor="red" grayColor="gray">
         <div />
-          <Suspense fallback="...">
-            <NavBar />
-          </Suspense>
-          <main>
+            <header className="fixed top-0 left-0 right-0 z-10">
+            <Suspense fallback="...">
+              <NavBar />
+            </Suspense>
+            </header>
+          <main className="">
             {children}
           </main>
         </Theme>

@@ -1,6 +1,8 @@
 export interface EntityState {
     room: string;
     roomDescription: string;
+    roomExits: string[];
+    roomItems: string[];
     health: number;
     maxHealth: number;
     location: string;

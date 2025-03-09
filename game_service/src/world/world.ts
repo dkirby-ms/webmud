@@ -113,6 +113,8 @@ export class World {
                 health: 100,
                 maxHealth: 100,
                 location: "room-001",
+                roomExits: [],
+                roomItems: [],
                 gameMessages: [],
             };
         }
@@ -121,7 +123,7 @@ export class World {
         }
         playerEntity.state.gameMessages.push("You have joined the world of " + this.name);
         this.entities.push(playerEntity);
-        this.movePlayer(playerEntity.pkid, playerCharacter.saved_state.location);
+        this.arrivePlayer(playerEntity.pkid, playerCharacter.saved_state.location);
     }
 
     public reconnectPlayer(playerCharacterId: string, socket: Socket): void {
@@ -151,30 +153,55 @@ export class World {
         this.entities = this.entities.filter(entity => entity.pkid !== playerCharacterId);
     }
 
-    public movePlayer(playerCharacterId: string, location: string): void {
+    // Used for when a player moves between rooms using a direction command (e.g., north, south, etc.)
+    public movePlayer(playerCharacterId: string, direction: string): void {
+        // lookup the player entity
+        const entity = this.entities.find(e => e.pkid === playerCharacterId);
+        if (entity !== undefined) {
+            // lookup the location in the rooms array
+            const room = this.rooms.find(r => r.id === entity.state!.location);
+            if (!room) {
+                throw new Error(`Room not found for location ${entity.state!.location}`);
+            }
+            if (room.dbRecord.exits[direction]) {
+                const locationExit = room.dbRecord.exits[direction];
+                const newRoom = this.rooms.find(r => r.id === locationExit.room_id);
+                if (!newRoom) {
+                    throw new Error(`Room not found for location ${locationExit.room_id}`);
+                }
+                entity.state!.location = locationExit.room_id;
+                entity.state!.room = newRoom.dbRecord.name;
+                entity.state!.roomDescription = newRoom.dbRecord.description;
+                entity.state!.roomExits = newRoom.dbRecord.exits;
+                entity.state!.gameMessages?.push(`You move ${direction} to ${newRoom.dbRecord.name}`);
+            } else {
+                entity.state!.gameMessages?.push(`You cannot move ${direction} from here.`);
+            }
+        } else {
+            throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
+        }
+    }
+
+    // Used for when a player connects to a specific room in the world (e.g., on login)
+    public arrivePlayer(playerCharacterId: string, location: string): void {
         // lookup the location in the rooms array
         const room = this.rooms.find(r => r.id === location);
         if (!room) {
             throw new Error(`Room not found for location ${location}`);
         }
-        // Changed: use array find instead of Map lookup.
         const entity = this.entities.find(e => e.pkid === playerCharacterId);
         if (entity !== undefined) {
             entity.state!.location = location;
             entity.state!.room = room.dbRecord.name;
             entity.state!.roomDescription = room.dbRecord.description;
-            entity.state!.gameMessages?.push("You have moved to " + room.dbRecord.name);
+            entity.state!.roomExits = room.dbRecord.exits;
+            entity.state!.gameMessages?.push("You have entered the game.");
         } else {
             throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
         }
     }
 
     private tick(): void {
-        // Example: update entities, process queued events, update world time.
-        // You can call world.updateEntities() or similar methods here.
-        //logger.debug(`Game loop tick at ${new Date().toISOString()}`);
-
-        // For example:
         this.gatherInputs();
         this.updateWorldState();
         this.broadcastWorldState();
