@@ -2,7 +2,8 @@ import { Socket, Server } from 'socket.io';
 import { sentMessage } from "./message/send.js";
 import { MessageTypes } from './taxonomy.js';
 import { _ } from 'ajv';
-import { Command, CommandType, parseCommand } from './commandParser.js';
+import { CommandType, parseCommand } from './commandParser.js';
+import { tellPlayer } from './message/tell.js'
 
 interface Dependencies {
     // socket server
@@ -72,13 +73,24 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 				break;
 			case CommandType.SAY:
 				// need to update this to only send to the room the player is in and add additional commands for comms
-				sentMessage(io, socket, parsedCommand.text!, "global");
+				//sentMessage(io, socket, parsedCommand.text!, "global");
+				world.sayToRoom(socket.data.playerCharacterId, parsedCommand.text!);
+				break;
+			case CommandType.TELL:
+				tellPlayer(io, socket, parsedCommand.args![0], parsedCommand.text!);
+				break;
+			case CommandType.LOOK:
+				//world.look(socket.data.playerCharacterId);
 				break;
 			case CommandType.ATTACK:
 				//world.attack(socket.data.playerCharacterId, parsedCommand.args[0]);
 				break;
 			case CommandType.UNKNOWN:
 				logger.warn(`Player ${socket.data.playerCharacterId} sent an unknown command: ${command}`);
+				const output = "Sorry, I don't understand that command.";
+				const messages: string[] = [];
+				messages[0] = output;
+				world.sendCommandOutputToPlayer(socket.data.playerCharacterId, messages);
 				break;
 		}
 	});

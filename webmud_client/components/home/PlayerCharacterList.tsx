@@ -27,6 +27,8 @@ export function PlayerCharacterList({ onConnect, onLoaded }: { onConnect: (url: 
         if (data && data.length > 0 && !selectedCharId) {
             handleSelect(data[0]._id);
             onLoaded();
+        } else if (data && data.length === 0) {
+            onLoaded();
         }
     }, [data, selectedCharId, onLoaded]);
 

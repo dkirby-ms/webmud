@@ -9,8 +9,8 @@ export function UserAvatar() {
   const username = session.user?.name || session.user?.email
   const initials = username?.split(" ").map((n) => n[0]).join("").toUpperCase()
   const userId = session.userId
-  const handleLogout = () => {
-    signOut(); // signin using next-auth with configured AADB2C provider
+  const handleLogout = async () => {
+    await signOut(); // signin using next-auth with configured AADB2C provider
   };
   return (
 

@@ -69,9 +69,17 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
             setGlobalChatMessages(prev => [...prev, formattedMessage]);
         });
 
+        newSocket.on("chat:tell", (message) => {
+            const formattedMessage = `You tell ${message.senderName}: ${message.content}`;
+            setGlobalChatMessages(prev => [...prev, formattedMessage]);
+        });
+
         newSocket.on("game:state_update", (gameState) => {
-            //console.log('GameService provider received game state:', gameState);
             setGameState(gameState);
+        });
+
+        newSocket.on("game:messages", (messages) => {
+            setGlobalChatMessages(prev => [...prev, ...messages]);
         });
     }
 

@@ -12,6 +12,7 @@ export const MessageTypes = {
     chat: {
         SEND_MESSAGE: "chat:send",
         SENT_MESSAGE: "chat:sent",
+        TELL: "chat:tell",
         MESSAGE_ACK: "chat:ack",
     },
     game: {

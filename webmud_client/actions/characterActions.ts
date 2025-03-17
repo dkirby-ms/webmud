@@ -30,6 +30,14 @@ export async function createCharacter(formData: FormData) {
   // Connect and insert into MongoDB
   try {
     const { db } = await connectToDatabase();
+    
+    // add default state info and merge with the incoming data
+    const saved_state = {
+        "location": "room-002",
+        "health": 100,
+        "max_health": 100
+    }
+
     const newCharacter = await db.collection("playerCharacters").insertOne({
       species,
       name,
@@ -37,6 +45,7 @@ export async function createCharacter(formData: FormData) {
       userId,
       level: 1,
       createdAt: new Date(),
+      saved_state: saved_state
     });
     logger.info(`Created character: ${newCharacter}`);
     return true;

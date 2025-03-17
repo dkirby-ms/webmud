@@ -3,6 +3,8 @@ export enum CommandType {
     MOVE = "move",
     ATTACK = "attack",
     UNKNOWN = "unknown",
+    TELL = "tell",
+    LOOK = "look",
 }
 
 export interface Command {
@@ -58,6 +60,16 @@ export function parseCommand(input: string): Command {
         return {
             type: CommandType.SAY,
             text: rest,
+        };
+    }
+
+    // Handle the 'tell' command.
+    if (commandWord === "tell") {
+        const [target, ...message] = rest.split(" ");
+        return {
+            type: CommandType.TELL,
+            args: [target],
+            text: message.join(" "),
         };
     }
 
