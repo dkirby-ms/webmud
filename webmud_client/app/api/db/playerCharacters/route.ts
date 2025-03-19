@@ -47,9 +47,8 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const session = await auth() as any;
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  const userId = session.userId;
 
-  let data = await request.json();
+  const data = await request.json();
 
   const client = new MongoClient(process.env.MONGODB_URI as string);
   await client.connect();

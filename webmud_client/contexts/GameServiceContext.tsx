@@ -70,7 +70,7 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
         });
 
         newSocket.on("chat:tell", (message) => {
-            const formattedMessage = `You tell ${message.senderName}: ${message.content}`;
+            const formattedMessage = `${message.senderName} tells you: ${message.content}`;
             setGlobalChatMessages(prev => [...prev, formattedMessage]);
         });
 
