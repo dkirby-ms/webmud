@@ -1,6 +1,6 @@
 "use client";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Flex, Box } from "@radix-ui/themes";
 import { useGameService } from "../../contexts/GameServiceContext.tsx";
 import styles from "./MapPanel.module.css";
@@ -32,6 +32,7 @@ type MapData = {
 export function MapPanel() {
     const { data: session } = useSession();
     const { gameState, socket } = useGameService();
+    const mapContainerRef = useRef<HTMLDivElement>(null);
     const [mapData, setMapData] = useState<MapData>({
         rooms: {},
         playerLocation: null,
@@ -90,7 +91,7 @@ export function MapPanel() {
         };
     }, [socket]);
 
-    // Calculate position for a room based on its connections
+    // Improved calculation for room position
     const calculateRoomPosition = (
         roomId: string, 
         previousRoomId: string | null, 
@@ -122,26 +123,75 @@ export function MapPanel() {
             case 'west': return { ...prevPosition, x: prevPosition.x - 1 };
             case 'up': return { ...prevPosition, z: prevPosition.z + 1 };
             case 'down': return { ...prevPosition, z: prevPosition.z - 1 };
-            default: 
+            default:
+                // If no direct connection found, try to place it logically
+                // Check if room has any connections to existing rooms
+                for (const [existingId, existingRoom] of Object.entries(existingRooms)) {
+                    if (existingId === roomId) continue;
+                    
+                    // Check if this existing room has an exit to our new room
+                    for (const [dir, targetId] of Object.entries(existingRoom.exits)) {
+                        if (targetId === roomId) {
+                            // Position based on reverse direction
+                            const pos = {...existingRoom.position};
+                            switch (dir as Direction) {
+                                case 'north': return { ...pos, y: pos.y + 1 };
+                                case 'south': return { ...pos, y: pos.y - 1 };
+                                case 'east': return { ...pos, x: pos.x - 1 };
+                                case 'west': return { ...pos, x: pos.x + 1 };
+                                case 'up': return { ...pos, z: pos.z - 1 };
+                                case 'down': return { ...pos, z: pos.z + 1 };
+                            }
+                        }
+                    }
+                }
+                
                 // If no connection found, place it adjacent to previous room
                 return { ...prevPosition, x: prevPosition.x + 1 };
         }
     };
 
-    // Render the map grid
+    // Center the map on player's current room
+    useEffect(() => {
+        if (mapContainerRef.current && mapData.playerLocation) {
+            // Get the current room element (by finding the currentRoom class)
+            const currentRoomElement = mapContainerRef.current.querySelector(`.${styles.currentRoom}`);
+            if (currentRoomElement) {
+                // Scroll to center the current room in the viewport
+                currentRoomElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                    inline: 'center'
+                });
+            }
+        }
+    }, [mapData.playerLocation]);
+
+    // Improved render map function
     const renderMap = () => {
         if (Object.keys(mapData.rooms).length === 0) {
             return <div>No map data available</div>;
         }
 
-        // Find bounds of the map
-        let minX = 0, maxX = 0, minY = 0, maxY = 0;
+        // Find bounds of the map considering only visited rooms
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        
         Object.values(mapData.rooms).forEach(room => {
-            minX = Math.min(minX, room.position.x);
-            maxX = Math.max(maxX, room.position.x);
-            minY = Math.min(minY, room.position.y);
-            maxY = Math.max(maxY, room.position.y);
+            if (mapData.visitedRooms.has(room.id)) {
+                minX = Math.min(minX, room.position.x);
+                maxX = Math.max(maxX, room.position.x);
+                minY = Math.min(minY, room.position.y);
+                maxY = Math.max(maxY, room.position.y);
+            }
         });
+        
+        // Handle case where there are no visited rooms
+        if (minX === Infinity) {
+            minX = 0;
+            maxX = 0;
+            minY = 0;
+            maxY = 0;
+        }
 
         // Calculate grid size
         const gridWidth = maxX - minX + 1;
@@ -156,7 +206,11 @@ export function MapPanel() {
             if (mapData.visitedRooms.has(room.id)) {
                 const gridX = room.position.x - minX;
                 const gridY = room.position.y - minY;
-                grid[gridY][gridX] = room;
+                
+                // Ensure we're not trying to place a room outside our grid bounds
+                if (gridY >= 0 && gridY < grid.length && gridX >= 0 && gridX < grid[0].length) {
+                    grid[gridY][gridX] = room;
+                }
             }
         });
 
@@ -226,7 +280,7 @@ export function MapPanel() {
 
     return (
         <Flex direction="column">
-            <Box className={styles.mapContainer}>
+            <Box className={styles.mapContainer} ref={mapContainerRef}>
                 {renderMap()}
             </Box>
         </Flex>

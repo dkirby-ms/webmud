@@ -1,18 +1,22 @@
 .mapContainer {
   width: 100%;
+  height: 400px;  /* Set a fixed height for better control */
   padding: 1rem;
   overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .mapGrid {
   display: grid;
-  gap: 2rem;
+  gap: 1rem;  /* Reduced from 2rem for tighter layout */
   position: relative;
 }
 
 .mapCell {
-  width: 80px;
-  height: 80px;
+  width: 60px;  /* Reduced from 80px for more compact display */
+  height: 60px;
   position: relative;
 }
 
@@ -52,41 +56,41 @@
 }
 
 .northExit {
-  width: 10px;
-  height: 25px;
-  top: -25px;
+  width: 8px;  /* Adjusted for smaller cells */
+  height: 16px;  /* Adjusted for smaller gap */
+  top: -8px;  /* Adjusted to connect properly */
   left: 50%;
   transform: translateX(-50%);
 }
 
 .southExit {
-  width: 10px;
-  height: 25px;
-  bottom: -25px;
+  width: 8px;  /* Adjusted for smaller cells */
+  height: 16px;  /* Adjusted for smaller gap */
+  bottom: -8px;  /* Adjusted to connect properly */
   left: 50%;
   transform: translateX(-50%);
 }
 
 .eastExit {
-  width: 25px;
-  height: 10px;
-  right: -25px;
+  width: 16px;  /* Adjusted for smaller gap */
+  height: 8px;  /* Adjusted for smaller cells */
+  right: -8px;  /* Adjusted to connect properly */
   top: 50%;
   transform: translateY(-50%);
 }
 
 .westExit {
-  width: 25px;
-  height: 10px;
-  left: -25px;
+  width: 16px;  /* Adjusted for smaller gap */
+  height: 8px;  /* Adjusted for smaller cells */
+  left: -8px;  /* Adjusted to connect properly */
   top: 50%;
   transform: translateY(-50%);
 }
 
 .upExit, .downExit {
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: 16px;  /* Smaller for more proportion */
+  height: 16px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -94,16 +98,17 @@
   background-color: #666;
   color: white;
   font-weight: bold;
+  font-size: 0.7rem;  /* Smaller font size */
 }
 
 .upExit {
-  top: 0;
-  right: 0;
+  top: 2px;
+  right: 2px;
 }
 
 .downExit {
-  bottom: 0;
-  right: 0;
+  bottom: 2px;
+  right: 2px;
 }
 
 .emptyCell {
