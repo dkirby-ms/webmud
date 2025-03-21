@@ -168,6 +168,26 @@ export class World {
                 // Get the movement type for messages
                 const movementType = entity.getMovementTypeDescription();
 
+                // Initialize visited rooms if not already set
+                if (!entity.state!.visitedRooms) {
+                    entity.state!.visitedRooms = new Set<string>();
+                }
+                
+                // Mark both current and destination rooms as visited
+                entity.state!.visitedRooms.add(entity.state!.location);
+                entity.state!.visitedRooms.add(locationExit.room_id);
+                
+                // Initialize map data if not already set
+                if (!entity.state!.mapData) {
+                    entity.state!.mapData = { rooms: {} };
+                }
+                
+                // Add or update current room in map data
+                this.updateRoomInPlayerMap(entity, room);
+                
+                // Add or update destination room in map data
+                this.updateRoomInPlayerMap(entity, newRoom);
+
                 // Update entity state using the BaseEntity.updateState method
                 entity.updateState({
                     location: locationExit.room_id,
@@ -206,6 +226,8 @@ export class World {
                     }
                 }
 
+                // Send map update to player
+                this.sendMapUpdateToPlayer(playerCharacterId);
             } else {
                 if (entity.state?.gameMessages) {
                     entity.state.gameMessages.push(`You cannot move ${direction} from here.`);
@@ -216,22 +238,64 @@ export class World {
         }
     }
 
-    // Helper method to get the opposite direction for arrival messages
+    // Helper method to update a room in the player's map data
+    private updateRoomInPlayerMap(entity: Entity, room: Room): void {
+        if (!entity.state?.mapData) return;
+        
+        const roomId = room.id;
+        const roomExits: Record<string, string> = {};
+        
+        // Format exits data for the map
+        if (room.dbRecord.exits) {
+            for (const [direction, exitInfo] of Object.entries(room.dbRecord.exits)) {
+                if (exitInfo !== null && typeof exitInfo === 'object' && 'room_id' in exitInfo && typeof exitInfo.room_id === 'string') {
+                    roomExits[direction] = exitInfo.room_id;
+                }
+            }
+        }
+        
+        // Add or update the room in player's map data
+        entity.state.mapData.rooms[roomId] = {
+            id: roomId,
+            name: room.dbRecord.name,
+            exits: roomExits
+        };
+    }
+    
+    // Helper method to get the opposite direction
     private getOppositeDirection(direction: string): string {
-        const opposites: {[key: string]: string} = {
+        const opposites: Record<string, string> = {
             'north': 'south',
             'south': 'north',
             'east': 'west',
             'west': 'east',
-            'up': 'below',
-            'down': 'above',
+            'up': 'down',
+            'down': 'up',
             'northeast': 'southwest',
-            'southeast': 'northwest',
             'southwest': 'northeast',
             'northwest': 'southeast',
+            'southeast': 'northwest',
+            'in': 'out',
+            'out': 'in'
         };
         
         return opposites[direction] || 'somewhere';
+    }
+
+    // Send map data update to player
+    private sendMapUpdateToPlayer(playerCharacterId: string): void {
+        const player = this.players.get(playerCharacterId);
+        const entity = this.entities.find(e => e.pkid === playerCharacterId);
+        
+        if (player && entity && entity.state?.mapData) {
+            const mapUpdateData = {
+                rooms: entity.state.mapData.rooms,
+                playerLocation: entity.state.location,
+                visitedRooms: Array.from(entity.state.visitedRooms || [])
+            };
+            
+            player.socket.emit('game:map_update', mapUpdateData);
+        }
     }
 
     // Used for when a player connects to a specific room in the world (e.g., on login)
@@ -243,6 +307,20 @@ export class World {
         }
         let entity = this.entities.find(e => e.pkid === playerCharacterId);
         if (entity !== undefined) {
+            // Initialize map-related properties
+            if (!entity.state!.visitedRooms) {
+                entity.state!.visitedRooms = new Set<string>();
+            }
+            if (!entity.state!.mapData) {
+                entity.state!.mapData = { rooms: {} };
+            }
+            
+            // Mark room as visited
+            entity.state!.visitedRooms.add(location);
+            
+            // Add room to map data
+            this.updateRoomInPlayerMap(entity, room);
+            
             // Use updateState method for entity state changes
             entity.updateState({
                 location: location,
@@ -256,6 +334,9 @@ export class World {
                 entity.state.gameMessages.push(`You have arrived in a ${room.dbRecord.name}.`);
             }
             room.roomEntities.push(playerCharacterId);
+            
+            // Send initial map data
+            this.sendMapUpdateToPlayer(playerCharacterId);
         } else {
             throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
         }
@@ -297,6 +378,23 @@ export class World {
             throw new Error(`Room not found for location ${roomId}`);
         }
         return this.entities.filter(e => room.roomEntities.includes(e.pkid));
+    }
+
+    public getPlayerName(playerCharacterId: string): string {
+        const player = this.players.get(playerCharacterId);
+        if (!player) {
+            throw new Error(`Player not found for user ID ${playerCharacterId}`);
+        }
+        return player.playerCharacter.name;
+    }
+
+    public getPlayerSocketByName(playerName: string): Socket | undefined {
+        for (const [_, playerData] of this.players.entries()) {
+            if (playerData.playerCharacter.name === playerName) {
+                return playerData.socket;
+            }
+        }
+        return undefined;
     }
 
     public sayToRoom(playerCharacterId: string, message: string): void {

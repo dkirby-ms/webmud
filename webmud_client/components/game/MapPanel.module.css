@@ -1,0 +1,112 @@
+.mapContainer {
+  width: 100%;
+  padding: 1rem;
+  overflow: auto;
+}
+
+.mapGrid {
+  display: grid;
+  gap: 2rem;
+  position: relative;
+}
+
+.mapCell {
+  width: 80px;
+  height: 80px;
+  position: relative;
+}
+
+.room {
+  width: 100%;
+  height: 100%;
+  background-color: #2a3f5f;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 0.8rem;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.currentRoom {
+  background-color: #4c6baf;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.roomName {
+  font-size: 0.7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 95%;
+}
+
+.exit {
+  position: absolute;
+  background-color: #ddd;
+}
+
+.northExit {
+  width: 10px;
+  height: 25px;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.southExit {
+  width: 10px;
+  height: 25px;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.eastExit {
+  width: 25px;
+  height: 10px;
+  right: -25px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.westExit {
+  width: 25px;
+  height: 10px;
+  left: -25px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.upExit, .downExit {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  background-color: #666;
+  color: white;
+  font-weight: bold;
+}
+
+.upExit {
+  top: 0;
+  right: 0;
+}
+
+.downExit {
+  bottom: 0;
+  right: 0;
+}
+
+.emptyCell {
+  width: 100%;
+  height: 100%;
+}

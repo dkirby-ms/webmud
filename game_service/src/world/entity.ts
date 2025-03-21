@@ -15,6 +15,16 @@ export interface EntityState {
     movementType?: string; // Default movement type for this entity
     movementTypes?: string[]; // Movement types this entity can use
     currentMovementType?: string; // Currently active movement type
+    
+    // Add map-related data
+    visitedRooms?: Set<string>; // Rooms the player has visited
+    mapData?: {
+        rooms: Record<string, {
+            id: string;
+            name: string;
+            exits: Record<string, string>; // Direction -> Room ID mapping
+        }>;
+    };
 }
 
 export interface Entity {

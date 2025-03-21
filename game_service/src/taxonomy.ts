@@ -19,6 +19,7 @@ export const MessageTypes = {
         PLAYER_JOIN: "game:player_join",
         PLAYER_LEAVE: "game:player_leave",
         GAME_STATE_UPDATE: "game:state_update",
+        MAP_UPDATE: "game:map_update", // Added message type for map updates
     },
     combat: {
         ATTACK: "combat:attack",
