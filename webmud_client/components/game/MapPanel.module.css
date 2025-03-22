@@ -1,0 +1,117 @@
+.mapContainer {
+  width: 100%;
+  height: 400px;  /* Set a fixed height for better control */
+  padding: 1rem;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mapGrid {
+  display: grid;
+  gap: 1rem;  /* Reduced from 2rem for tighter layout */
+  position: relative;
+}
+
+.mapCell {
+  width: 60px;  /* Reduced from 80px for more compact display */
+  height: 60px;
+  position: relative;
+}
+
+.room {
+  width: 100%;
+  height: 100%;
+  background-color: #2a3f5f;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 0.8rem;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.currentRoom {
+  background-color: #4c6baf;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.roomName {
+  font-size: 0.7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 95%;
+}
+
+.exit {
+  position: absolute;
+  background-color: #ddd;
+}
+
+.northExit {
+  width: 8px;  /* Adjusted for smaller cells */
+  height: 16px;  /* Adjusted for smaller gap */
+  top: -8px;  /* Adjusted to connect properly */
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.southExit {
+  width: 8px;  /* Adjusted for smaller cells */
+  height: 16px;  /* Adjusted for smaller gap */
+  bottom: -8px;  /* Adjusted to connect properly */
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.eastExit {
+  width: 16px;  /* Adjusted for smaller gap */
+  height: 8px;  /* Adjusted for smaller cells */
+  right: -8px;  /* Adjusted to connect properly */
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.westExit {
+  width: 16px;  /* Adjusted for smaller gap */
+  height: 8px;  /* Adjusted for smaller cells */
+  left: -8px;  /* Adjusted to connect properly */
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.upExit, .downExit {
+  position: absolute;
+  width: 16px;  /* Smaller for more proportion */
+  height: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  background-color: #666;
+  color: white;
+  font-weight: bold;
+  font-size: 0.7rem;  /* Smaller font size */
+}
+
+.upExit {
+  top: 2px;
+  right: 2px;
+}
+
+.downExit {
+  bottom: 2px;
+  right: 2px;
+}
+
+.emptyCell {
+  width: 100%;
+  height: 100%;
+}

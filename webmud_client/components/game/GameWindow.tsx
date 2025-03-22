@@ -1,7 +1,7 @@
 "use client";
 import { useSession } from "next-auth/react";
 import { Flex, Box } from "@radix-ui/themes";
-import { ChatPanel } from "./ChatPanel.tsx";
+import { GameMessagePanel } from "./GameMessagePanel.tsx";
 import { ActionPanel } from "./ActionPanel.tsx";
 import { StatusPanel } from "./StatusPanel.tsx";
 import { CommandLine } from "./CommandLine.tsx";
@@ -25,7 +25,7 @@ export function GameWindow() {
             </Flex>
             {/* Bottom section: ChatPanel */}
             <Flex direction="column" style={{ borderTop: "1px solid #ccc" }}>
-                <ChatPanel />
+                <GameMessagePanel />
                 <CommandLine />
             </Flex>
         </Flex>

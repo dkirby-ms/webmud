@@ -4,6 +4,7 @@ import { MessageTypes } from './taxonomy.js';
 import { _ } from 'ajv';
 import { CommandType, parseCommand } from './commandParser.js';
 import { tellPlayer } from './message/tell.js'
+import { PlayerCharacterRepository } from './db/playerCharacterRepository.js';
 
 interface Dependencies {
     // socket server
@@ -48,6 +49,16 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 			logger.info(`Player ${userId} connected with character ${playerCharacter.name}`);
 			world.addPlayer(playerCharacterId, playerCharacter, socket);
 		}
+
+		// // Send initial map data upon player join
+        // if (playerEntity && playerEntity.state?.mapData) {
+        //     const mapUpdateData = {
+        //         rooms: playerEntity.state.mapData.rooms,
+        //         playerLocation: playerEntity.state.location,
+        //         visitedRooms: Array.from(playerEntity.state.visitedRooms || [])
+        //     };
+        //     socket.emit(MessageTypes.game.MAP_UPDATE, mapUpdateData);
+        // }
 	});
 	
 	socket.on('disconnect', () => {
@@ -77,10 +88,18 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 				world.sayToRoom(socket.data.playerCharacterId, parsedCommand.text!);
 				break;
 			case CommandType.TELL:
-				tellPlayer(io, socket, parsedCommand.args![0], parsedCommand.text!);
+				const toPlayerSocket = world.getPlayerSocketByName(parsedCommand.args![0]);
+				const fromPlayerName = world.getPlayerName(socket.data.playerCharacterId);
+				tellPlayer(toPlayerSocket, fromPlayerName, parsedCommand.text!);
 				break;
 			case CommandType.LOOK:
-				//world.look(socket.data.playerCharacterId);
+				 // Add support for map-related look command
+                if (parsedCommand.args && parsedCommand.args[0] === "map") {
+                    // Send a fresh map update when player looks at map
+                    world.sendMapUpdateToPlayer(socket.data.playerCharacterId);
+                } else {
+                    //world.look(socket.data.playerCharacterId);
+                }
 				break;
 			case CommandType.ATTACK:
 				//world.attack(socket.data.playerCharacterId, parsedCommand.args[0]);

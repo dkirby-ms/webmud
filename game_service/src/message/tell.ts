@@ -1,8 +1,8 @@
-import { Server, Socket } from "socket.io";
-import { MessageTypes, ChatMessage } from "../taxonomy.js";
+import { Socket } from "socket.io";
+import { MessageTypes } from "../taxonomy.js";
 
-export const tellPlayer = (io: Server, socket: Socket, target: string, message: string) => {
-    const payload: ChatMessage = { content: message, senderName: socket.data.playerCharacterName, channel: target };
-    io.to(target).emit(MessageTypes.chat.TELL, payload);
+export const tellPlayer = (socket: Socket, fromPlayerName: string, message: string) => {
+    const formattedMessage = `${fromPlayerName} tells you: ${message}`;
+    socket.emit(MessageTypes.chat.TELL, formattedMessage);
 }
     

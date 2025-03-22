@@ -1,20 +1,35 @@
+import { isConstructorDeclaration } from "typescript";
+
 export interface EntityState {
     name: string;
     description: string;
     inventory: string[];
     equipped: string[];
     room: string;
-    roomDescription: string;
-    roomExits: string[];
-    roomItems: string[];
-    roomEntities: string[];
     health: number;
     maxHealth: number;
     location: string;
-    gameMessages?: string[];
     movementType?: string; // Default movement type for this entity
     movementTypes?: string[]; // Movement types this entity can use
     currentMovementType?: string; // Currently active movement type
+
+    // Add map-related data
+    visitedRooms?: Set<string>; // Rooms the player has visited
+    mapData?: {
+        rooms: Record<string, {
+            id: string;
+            name: string;
+            exits: Record<string, string>; // Direction -> Room ID mapping
+        }>;
+    };
+
+    // Player-specific state
+    roomDescription?: string;
+    roomExits?: string[];
+    roomItems?: string[];
+    roomEntityStates?: EntityState[]; // state of entities in the room other than the player
+    roomEffects?: string[]; // Effects or conditions in the room
+    gameMessages?: string[];
 }
 
 export interface Entity {
@@ -59,17 +74,17 @@ export abstract class BaseEntity implements Entity {
             inventory: dbRecord.inventory || [],
             equipped: dbRecord.equipped || [],
             room: '',
-            roomDescription: '',
-            roomExits: [],
-            roomItems: [],
-            roomEntities: [],
             health: dbRecord.health || 100,
             maxHealth: dbRecord.maxHealth || 100,
             location: dbRecord.location || '',
-            gameMessages: [],
             movementType: 'walk', // Default movement type
             movementTypes: ['walk'], // Default available movement types
             currentMovementType: 'walk', // Currently using this movement type
+            roomDescription: '',
+            roomExits: [],
+            roomItems: [],
+            roomEntityStates: [],
+            gameMessages: [],
         };
 
         // If there's a saved state in the DB record, merge it
@@ -119,6 +134,8 @@ export abstract class BaseEntity implements Entity {
 
 // Player entity class
 export class PlayerEntity extends BaseEntity {
+    declare state?: EntityState;
+
     constructor(dbRecord: any) {
         super(dbRecord);
         this.type = 'player';
@@ -131,14 +148,31 @@ export class PlayerEntity extends BaseEntity {
             this.state.movementTypes = ['walk', 'run'];
             
             // Additional movement types based on character class or abilities could be added here
-            if (dbRecord.class === 'ranger' || dbRecord.skills?.includes('sprint')) {
-                this.state.movementTypes.push('sprint');
-            }
+            // if (dbRecord.class === 'ranger' || dbRecord.skills?.includes('sprint')) {
+            //     this.state.movementTypes.push('sprint');
+            // }
             
-            if (dbRecord.race === 'avian' || dbRecord.skills?.includes('fly')) {
-                this.state.movementTypes.push('fly');
-            }
+            // if (dbRecord.race === 'avian' || dbRecord.skills?.includes('fly')) {
+            //     this.state.movementTypes.push('fly');
+            // }
         }
+    }
+
+    public updateState(partialState: Partial<EntityState>): void {
+        if (this.state) {
+            this.state = { ...this.state, ...partialState };
+        }
+        this.lastUpdate = Date.now();
+    }
+
+    protected createDefaultState(dbRecord: any): EntityState {
+        const state = super.createDefaultState(dbRecord);
+        state.roomDescription = '';
+        state.roomExits = [];
+        state.roomItems = [];
+        state.roomEntityStates = [];
+        state.gameMessages = [];
+        return state;
     }
 }
 

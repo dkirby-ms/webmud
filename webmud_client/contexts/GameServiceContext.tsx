@@ -78,6 +78,24 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
             setGameState(gameState);
         });
 
+        newSocket.on("game:room_update", (roomUpdate) => {
+            // setGameState(prev => ({
+            //     ...prev,
+            //     roomState: {
+            //         ...prev.roomState,
+            //         ...roomUpdate
+            //     }
+            // }));
+        });
+
+        //newSocket.on("game:room_state", (roomState) => {
+        // newSocket.on("game:room_state"), (roomId, entityStates) => {
+        //     setGameState(prev => ({
+        //         ...prev,
+        //         roomState: roomState
+        //     }));
+        // });
+
         newSocket.on("game:messages", (messages) => {
             setGlobalChatMessages(prev => [...prev, ...messages]);
         });
