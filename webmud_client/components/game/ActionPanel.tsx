@@ -3,7 +3,6 @@ import { useSession } from "next-auth/react";
 import { useEffect, useRef } from "react";
 import { Flex, Box, Text, Heading, Separator } from "@radix-ui/themes";
 import { useGameService } from "../../contexts/GameServiceContext.tsx";
-import { StickToBottom } from 'use-stick-to-bottom';
 import { MapPanel } from "./MapPanel.tsx";
 export function ActionPanel() {
 
