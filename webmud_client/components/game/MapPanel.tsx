@@ -29,7 +29,7 @@ type MapData = {
 };
 
 export function MapPanel() {
-  const { socket, gameState } = useGameService();
+  const { socket } = useGameService();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapGridRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -197,7 +197,7 @@ export function MapPanel() {
         // Only render connections if the target room is visited and positioned
         if (!positionedRooms[targetId] || !mapData.visitedRooms.includes(targetId)) return;
         
-        const targetPosition = positionedRooms[targetId].position;
+        //const targetPosition = positionedRooms[targetId].position;
         
         // Calculate positions for connection
         let connectorStyle: React.CSSProperties = {};
