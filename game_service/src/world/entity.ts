@@ -1,35 +1,109 @@
-import { isConstructorDeclaration } from "typescript";
+// import { isConstructorDeclaration } from "typescript";
 
-export interface EntityState {
+// Baseline data interface - represents static/persistent entity properties
+export interface BaseEntityData {
+    id?: string;
     name: string;
     description: string;
-    inventory: string[];
-    equipped: string[];
-    room: string;
-    health: number;
+    baseInventory: string[];
+    baseEquipped: string[];
+    startingRoom: string;
+    baseHealth: number;
     maxHealth: number;
-    location: string;
-    movementType?: string; // Default movement type for this entity
-    movementTypes?: string[]; // Movement types this entity can use
-    currentMovementType?: string; // Currently active movement type
+    defaultLocation: string;
+    defaultMovementType: string;
+    availableMovementTypes: string[];
+    type: string; // e.g., "player", "npc", "item", etc.
+    form: string; // e.g., "humanoid", "beast", "undead", etc.
+    size: string; // e.g., "xsmall", "small", "medium", "large", "xlarge"
+    // Other baseline properties that don't change frequently
+}
 
-    // Add map-related data
-    visitedRooms?: Set<string>; // Rooms the player has visited
+// Runtime state interface - only contains dynamic state that changes during gameplay
+export interface EntityState {
+    currentRoom: string;
+    currentHealth: number;
+    currentInventory: string[];
+    currentEquipped: string[];
+    currentLocation: string;
+    currentMovementType: string;
+    
+    // Map-related data
+    visitedRooms?: Set<string>;
     mapData?: {
         rooms: Record<string, {
             id: string;
             name: string;
-            exits: Record<string, string>; // Direction -> Room ID mapping
+            exits: Record<string, string>;
         }>;
     };
 
-    // Player-specific state
+    // Player-specific runtime state
     roomDescription?: string;
     roomExits?: string[];
     roomItems?: string[];
     roomEntityStates?: EntityState[]; // state of entities in the room other than the player
     roomEffects?: string[]; // Effects or conditions in the room
     gameMessages?: string[];
+    
+    // Track temporary effects/modifiers that affect the entity
+    activeEffects?: Array<{
+        name: string;
+        duration: number;
+        modifiers: Record<string, any>;
+    }>;
+
+    // Updated to include complete entity data
+    roomEntityViews?: EntityClientView[]; // complete entity data for client rendering
+}
+
+// Client-side view of an entity - combines essential data from both BaseEntityData and EntityState
+export interface EntityClientView {
+    // Core identity
+    id: string;
+    name: string;
+    description: string;
+    type: string; // player, npc, item, etc.
+    form: string;
+    size: string;
+    
+    // Health and status
+    currentHealth: number;
+    maxHealth: number;
+    
+    // Equipment and inventory
+    inventory: string[];
+    equipped: string[];
+    
+    // Position and movement
+    currentRoom: string;
+    currentLocation: string;
+    currentMovementType: string;
+    availableMovementTypes: string[];
+    
+    // Visual indicators
+    activeEffects: Array<{
+        name: string;
+        duration: number;
+        modifiers: Record<string, any>;
+    }>;
+
+    // Room context information
+    roomDescription?: string;
+    roomExits?: any[]; // Using any to match the structure in the original code
+    roomItems?: string[];
+    gameMessages?: string[];
+    roomEffects?: string[];
+    
+    // Map data - only include what's needed for client rendering
+    visitedRooms?: string[];
+    mapData?: {
+        rooms: Record<string, {
+            id: string;
+            name: string;
+            exits: Record<string, string>;
+        }>;
+    };
 }
 
 export interface Entity {
@@ -39,11 +113,23 @@ export interface Entity {
     userId?: string;
     type: string; // e.g., "player", "npc", etc.
     lastUpdate: number;
-    state?: EntityState; // for players or NPCs that need additional state data
+    baseData: BaseEntityData; // Static/persistent data
+    state: EntityState;      // Dynamic/runtime data
+    
+    // Methods
     updateState(partialState: Partial<EntityState>): void;
     getMovementTypeDescription(): string;
     setMovementType(movementType: string): boolean;
     canUseMovementType(movementType: string): boolean;
+    
+    // New methods for getting effective values (baseline + modifiers)
+    getCurrentHealth(): number;
+    getMaxHealth(): number;
+    getName(): string;
+    getDescription(): string;
+    
+    // New method to generate a client view of this entity
+    toClientView(): EntityClientView;
 }
 
 // Abstract base class that implements the Entity interface
@@ -54,7 +140,8 @@ export abstract class BaseEntity implements Entity {
     userId?: string;
     type: string;
     lastUpdate: number;
-    state?: EntityState;
+    baseData: BaseEntityData;
+    state: EntityState;
 
     constructor(dbRecord: any) {
         this.dbRecord = dbRecord;
@@ -63,33 +150,54 @@ export abstract class BaseEntity implements Entity {
         this.lastUpdate = Date.now();
         this.userId = dbRecord.userId;
         
-        // Initialize with default state if none provided
-        this.state = this.createDefaultState(dbRecord);
+        // Extract base data from DB record
+        this.baseData = this.extractBaseData(dbRecord);
+        
+        // Initialize runtime state based on base data
+        this.state = this.initializeState(this.baseData);
     }
 
-    protected createDefaultState(dbRecord: any): EntityState {
-        const state: EntityState = {
+    protected extractBaseData(dbRecord: any): BaseEntityData {
+        return {
+            id: dbRecord._id?.toString() || dbRecord.entity_pk || '',
             name: dbRecord.name || 'Unknown',
             description: dbRecord.description || 'No description available',
-            inventory: dbRecord.inventory || [],
-            equipped: dbRecord.equipped || [],
-            room: '',
-            health: dbRecord.health || 100,
+            baseInventory: dbRecord.inventory || [],
+            baseEquipped: dbRecord.equipped || [],
+            startingRoom: dbRecord.startingRoom || '',
+            baseHealth: dbRecord.health || 100,
             maxHealth: dbRecord.maxHealth || 100,
-            location: dbRecord.location || '',
-            movementType: 'walk', // Default movement type
-            movementTypes: ['walk'], // Default available movement types
-            currentMovementType: 'walk', // Currently using this movement type
+            defaultLocation: dbRecord.location || '',
+            defaultMovementType: dbRecord.movementType || 'walk',
+            availableMovementTypes: dbRecord.movementTypes || ['walk'],
+            type: dbRecord.entity_type || '',
+            form: dbRecord.form || 'humanoid',
+            size: dbRecord.size || 'medium'
+        };
+    }
+
+    protected initializeState(baseData: BaseEntityData): EntityState {
+        // Initialize runtime state from base data
+        const state: EntityState = {
+            currentRoom: baseData.startingRoom,
+            currentHealth: baseData.baseHealth,
+            currentInventory: [...baseData.baseInventory],
+            currentEquipped: [...baseData.baseEquipped],
+            currentLocation: baseData.defaultLocation,
+            currentMovementType: baseData.defaultMovementType,
             roomDescription: '',
             roomExits: [],
             roomItems: [],
             roomEntityStates: [],
+            roomEntityViews: [], // Initialize the new property
             gameMessages: [],
+            activeEffects: []
         };
 
-        // If there's a saved state in the DB record, merge it
-        if (dbRecord.saved_state) {
-            for (const [key, value] of Object.entries(dbRecord.saved_state)) {
+        // If there's saved state in the DB record, merge it
+        if (this.dbRecord && (this.dbRecord as any).saved_state) {
+            const savedState = (this.dbRecord as any).saved_state;
+            for (const [key, value] of Object.entries(savedState)) {
                 if (key in state) {
                     (state as any)[key] = value;
                 }
@@ -101,24 +209,18 @@ export abstract class BaseEntity implements Entity {
 
     // Method to update entity state
     public updateState(partialState: Partial<EntityState>): void {
-        if (this.state) {
-            this.state = { ...this.state, ...partialState };
-        }
+        this.state = { ...this.state, ...partialState };
         this.lastUpdate = Date.now();
     }
 
     // Get the current movement type description
     public getMovementTypeDescription(): string {
-        if (!this.state) return 'move';
-        
-        return this.state.currentMovementType || this.state.movementType || 'move';
+        return this.state.currentMovementType || this.baseData.defaultMovementType;
     }
     
     // Set the current movement type if it's available to this entity
     public setMovementType(movementType: string): boolean {
-        if (!this.state || !this.state.movementTypes) return false;
-        
-        if (this.state.movementTypes.includes(movementType)) {
+        if (this.canUseMovementType(movementType)) {
             this.state.currentMovementType = movementType;
             return true;
         }
@@ -127,53 +229,84 @@ export abstract class BaseEntity implements Entity {
     
     // Check if entity can use a specific movement type
     public canUseMovementType(movementType: string): boolean {
-        if (!this.state || !this.state.movementTypes) return false;
-        return this.state.movementTypes.includes(movementType);
+        return this.baseData.availableMovementTypes.includes(movementType);
+    }
+    
+    // Methods to get effective values (considering active effects)
+    public getCurrentHealth(): number {
+        // Could apply modifiers from active effects
+        return this.state.currentHealth;
+    }
+    
+    public getMaxHealth(): number {
+        // Could apply modifiers from active effects
+        return this.baseData.maxHealth;
+    }
+    
+    public getName(): string {
+        // Could apply effects like invisibility or disguise
+        return this.baseData.name;
+    }
+    
+    public getDescription(): string {
+        // Could apply effects that alter appearance
+        return this.baseData.description;
+    }
+
+    // Generate a client-friendly view of this entity
+    public toClientView(): EntityClientView {
+        return {
+            id: this.baseData.id || this.pkid,
+            name: this.getName(),
+            description: this.getDescription(),
+            type: this.type,
+            form: this.baseData.form,
+            size: this.baseData.size,
+            
+            currentHealth: this.getCurrentHealth(),
+            maxHealth: this.getMaxHealth(),
+            
+            inventory: [...this.state.currentInventory],
+            equipped: [...this.state.currentEquipped],
+            
+            currentRoom: this.state.currentRoom,
+            currentLocation: this.state.currentLocation,
+            currentMovementType: this.state.currentMovementType,
+            availableMovementTypes: [...this.baseData.availableMovementTypes],
+            
+            activeEffects: this.state.activeEffects || [],
+            
+            // Include room context information
+            roomDescription: this.state.roomDescription,
+            roomExits: this.state.roomExits,
+            roomItems: this.state.roomItems,
+            gameMessages: this.state.gameMessages,
+            roomEffects: this.state.roomEffects,
+            
+            // Include simplified map data
+            visitedRooms: this.state.visitedRooms ? Array.from(this.state.visitedRooms) : [],
+            mapData: this.state.mapData
+        };
     }
 }
 
 // Player entity class
 export class PlayerEntity extends BaseEntity {
-    declare state?: EntityState;
-
     constructor(dbRecord: any) {
         super(dbRecord);
         this.type = 'player';
         
         // Player-specific initialization
-        if (this.state) {
-            this.state.gameMessages = this.state.gameMessages || [];
-            
-            // Players can walk and run by default
-            this.state.movementTypes = ['walk', 'run'];
-            
-            // Additional movement types based on character class or abilities could be added here
-            // if (dbRecord.class === 'ranger' || dbRecord.skills?.includes('sprint')) {
-            //     this.state.movementTypes.push('sprint');
-            // }
-            
-            // if (dbRecord.race === 'avian' || dbRecord.skills?.includes('fly')) {
-            //     this.state.movementTypes.push('fly');
-            // }
-        }
+        this.baseData.availableMovementTypes = ['walk', 'run', ...this.baseData.availableMovementTypes];
+        this.state.currentMovementType = this.baseData.defaultMovementType;
+        
+        // Additional movement types could be added based on character class or abilities
+        // if (dbRecord.class === 'ranger' || dbRecord.skills?.includes('sprint')) {
+        //     this.baseData.availableMovementTypes.push('sprint');
+        // }
     }
 
-    public updateState(partialState: Partial<EntityState>): void {
-        if (this.state) {
-            this.state = { ...this.state, ...partialState };
-        }
-        this.lastUpdate = Date.now();
-    }
-
-    protected createDefaultState(dbRecord: any): EntityState {
-        const state = super.createDefaultState(dbRecord);
-        state.roomDescription = '';
-        state.roomExits = [];
-        state.roomItems = [];
-        state.roomEntityStates = [];
-        state.gameMessages = [];
-        return state;
-    }
+    // Override or add player-specific methods as needed
 }
 
 // NPC entity class
@@ -183,35 +316,30 @@ export class NPCEntity extends BaseEntity {
         this.type = 'npc';
         
         // NPC-specific movement initialization
-        if (this.state) {
-            // Set movement types based on NPC type
-            switch (dbRecord.npcType?.toLowerCase()) {
-                case 'animal':
-                    if (dbRecord.animalType === 'bird') {
-                        this.state.movementTypes = ['walk', 'fly'];
-                        this.state.movementType = 'fly';
-                    } else if (dbRecord.animalType === 'snake') {
-                        this.state.movementTypes = ['slither'];
-                        this.state.movementType = 'slither';
-                    } else {
-                        this.state.movementTypes = ['walk', 'run'];
-                    }
-                    break;
-                case 'undead':
-                    this.state.movementTypes = ['shamble'];
-                    this.state.movementType = 'shamble';
-                    break;
-                case 'spirit':
-                    this.state.movementTypes = ['float'];
-                    this.state.movementType = 'float';
-                    break;
-                default:
-                    this.state.movementTypes = ['walk'];
-            }
-            
-            // Set current movement type to default
-            this.state.currentMovementType = this.state.movementType;
+        const npcType = dbRecord.npcType?.toLowerCase();
+        switch (npcType) {
+            case 'animal':
+                if (dbRecord.animalType === 'bird') {
+                    this.baseData.availableMovementTypes = ['walk', 'fly'];
+                    this.baseData.defaultMovementType = 'fly';
+                } else if (dbRecord.animalType === 'snake') {
+                    this.baseData.availableMovementTypes = ['slither'];
+                    this.baseData.defaultMovementType = 'slither';
+                } else {
+                    this.baseData.availableMovementTypes = ['walk', 'run'];
+                }
+                break;
+            case 'undead':
+                this.baseData.availableMovementTypes = ['shamble'];
+                this.baseData.defaultMovementType = 'shamble';
+                break;
+            case 'spirit':
+                this.baseData.availableMovementTypes = ['float'];
+                this.baseData.defaultMovementType = 'float';
+                break;
         }
+        
+        this.state.currentMovementType = this.baseData.defaultMovementType;
     }
 }
 
@@ -220,8 +348,6 @@ export class ItemEntity extends BaseEntity {
     constructor(dbRecord: any) {
         super(dbRecord);
         this.type = 'item';
-        
-        // Item-specific initialization can go here
     }
 }
 
