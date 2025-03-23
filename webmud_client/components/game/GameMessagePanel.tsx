@@ -14,7 +14,7 @@ export function GameMessagePanel() {
 
     useEffect(() => {
         messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [gameState]);
+    }, [gameState]); // Change dependency from gameState to gameState.gameMessages
 
     if (!session) return <div>Not authenticated</div>
 

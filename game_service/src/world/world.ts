@@ -336,7 +336,7 @@ export class World {
                         const clientView = entity.toClientView();
                         
                         // Send the complete client view
-                        player.socket.emit(MessageTypes.game.ROOM_UPDATE, clientView);
+                        player.socket.emit(MessageTypes.game.GAME_STATE_UPDATE, clientView);
                     }
                 }
             });
