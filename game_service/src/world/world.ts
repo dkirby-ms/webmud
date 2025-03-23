@@ -24,7 +24,7 @@ export class World {
     protected name: string;
     protected id: string;
     protected timer?: NodeJS.Timeout;
-    private readonly tickRate = 1000 / 20; // 20 ticks per second; // 1 second
+    private readonly tickRate = 1000 / 100; // 10 ticks per second; 1 tick = 100ms; 
 
     //protected redis: RedisClientType;
     protected socketServer: Server;
@@ -44,6 +44,7 @@ export class World {
         //this.redis = createClient({ url: REDIS_URL });
     }
 
+    // init the world from the database 
     public async init(): Promise<void> {
         try {
             // load world rooms from database
@@ -84,6 +85,7 @@ export class World {
 
     }
 
+    // start the game world loop
     public start(): void {
         try {
             this.timer = setInterval(() => this.tick(), this.tickRate);
@@ -94,6 +96,7 @@ export class World {
         }
     }
 
+    // stop the game world loop
     public stop(): void {
         if (this.timer) {
             clearInterval(this.timer);
@@ -101,6 +104,8 @@ export class World {
         }
     }
 
+    
+    // Add a player to the world as an entity
     public addPlayer(playerCharacterId: string, playerCharacter: any, socket: Socket): void {
         // Add the player to the world using Map.
         this.players.set(playerCharacterId, { playerCharacter, socket });
@@ -126,6 +131,7 @@ export class World {
         this.arrivePlayer(playerEntity.pkid, playerEntity.state.currentLocation || "room-001");
     }
 
+    // reconnect a disconnected player
     public reconnectPlayer(playerCharacterId: string, socket: Socket): void {
         // Changed: use array find instead of Map lookup.
         const player = this.players.get(playerCharacterId);
@@ -136,6 +142,7 @@ export class World {
         const playerEntity = this.entities.get(playerCharacterId); // not sure we need to do anything with entities here
     }
 
+    // remove a player from the world
     public removePlayer(playerCharacterId: string, options?: { disconnected?: boolean, kicked?: boolean }): void {
         // Remove player from the Map.
         if (options) {
@@ -271,6 +278,7 @@ export class World {
         };
     }
 
+    // advance the game loop - one tick represents 1/20th of a second at the current tick rate
     private tick(): void {
         this.gatherInputs();
         this.updateWorldState();
