@@ -1,9 +1,9 @@
 import { Repositories } from "../db/index.js";
 import { Socket, Server } from "socket.io";
-import { logger } from '../util.js'
-import { createClient, RedisClientType } from 'redis';
+import { logger, getOppositeDirection } from '../util.js'
+//import { createClient, RedisClientType } from 'redis';
 import { WithId, Document } from 'mongodb';
-import { Entity, EntityState, EntityFactory, PlayerEntity } from './entity.js';
+import { Entity, EntityFactory, PlayerEntity, EntityClientView } from './entity.js';
 import { MessageTypes } from "../taxonomy.js";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
@@ -109,24 +109,21 @@ export class World {
         const playerEntity = EntityFactory.createPlayerEntity(playerCharacter);
 
         // Set initial state values if not already set by the factory
-        if (playerEntity.state) {
-            // Default values for new players
-            if (!playerEntity.state.room) playerEntity.state.room = "";
-            if (!playerEntity.state.roomDescription) playerEntity.state.roomDescription = "";
-            if (!playerEntity.state.health) playerEntity.state.health = 100;
-            if (!playerEntity.state.maxHealth) playerEntity.state.maxHealth = 100;
-            if (!playerEntity.state.location) playerEntity.state.location = "room-001";
-            if (!playerEntity.state.roomExits) playerEntity.state.roomExits = [];
-            if (!playerEntity.state.roomItems) playerEntity.state.roomItems = [];
-            if (!playerEntity.state.roomEntityStates) playerEntity.state.roomEntityStates = [];
-            if (!playerEntity.state.gameMessages) playerEntity.state.gameMessages = [];
+        // Default values for new players
+        if (!playerEntity.state.currentRoom) playerEntity.state.currentRoom = "";
+        if (!playerEntity.state.roomDescription) playerEntity.state.roomDescription = "";
+        if (!playerEntity.state.currentHealth) playerEntity.state.currentHealth = 100;
+        if (!playerEntity.state.gameMessages) playerEntity.state.gameMessages = [];
+        if (!playerEntity.state.currentLocation) playerEntity.state.currentLocation = "room-001";
+        if (!playerEntity.state.roomExits) playerEntity.state.roomExits = [];
+        if (!playerEntity.state.roomItems) playerEntity.state.roomItems = [];
+        if (!playerEntity.state.roomEntityStates) playerEntity.state.roomEntityStates = [];
 
-            // Add welcome message
-            playerEntity.state.gameMessages.push("You have joined the world of " + this.name);
-        }
+        // Add welcome message
+        playerEntity.state.gameMessages.push("You have joined the world of " + this.name);
 
         this.entities.set(playerEntity.pkid, playerEntity);
-        this.arrivePlayer(playerEntity.pkid, playerEntity.state?.location || "room-001");
+        this.arrivePlayer(playerEntity.pkid, playerEntity.state.currentLocation || "room-001");
     }
 
     public reconnectPlayer(playerCharacterId: string, socket: Socket): void {
@@ -161,9 +158,9 @@ export class World {
         const entity = this.entities.get(playerCharacterId) as PlayerEntity;
         if (entity !== undefined) {
             // lookup the location in the rooms array
-            const room = this.rooms.find(r => r.id === entity.state!.location);
+            const room = this.rooms.find(r => r.id === entity.state.currentLocation);
             if (!room) {
-                throw new Error(`Room not found for location ${entity.state!.location}`);
+                throw new Error(`Room not found for location ${entity.state.currentLocation}`);
             }
 
             // check if the room has an exit in the specified direction
@@ -178,32 +175,32 @@ export class World {
                 const movementType = entity.getMovementTypeDescription();
 
                 // Initialize visited rooms if not already set
-                if (!entity.state!.visitedRooms) {
-                    entity.state!.visitedRooms = new Set<string>();
+                if (!entity.state.visitedRooms) {
+                    entity.state.visitedRooms = new Set<string>();
                 }
-                
+
                 // Mark both current and destination rooms as visited
-                entity.state!.visitedRooms.add(entity.state!.location);
-                entity.state!.visitedRooms.add(locationExit.room_id);
-                
+                entity.state.visitedRooms.add(entity.state.currentLocation);
+                entity.state.visitedRooms.add(locationExit.room_id);
+
                 // Initialize map data if not already set
-                if (!entity.state!.mapData) {
-                    entity.state!.mapData = { rooms: {} };
+                if (!entity.state.mapData) {
+                    entity.state.mapData = { rooms: {} };
                 }
-                
+
                 // Add or update current room in map data
                 this.updateRoomInPlayerMap(entity, room);
-                
+
                 // Add or update destination room in map data
                 this.updateRoomInPlayerMap(entity, newRoom);
 
                 // Update entity state using the BaseEntity.updateState method
                 entity.updateState({
-                    location: locationExit.room_id,
-                    room: newRoom.dbRecord.name,
+                    currentLocation: locationExit.room_id,
+                    currentRoom: newRoom.dbRecord.name,
                     roomDescription: newRoom.dbRecord.description,
                     roomExits: newRoom.dbRecord.exits,
-                    roomEntityStates: this.getRoomEntityStates(locationExit.room_id)
+                    roomEntityViews: this.getRoomEntityViews(locationExit.room_id)
                 });
 
                 // remove the player entity from the old room
@@ -221,7 +218,7 @@ export class World {
                 for (const entityPkid of room.roomEntities) {
                     const otherEntity = this.entities.get(entityPkid) as PlayerEntity;
                     if (otherEntity && otherEntity.state?.gameMessages) {
-                        otherEntity.state.gameMessages.push(`${entity.state?.name} ${movementType}s ${direction}.`);
+                        otherEntity.state.gameMessages.push(`${entity.baseData.name} ${movementType}s ${direction}.`);
                     }
                 }
 
@@ -230,7 +227,7 @@ export class World {
                     if (entityPkid !== playerCharacterId) { // Don't notify the arriving player
                         const otherEntity = this.entities.get(entityPkid) as PlayerEntity;
                         if (otherEntity && otherEntity.state?.gameMessages) {
-                            otherEntity.state.gameMessages.push(`${entity.state?.name} ${movementType}s in from the ${this.getOppositeDirection(direction)}.`);
+                            otherEntity.state.gameMessages.push(`${entity.baseData.name} ${movementType}s in from ${getOppositeDirection(direction)}.`);
                         }
                     }
                 }
@@ -253,10 +250,10 @@ export class World {
     // Helper method to update a room in the player's map data
     private updateRoomInPlayerMap(entity: PlayerEntity, room: Room): void {
         if (!entity.state?.mapData) return;
-        
+
         const roomId = room.id;
         const roomExits: Record<string, string> = {};
-        
+
         // Format exits data for the map
         if (room.dbRecord.exits) {
             for (const [direction, exitInfo] of Object.entries(room.dbRecord.exits)) {
@@ -265,7 +262,7 @@ export class World {
                 }
             }
         }
-        
+
         // Add or update the room in player's map data
         entity.state.mapData.rooms[roomId] = {
             id: roomId,
@@ -273,94 +270,11 @@ export class World {
             exits: roomExits
         };
     }
-    
-    // Helper method to get the opposite direction
-    private getOppositeDirection(direction: string): string {
-        const opposites: Record<string, string> = {
-            'north': 'south',
-            'south': 'north',
-            'east': 'west',
-            'west': 'east',
-            'up': 'down',
-            'down': 'up',
-            'northeast': 'southwest',
-            'southwest': 'northeast',
-            'northwest': 'southeast',
-            'southeast': 'northwest',
-            'in': 'out',
-            'out': 'in'
-        };
-        
-        return opposites[direction] || 'somewhere';
-    }
-
-    // Send map data update to player
-    private sendMapUpdateToPlayer(playerCharacterId: string): void {
-        const player = this.players.get(playerCharacterId);
-        const entity = this.entities.get(playerCharacterId) as PlayerEntity;
-        
-        if (player && entity && entity.state?.mapData) {
-            const mapUpdateData = {
-                rooms: entity.state.mapData.rooms,
-                playerLocation: entity.state.location,
-                visitedRooms: Array.from(entity.state.visitedRooms || [])
-            };
-            
-            player.socket.emit('game:map_update', mapUpdateData);
-        }
-    }
-
-    // Used for when a player connects to a specific room in the world (e.g., on login)
-    public arrivePlayer(playerCharacterId: string, location: string): void {
-        // lookup the location in the rooms array
-        let room = this.rooms.find(r => r.id === location);
-        if (!room) {
-            throw new Error(`Room not found for location ${location}`);
-        }
-        let entity = this.entities.get(playerCharacterId) as PlayerEntity;
-        if (entity !== undefined) {
-            // Initialize map-related properties
-            if (!entity.state!.visitedRooms) {
-                entity.state!.visitedRooms = new Set<string>();
-            }
-            if (!entity.state!.mapData) {
-                entity.state!.mapData = { rooms: {} };
-            }
-            
-            // Mark room as visited
-            entity.state!.visitedRooms.add(location);
-            
-            // Add room to map data
-            this.updateRoomInPlayerMap(entity, room);
-            
-            // Use updateState method for entity state changes
-            entity.updateState({
-                location: location,
-                room: room.dbRecord.name,
-                roomDescription: room.dbRecord.description,
-                roomExits: room.dbRecord.exits,
-                roomEntityStates: this.getRoomEntityStates(location)
-            });
-
-            if (entity.state?.gameMessages) {
-                entity.state.gameMessages.push(`You have arrived in a ${room.dbRecord.name}.`);
-            }
-            room.roomEntities.push(playerCharacterId);
-            
-            // Send initial map data
-            this.sendMapUpdateToPlayer(playerCharacterId);
-
-            // Send room state to player
-            this.sendStateToPlayer(playerCharacterId, location);
-        } else {
-            throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
-        }
-    }
 
     private tick(): void {
         this.gatherInputs();
         this.updateWorldState();
-        this.broadcastWorldState();
+        this.broadcastClientViews();
     }
 
     private gatherInputs(): void {
@@ -375,7 +289,50 @@ export class World {
     private updateWorldState(): void {
         // update the world state
         // for each room, update the state
+        for (const room of this.rooms) {
+            // update the room state
+            room.lastUpdate = Date.now();
+            // update the entities in the room if needed
+            const roomEntities = this.getRoomEntities(room.id);
+            for (const entity of roomEntities) {
+                // update the entity state if needed
+                if (entity.state) {
+                    // perform any necessary updates to the entity state
+                    entity.lastUpdate = Date.now();
+                }
+            }
+        }
+    }
 
+    // FINISH UPDATING THIS TO USE ROOMS FIRST
+    private broadcastClientViews(): void {
+        this.rooms.forEach(room => {
+            // WARNING!! at some point the order the entities iterate through will matter
+            const roomEntities = this.getRoomEntities(room.id);
+            
+            // First, update players' state with room entity views
+            const roomEntityViews = roomEntities.map(entity => entity.toClientView());
+            
+            // Then send each player their complete client view
+            roomEntities.forEach(entity => {
+                if (entity.type === "player") {
+                    // Get the player's socket
+                    const player = this.players.get(entity.pkid);
+                    if (player && player.socket) {
+                        // Update the player's state with room entity views
+                        entity.updateState({
+                            roomEntityViews
+                        });
+                        
+                        // Get the complete client view
+                        const clientView = entity.toClientView();
+                        
+                        // Send the complete client view
+                        player.socket.emit(MessageTypes.game.ROOM_UPDATE, clientView);
+                    }
+                }
+            });
+        });
     }
 
     public sendCommandOutputToPlayer(playerCharacterId: string, messages: string[]): void {
@@ -395,9 +352,9 @@ export class World {
         return Array.from(this.entities.values()).filter(e => room.roomEntities.includes(e.pkid));
     }
 
-    private getRoomEntityStates(roomId: string): EntityState[] {
+    private getRoomEntityViews(roomId: string): EntityClientView[] {
         const roomEntities = this.getRoomEntities(roomId);
-        return roomEntities.map(entity => entity.state).filter(state => state !== undefined) as EntityState[];
+        return roomEntities.map(entity => entity.toClientView());
     }
 
     public getPlayerName(playerCharacterId: string): string {
@@ -418,6 +375,69 @@ export class World {
         return undefined;
     }
 
+    // Send map data update to player
+    private sendMapUpdateToPlayer(playerCharacterId: string): void {
+        const player = this.players.get(playerCharacterId);
+        const entity = this.entities.get(playerCharacterId) as PlayerEntity;
+
+        if (player && entity && entity.state?.mapData) {
+            const mapUpdateData = {
+                rooms: entity.state.mapData.rooms,
+                playerLocation: entity.state.currentLocation,
+                visitedRooms: Array.from(entity.state.visitedRooms || [])
+            };
+
+            player.socket.emit('game:map_update', mapUpdateData);
+        }
+    }
+
+    // Used for when a player connects to a specific room in the world (e.g., on login)
+    public arrivePlayer(playerCharacterId: string, location: string): void {
+        // lookup the location in the rooms array
+        let room = this.rooms.find(r => r.id === location);
+        if (!room) {
+            throw new Error(`Room not found for location ${location}`);
+        }
+        let entity = this.entities.get(playerCharacterId) as PlayerEntity;
+        if (entity !== undefined) {
+            // Initialize map-related properties
+            if (!entity.state.visitedRooms) {
+                entity.state.visitedRooms = new Set<string>();
+            }
+            if (!entity.state.mapData) {
+                entity.state.mapData = { rooms: {} };
+            }
+
+            // Mark room as visited
+            entity.state.visitedRooms.add(location);
+
+            // Add room to map data
+            this.updateRoomInPlayerMap(entity, room);
+
+            // Use updateState method for entity state changes
+            entity.updateState({
+                currentLocation: location,
+                currentRoom: room.dbRecord.name,
+                roomDescription: room.dbRecord.description,
+                roomExits: room.dbRecord.exits,
+                roomEntityViews: this.getRoomEntityViews(location)
+            });
+
+            if (entity.state?.gameMessages) {
+                entity.state.gameMessages.push(`You have arrived in a ${room.dbRecord.name}.`);
+            }
+            room.roomEntities.push(playerCharacterId);
+
+            // Send initial map data
+            this.sendMapUpdateToPlayer(playerCharacterId);
+
+            // Send room state to player
+            this.sendStateToPlayer(playerCharacterId, location);
+        } else {
+            throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
+        }
+    }
+
     public sayToRoom(playerCharacterId: string, message: string): void {
         // Find the player entity for the socket
         const player = this.players.get(playerCharacterId);
@@ -427,7 +447,7 @@ export class World {
         const entity = this.entities.get(playerCharacterId) as PlayerEntity;
         if (entity) {
             // Get the room entities
-            const roomEntities = this.getRoomEntities(entity.state?.location || "");
+            const roomEntities = this.getRoomEntities(entity.state.currentLocation || "");
             // Add the message to the player's game messages
             if (entity.state?.gameMessages) {
                 entity.state.gameMessages.push(`You say, "${message}"`);
@@ -435,7 +455,7 @@ export class World {
             // Add the message to the other entities' game messages
             for (const roomEntity of roomEntities) {
                 if (roomEntity.pkid !== playerCharacterId && roomEntity.state?.gameMessages) {
-                    roomEntity.state.gameMessages.push(`${entity.state?.name} says, "${message}"`);
+                    roomEntity.state.gameMessages.push(`${entity.baseData.name} says, "${message}"`);
                 }
             }
         }
@@ -447,7 +467,7 @@ export class World {
         if (!entity) {
             throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
         }
-        
+
         if (entity.setMovementType(newMovementType)) {
             if (entity.state?.gameMessages) {
                 entity.state.gameMessages.push(`You are now ${newMovementType}ing.`);
@@ -459,20 +479,7 @@ export class World {
         }
     }
 
-    // FINISH UPDATING THIS TO USE ROOMS FIRST
-    private broadcastWorldState(): void {
-        this.rooms.forEach(room => {
-            const roomEntities = this.getRoomEntities(room.id);
-            roomEntities.forEach(entity => {
-                if (entity.type === "player") {
-                    // send player state to player (player current stats, etc)
-                    // sendPlayerStateToPlayer(entity.pkid);
-                    // send room state to player (room effects and current state of entities in the room)
-                    this.sendStateToPlayer(entity.pkid, room.id);
-                }
-            });
-        });
-    }
+
 
     // send the current state of the room to the specified player - in the future this could be used for scrying or other effects 
     public sendStateToPlayer(playerCharacterId: string, roomId: string): void {
@@ -480,26 +487,26 @@ export class World {
         if (!player) {
             throw new Error(`Player not found for user ID ${playerCharacterId}`);
         }
-        
+
         const room = this.rooms.find(r => r.id === roomId);
         if (!room) {
             throw new Error(`Room not found for location ${roomId}`);
         }
-        
+
         // get the player's current state
         const entity = this.entities.get(playerCharacterId) as PlayerEntity;
         if (!entity) {
             throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
         }
 
-        // get the current state of the room and its entities
-        //const entityStates = this.getRoomEntityStates(roomId);
-        
-        player.socket.emit('game:state_update', entity.state);
+        // Update the player's state with room entity views
+        const roomEntityViews = this.getRoomEntityViews(roomId);
+        entity.updateState({
+            roomEntityViews
+        });
 
-        //player.socket.emit(MessageTypes.game.GAME_STATE_UPDATE)
-
-        //ayer.socket.emit(MessageTypes.game.ROOM_UPDATE, { roomId, entityStates });
+        // Send the complete client view
+        player.socket.emit('game:state_update', entity.toClientView());
     }
 
 }

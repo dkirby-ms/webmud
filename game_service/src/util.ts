@@ -56,3 +56,15 @@ export function validateJwt(token: string): Promise<jwt.JwtPayload | string | an
     );
   });
 }
+
+export function getOppositeDirection(direction: string): string {
+  const oppositeDirections: Record<string, string> = {
+    north: "the south",
+    south: "the north",
+    east: "the west",
+    west: "the east",
+    up: "the below",
+    down: "above",
+  };
+  return oppositeDirections[direction] || direction;
+}

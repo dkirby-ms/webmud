@@ -4,6 +4,8 @@ import { useEffect, useRef } from "react";
 import { Flex, Box, Text, Heading, Separator } from "@radix-ui/themes";
 import { useGameService } from "../../contexts/GameServiceContext.tsx";
 import { MapPanel } from "./MapPanel.tsx";
+import { EntityList } from "./EntityList.tsx";
+
 export function ActionPanel() {
 
     const { data: session } = useSession();
@@ -32,6 +34,12 @@ export function ActionPanel() {
             {gameState.roomExits && (
                 <>Exits: {Object.keys(gameState.roomExits).join(", ")}</>
             )}</Text></Box>
+            
+            {/* Add EntityList component */}
+            <Box p="2">
+                <EntityList />
+            </Box>
+            
             {/* <Separator style={{ width: "73vw", position: "relative", left: "50%", transform: "translateX(-50%)" }} />
             {gameState.gameMessages && (
                 <Box>
