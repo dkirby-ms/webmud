@@ -14,3 +14,4 @@ game_service/build/
 game_service/server.log
 webmud_client/server.log
 .azure
+infra/main.parameters.json
