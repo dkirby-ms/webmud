@@ -202,6 +202,10 @@ module gameService 'br/public:avm/res/app/container-app:0.8.0' = {
             secretRef: 'mongodb-url'
           }
           {
+            name: 'MONGODB_URI'
+            secretRef: 'mongodb-url'
+          }
+          {
             name: 'PORT'
             value: '28999'
           }
