@@ -4,6 +4,12 @@ param location string = resourceGroup().location
 @description('Tags that will be applied to all resources')
 param tags object = {}
 
+// Add custom domain parameters
+@description('Custom domain for game service (optional)')
+param gameServiceCustomDomain string = ''
+
+@description('Custom domain for webmud client (optional)')
+param webmudClientCustomDomain string = ''
 
 param gameServiceExists bool
 @secure()
@@ -160,6 +166,7 @@ module gameService 'br/public:avm/res/app/container-app:0.8.0' = {
     corsPolicy: {
       allowedOrigins: [
         'https://webmud-client.${containerAppsEnvironment.outputs.defaultDomain}'
+        !empty(webmudClientCustomDomain) ? 'https://${webmudClientCustomDomain}' : ''
       ]
       allowedMethods: [
         '*'
@@ -167,6 +174,14 @@ module gameService 'br/public:avm/res/app/container-app:0.8.0' = {
     }
     scaleMinReplicas: 1
     scaleMaxReplicas: 10
+    // Add custom domain configuration
+    customDomains: !empty(gameServiceCustomDomain) ? [
+      {
+        name: gameServiceCustomDomain
+        bindingType: 'SniEnabled'
+        certificateId: '' // For managed certificate
+      }
+    ] : []
     secrets: {
       secureList:  union([
         {
@@ -271,6 +286,14 @@ module webmudClient 'br/public:avm/res/app/container-app:0.8.0' = {
     ingressTargetPort: 3000
     scaleMinReplicas: 1
     scaleMaxReplicas: 10
+    // Add custom domain configuration
+    customDomains: !empty(webmudClientCustomDomain) ? [
+      {
+        name: webmudClientCustomDomain
+        bindingType: 'SniEnabled'
+        certificateId: '' // For managed certificate
+      }
+    ] : []
     secrets: {
       secureList:  union([
         {
@@ -310,18 +333,6 @@ module webmudClient 'br/public:avm/res/app/container-app:0.8.0' = {
             secretRef: 'mongodb-url'
           }
           {
-            name: 'HOST_URL'
-            value: 'https://webmud-client.${containerAppsEnvironment.outputs.defaultDomain}'
-          }
-          {
-            name: 'NEXTAUTH_URL'
-            value: 'https://webmud-client.${containerAppsEnvironment.outputs.defaultDomain}'
-          }
-          {
-            name: 'GAME-SERVICE_BASE_URL'
-            value: 'https://game-service.${containerAppsEnvironment.outputs.defaultDomain}'
-          }
-          {
             name: 'PORT'
             value: '3000'
           }
@@ -351,3 +362,7 @@ module webmudClient 'br/public:avm/res/app/container-app:0.8.0' = {
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer
 output AZURE_RESOURCE_GAME_SERVICE_ID string = gameService.outputs.resourceId
 output AZURE_RESOURCE_WEBMUD_CLIENT_ID string = webmudClient.outputs.resourceId
+
+// Add new outputs to show the URLs with custom domains
+output GAME_SERVICE_URL string = !empty(gameServiceCustomDomain) ? 'https://${gameServiceCustomDomain}' : 'https://game-service.${containerAppsEnvironment.outputs.defaultDomain}'
+output WEBMUD_CLIENT_URL string = !empty(webmudClientCustomDomain) ? 'https://${webmudClientCustomDomain}' : 'https://webmud-client.${containerAppsEnvironment.outputs.defaultDomain}'
