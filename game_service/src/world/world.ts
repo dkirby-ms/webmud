@@ -5,6 +5,7 @@ import { logger, getOppositeDirection } from '../util.js'
 import { WithId, Document } from 'mongodb';
 import { Entity, EntityFactory, PlayerEntity, EntityClientView } from './entity.js';
 import { MessageTypes } from "../taxonomy.js";
+import { getEmoteByKey, EmoteDefinition } from "./emoteConfig.js";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const enum RoomType {
@@ -487,7 +488,87 @@ export class World {
         }
     }
 
+    // Modify the emoteToRoom method to use the emote config
+    public emoteToRoom(playerCharacterId: string, emoteAction: string, target?: string): void {
+        // Find the player entity
+        const entity = this.entities.get(playerCharacterId) as PlayerEntity;
+        if (!entity) {
+            throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
+        }
 
+        // Get the current room entities
+        const roomEntities = this.getRoomEntities(entity.state.currentLocation || "");
+        
+        // Find the emote definition if it exists, otherwise use generic format
+        const emote = getEmoteByKey(emoteAction);
+        
+        // Format the messages
+        let playerMessage = "";
+        let othersMessage = "";
+        let targetMessage = "";
+        
+        // Check if this is a targeted emote
+        if (target) {
+            // Find the target entity in the room
+            const targetEntity = roomEntities.find(e => 
+                e.baseData.name.toLowerCase() === target.toLowerCase());
+            
+            if (targetEntity) {
+                // Target found in the room
+                if (emote) {
+                    // Use the predefined emote texts
+                    playerMessage = emote.targetSelfText.replace("{target}", targetEntity.baseData.name);
+                    othersMessage = emote.targetOthersText
+                        .replace("{name}", entity.baseData.name)
+                        .replace("{target}", targetEntity.baseData.name);
+                    targetMessage = emote.targetReceiverText.replace("{name}", entity.baseData.name);
+                } else {
+                    // Use generic format for custom emotes
+                    playerMessage = `You ${emoteAction} at ${targetEntity.baseData.name}.`;
+                    othersMessage = `${entity.baseData.name} ${emoteAction}s at ${targetEntity.baseData.name}.`;
+                    targetMessage = `${entity.baseData.name} ${emoteAction}s at you.`;
+                }
+                
+                // If the target is a player, send them the special message
+                if (targetEntity.type === "player") {
+                    const targetPlayer = this.entities.get(targetEntity.pkid) as PlayerEntity;
+                    if (targetPlayer && targetPlayer.state?.gameMessages) {
+                        targetPlayer.state.gameMessages.push(targetMessage);
+                    }
+                }
+            } else {
+                // Target not found, fall back to untargeted emote with mention
+                playerMessage = `You ${emoteAction} at ${target}, but they are not here.`;
+                othersMessage = `${entity.baseData.name} ${emoteAction}s at ${target}, but they are not here.`;
+            }
+        } else {
+            // Untargeted emote
+            if (emote) {
+                // Use the predefined emote texts
+                playerMessage = emote.selfText;
+                othersMessage = emote.othersText.replace("{name}", entity.baseData.name);
+            } else {
+                // Use generic format for custom emotes
+                playerMessage = `You ${emoteAction}.`;
+                othersMessage = `${entity.baseData.name} ${emoteAction}s.`;
+            }
+        }
+        
+        // Add the message to the player's game messages
+        if (entity.state?.gameMessages) {
+            entity.state.gameMessages.push(playerMessage);
+        }
+        
+        // Add the message to other entities in the room
+        for (const roomEntity of roomEntities) {
+            // Skip the originating player and the target (who gets a special message)
+            if (roomEntity.pkid !== playerCharacterId && 
+                (!target || roomEntity.baseData.name.toLowerCase() !== target.toLowerCase()) && 
+                roomEntity.state?.gameMessages) {
+                roomEntity.state.gameMessages.push(othersMessage);
+            }
+        }
+    }
 
     // send the current state of the room to the specified player - in the future this could be used for scrying or other effects 
     public sendStateToPlayer(playerCharacterId: string, roomId: string): void {

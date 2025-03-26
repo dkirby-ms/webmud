@@ -104,6 +104,14 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 			case CommandType.ATTACK:
 				//world.attack(socket.data.playerCharacterId, parsedCommand.args[0]);
 				break;
+			case CommandType.EMOTE:
+				// Handle emote commands
+				if (parsedCommand.text) {
+					const emoteAction = parsedCommand.text;
+					const target = parsedCommand.args && parsedCommand.args.length > 0 ? parsedCommand.args[0] : undefined;
+					world.emoteToRoom(socket.data.playerCharacterId, emoteAction, target);
+				}
+				break;
 			case CommandType.UNKNOWN:
 				logger.warn(`Player ${socket.data.playerCharacterId} sent an unknown command: ${command}`);
 				const output = "Sorry, I don't understand that command.";

@@ -5,7 +5,10 @@ export enum CommandType {
     UNKNOWN = "unknown",
     TELL = "tell",
     LOOK = "look",
+    EMOTE = "emote", // Added new command type for emotes
 }
+
+import { EMOTE_KEYS } from './world/emoteConfig.js';
 
 export interface Command {
     type: CommandType;
@@ -20,6 +23,7 @@ export interface Command {
  * - "say <message>" => CommandType.SAY with message in the "text" property.
  * - Direction commands (e.g., "north", "east") => CommandType.MOVE with the direction in "args".
  * - "kill <target>" => CommandType.ATTACK with the target in "args".
+ * - "emote <action>" or specific emotes like "smile", "dance" => CommandType.EMOTE
  *
  * If the command is not recognized, type will be CommandType.UNKNOWN.
  */
@@ -79,6 +83,34 @@ export function parseCommand(input: string): Command {
             type: CommandType.ATTACK,
             args: tokens.slice(1),
         };
+    }
+
+    // Handle 'look' command
+    if (commandWord === "look" || commandWord === "l") {
+        return {
+            type: CommandType.LOOK,
+            args: tokens.slice(1),
+        };
+    }
+
+    // Handle emote commands
+    // Check if the command is a specific emote or the generic 'emote' command
+    if (EMOTE_KEYS.includes(commandWord) || commandWord === "emote" || commandWord === "em") {
+        if (commandWord === "emote" || commandWord === "em") {
+            // For generic emote command, rest is the full emote text
+            return {
+                type: CommandType.EMOTE,
+                text: rest,
+                args: rest.length ? tokens.slice(1) : undefined
+            };
+        } else {
+            // For specific emote commands like "smile", the command itself is the action
+            return {
+                type: CommandType.EMOTE,
+                text: commandWord,
+                args: tokens.slice(1).length ? tokens.slice(1) : undefined
+            };
+        }
     }
 
     return { type: CommandType.UNKNOWN };
