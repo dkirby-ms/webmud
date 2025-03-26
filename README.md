@@ -4,9 +4,10 @@ This project is an interactive web-based MUD built with a modular, scalable arch
 
 ## Features
 - Real-time multiplayer gameplay
-- Modular design for easy expansion
-- Engaging text-based interactions
-
+- Old-school command line gameplay and socials
+- Play through the browser
+- Scalable architecture could support many concurrent users/large battles
+  
 ## Architecture
 
 ![architecture diagram](./docs/img/architecture.png)
