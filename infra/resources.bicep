@@ -213,10 +213,6 @@ module gameService 'br/public:avm/res/app/container-app:0.8.0' = {
             value: gameServiceIdentity.outputs.clientId
           }
           {
-            name: 'CORS_ORIGIN_HOST'
-            value: 'https://game-service.${containerAppsEnvironment.outputs.defaultDomain}'
-          }
-          {
             name: 'MONGODB_URL'
             secretRef: 'mongodb-url'
           }

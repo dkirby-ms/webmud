@@ -16,3 +16,37 @@ services:
         language: js
         docker:
             path: Dockerfile
+
+actions:
+  post-deployment:
+    - command: |
+        echo "Updating DNS records for kirbytoso.xyz zone..."
+        
+        # Get the game-service FQDN
+        GAME_SERVICE_FQDN=$(az containerapp show \
+          --resource-group $AZURE_RESOURCE_GROUP \
+          --name game-service \
+          --query properties.configuration.ingress.fqdn \
+          --output tsv)
+        
+        # Get the webmud-client FQDN
+        CLIENT_FQDN=$(az containerapp show \
+          --resource-group $AZURE_RESOURCE_GROUP \
+          --name webmud-client \
+          --query properties.configuration.ingress.fqdn \
+          --output tsv)
+        
+        # Update DNS records
+        az network dns record-set cname set-record \
+          --resource-group kirbytosodomain \
+          --zone-name kirbytoso.xyz \
+          --record-set-name webmud-testserver \
+          --cname $GAME_SERVICE_FQDN
+        
+        az network dns record-set cname set-record \
+          --resource-group kirbytosodomain \
+          --zone-name kirbytoso.xyz \
+          --record-set-name webmud \
+          --cname $CLIENT_FQDN
+        
+        echo "DNS records updated successfully."
