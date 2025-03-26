@@ -7,7 +7,6 @@ export async function GET() {
   const userId = session.userId;
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   
-  
   const client = new MongoClient(process.env.MONGODB_URI as string);
   await client.connect();
 
@@ -22,19 +21,20 @@ export async function GET() {
         as: "speciesData"
       }},
       { $unwind: "$speciesData" },
-      { $addFields: { speciesName: "$speciesData.name" } },
+      { $addFields: { 
+        speciesName: "$speciesData.name",
+        worldObjectId: { $toObjectId: "$worldId" }
+      }},
       { $project: { speciesData: 0 } },
       { $lookup: {
         from: "worlds",
-        let: { worldId: "$worldId" },
-        pipeline: [
-          { $match: { $expr: { $eq: ["$_id", { $toObjectId: "$$worldId" }] } } }
-        ],
+        localField: "worldObjectId",
+        foreignField: "_id",
         as: "worldData"
       }},
       { $unwind: "$worldData" },
       { $addFields: { worldName: "$worldData.name", worldUrl: "$worldData.url" } },
-      { $project: { worldData: 0 } }
+      { $project: { worldData: 0, worldObjectId: 0 } }
     ]).toArray();
     return NextResponse.json(characters);
   } catch (error: any) {

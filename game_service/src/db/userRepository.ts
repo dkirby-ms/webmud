@@ -14,7 +14,7 @@ export class UserRepository {
   constructor(db: Db) {
     // Use an index on username for uniqueness.
     this.users = db.collection("users");
-    this.users.createIndex({ username: 1 }, { unique: true });
+    //this.users.createIndex({ username: 1 }, { unique: true });
     this.userChannels = db.collection("user_channels");
     this.channels = db.collection("channels");
   }

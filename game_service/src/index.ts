@@ -13,7 +13,6 @@ import { createAdminRouter } from './admin.js';
 import { registerSocketConnectionHandlers } from './socketHandlers.js';
 
 const WORLD_NAME = process.env.WORLD_NAME || 'defaultServerName';
-const SERVICE_URL = process.env.SERVICE_URL || 'http://localhost';
 const PORT = process.env.PORT || 28999;
 const _30_DAYS = 30 * 24 * 60 * 60 * 1000;
 const CLEANUP_DISCONNECT_GRACE_PERIOD = 30_000; // 30 seconds
@@ -198,7 +197,7 @@ export default class GameService {
 
         // Start the http server
         this.httpServer.listen(PORT, () => {
-            this.logger.info(`server listening at ${SERVICE_URL}:${PORT}.`);
+            this.logger.info(`server listening on port ${PORT}.`);
         });
 
 
