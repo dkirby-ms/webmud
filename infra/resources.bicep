@@ -25,7 +25,7 @@ var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = uniqueString(subscription().id, resourceGroup().id, location)
 
 // Monitor application with Azure Monitor
-module monitoring 'br/public:avm/ptn/azd/monitoring:0.1.0' = {
+module monitoring 'br/public:avm/ptn/azd/monitoring:0.1.1' = {
   name: 'monitoring'
   params: {
     logAnalyticsName: '${abbrs.operationalInsightsWorkspaces}${resourceToken}'
@@ -37,13 +37,14 @@ module monitoring 'br/public:avm/ptn/azd/monitoring:0.1.0' = {
 }
 
 // Container registry
-module containerRegistry 'br/public:avm/res/container-registry/registry:0.1.1' = {
+module containerRegistry 'br/public:avm/res/container-registry/registry:0.9.1' = {
   name: 'registry'
   params: {
     name: '${abbrs.containerRegistryRegistries}${resourceToken}'
     location: location
     tags: tags
     publicNetworkAccess: 'Enabled'
+    exportPolicyStatus: 'enabled'
     roleAssignments:[
       {
         principalId: gameServiceIdentity.outputs.principalId
@@ -60,7 +61,7 @@ module containerRegistry 'br/public:avm/res/container-registry/registry:0.1.1' =
 }
 
 // Container apps environment
-module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.4.5' = {
+module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.10.1' = {
   name: 'container-apps-environment'
   params: {
     logAnalyticsWorkspaceResourceId: monitoring.outputs.logAnalyticsWorkspaceResourceId
@@ -71,7 +72,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.4.5
 }
 
 // Key Vault for secrets management
-module keyVault 'br/public:avm/res/key-vault/vault:0.6.0' = {
+module keyVault 'br/public:avm/res/key-vault/vault:0.12.1' = {
   name: 'key-vault'
   params: {
     name: '${abbrs.keyVaultVaults}${resourceToken}'
@@ -100,7 +101,7 @@ module keyVault 'br/public:avm/res/key-vault/vault:0.6.0' = {
   }
 }
 
-module cosmosMongo 'br/public:avm/res/document-db/database-account:0.8.1' = {
+module cosmosMongo 'br/public:avm/res/document-db/database-account:0.11.3' = {
   name: 'cosmosMongo'
   params: {
     name: '${abbrs.documentDBMongoDatabaseAccounts}${resourceToken}'
@@ -131,7 +132,7 @@ module cosmosMongo 'br/public:avm/res/document-db/database-account:0.8.1' = {
   }
 }
 
-module gameServiceIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.2.1' = {
+module gameServiceIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.0' = {
   name: 'gameServiceidentity'
   params: {
     name: '${abbrs.managedIdentityUserAssignedIdentities}gameService-${resourceToken}'
@@ -158,7 +159,7 @@ var gameServiceEnv = map(filter(gameServiceAppSettingsArray, i => i.?secret == n
   value: i.value
 })
 
-module gameService 'br/public:avm/res/app/container-app:0.8.0' = {
+module gameService 'br/public:avm/res/app/container-app:0.14.1' = {
   name: 'gameService'
   params: {
     name: 'game-service'
@@ -172,18 +173,20 @@ module gameService 'br/public:avm/res/app/container-app:0.8.0' = {
         '*'
       ]
     }
-    scaleMinReplicas: 1
-    scaleMaxReplicas: 10
+    scaleSettings:{
+      maxReplicas: 10
+      minReplicas: 1
+    }
+
     // Add custom domain configuration
     customDomains: !empty(gameServiceCustomDomain) ? [
       {
         name: gameServiceCustomDomain
-        bindingType: 'SniEnabled'
-        certificateId: '' // For managed certificate
+        bindingType: 'Auto'
       }
     ] : []
-    secrets: {
-      secureList:  union([
+    
+    secrets: union([
         {
           name: 'mongodb-url'
           identity:gameServiceIdentity.outputs.resourceId
@@ -194,7 +197,7 @@ module gameService 'br/public:avm/res/app/container-app:0.8.0' = {
         name: secret.secretRef
         value: secret.value
       }))
-    }
+
     containers: [
       {
         image: gameServiceFetchLatestImage.outputs.?containers[?0].?image ?? 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
@@ -248,7 +251,7 @@ module gameService 'br/public:avm/res/app/container-app:0.8.0' = {
   }
 }
 
-module webmudClientIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.2.1' = {
+module webmudClientIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.0' = {
   name: 'webmudClientidentity'
   params: {
     name: '${abbrs.managedIdentityUserAssignedIdentities}webmudClient-${resourceToken}'
@@ -275,34 +278,34 @@ var webmudClientEnv = map(filter(webmudClientAppSettingsArray, i => i.?secret ==
   value: i.value
 })
 
-module webmudClient 'br/public:avm/res/app/container-app:0.8.0' = {
+module webmudClient 'br/public:avm/res/app/container-app:0.14.1' = {
   name: 'webmudClient'
   params: {
     name: 'webmud-client'
     ingressTargetPort: 3000
-    scaleMinReplicas: 1
-    scaleMaxReplicas: 10
+    scaleSettings: {
+      maxReplicas: 10
+      minReplicas: 1      
+    }
     // Add custom domain configuration
     customDomains: !empty(webmudClientCustomDomain) ? [
       {
         name: webmudClientCustomDomain
-        bindingType: 'SniEnabled'
-        certificateId: '' // For managed certificate
+        bindingType: 'Auto'
       }
     ] : []
-    secrets: {
-      secureList:  union([
-        {
-          name: 'mongodb-url'
-          identity:webmudClientIdentity.outputs.resourceId
-          keyVaultUrl: cosmosMongo.outputs.exportedSecrets['mongodb-url'].secretUri
-        }
-      ],
-      map(webmudClientSecrets, secret => {
-        name: secret.secretRef
-        value: secret.value
-      }))
-    }
+    secrets: union([
+      {
+        name: 'mongodb-url'
+        identity: webmudClientIdentity.outputs.resourceId
+        keyVaultUrl: cosmosMongo.outputs.exportedSecrets['mongodb-url'].secretUri
+      }
+    ],
+    map(webmudClientSecrets, secret => {
+      name: secret.secretRef
+      value: secret.value
+    }))
+
     containers: [
       {
         image: webmudClientFetchLatestImage.outputs.?containers[?0].?image ?? 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'

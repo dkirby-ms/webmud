@@ -16,6 +16,9 @@ param webmudClientExists bool
 @secure()
 param webmudClientDefinition object
 
+param gameServiceCustomDomain string
+param webmudClientCustomDomain string
+
 @description('Id of the user or app to assign application roles')
 param principalId string
 
@@ -46,6 +49,8 @@ module resources 'resources.bicep' = {
     gameServiceDefinition: gameServiceDefinition
     webmudClientExists: webmudClientExists
     webmudClientDefinition: webmudClientDefinition
+    gameServiceCustomDomain: gameServiceCustomDomain
+    webmudClientCustomDomain: webmudClientCustomDomain
   }
 }
 
