@@ -68,6 +68,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.10.
     name: '${abbrs.appManagedEnvironments}${resourceToken}'
     location: location
     zoneRedundant: false
+    publicNetworkAccess: 'Enabled'
   }
 }
 
@@ -182,7 +183,7 @@ module gameService 'br/public:avm/res/app/container-app:0.14.1' = {
     customDomains: !empty(gameServiceCustomDomain) ? [
       {
         name: gameServiceCustomDomain
-        bindingType: 'Auto'
+        bindingType: 'disabled'
       }
     ] : []
     
@@ -291,7 +292,7 @@ module webmudClient 'br/public:avm/res/app/container-app:0.14.1' = {
     customDomains: !empty(webmudClientCustomDomain) ? [
       {
         name: webmudClientCustomDomain
-        bindingType: 'Auto'
+        bindingType: 'disabled'
       }
     ] : []
     secrets: union([

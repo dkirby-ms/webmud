@@ -14,7 +14,7 @@ services:
           postdeploy:
             posix:
               shell: sh
-              run: ./infra/scripts/set_fqdn_game-service.sh
+              run: ../infra/scripts/set_fqdn_game-service.sh
               interactive: true
               continueOnError: false
     webmud-client:
@@ -27,7 +27,7 @@ services:
           postdeploy:
             posix:
               shell: sh
-              run: ./infra/scripts/set_fqdn_client.sh
+              run: ../infra/scripts/set_fqdn_client.sh
               interactive: true
               continueOnError: false
 hooks:
