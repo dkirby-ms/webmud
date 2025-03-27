@@ -63,8 +63,6 @@ if (!targetConfig.url) {
   quit(1);
 }
 
-print(`Connecting to source: ${sourceConfig.url}/${sourceConfig.dbName}`);
-print(`Connecting to target: ${targetConfig.url}/${targetConfig.dbName}`);
 
 // Connect to source database
 const sourceConn = new Mongo(sourceConfig.url);
@@ -96,7 +94,7 @@ function copyCollection(collectionName) {
 }
 
 // Copy all collections
-print(`Starting to copy database from ${sourceConfig.url}/${sourceConfig.dbName} to ${targetConfig.url}/${targetConfig.dbName}`);
+print(`Starting to copy database`);
 collections.forEach(collection => {
   copyCollection(collection);
 });
