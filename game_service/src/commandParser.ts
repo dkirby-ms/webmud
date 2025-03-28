@@ -90,7 +90,7 @@ export function parseCommand(input: string): Command {
     if (commandWord === "look" || commandWord === "l") {
         return {
             type: CommandType.LOOK,
-            args: tokens.slice(1),
+            args: tokens.slice(1).length > 0 ? tokens.slice(1) : undefined,
         };
     }
 

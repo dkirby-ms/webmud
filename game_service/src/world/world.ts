@@ -7,6 +7,7 @@ import { MessageTypes } from "../taxonomy.js";
 import { getEmoteByKey, EmoteDefinition } from "./emoteConfig.js";
 import { CommandType } from "../commandParser.js";
 import { EMOTE_KEYS } from "./emoteConfig.js";
+import { isBigInt64Array } from "node:util/types";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const enum RoomType {
@@ -706,19 +707,7 @@ export class World {
                 helpMessages.push("Usage: tell <player> <message>");
                 helpMessages.push("Example: 'tell John How are you doing?'");
                 break;
-                
-            case "look":
-            case "l":
-                helpMessages.push("=== LOOK ===");
-                helpMessages.push("Look at your surroundings or a specific object/person.");
-                helpMessages.push("Usage: look [target]");
-                helpMessages.push("Examples:");
-                helpMessages.push("  'look' - Look at your current location");
-                helpMessages.push("  'look map' - View the map of areas you've visited");
-                helpMessages.push("  'look sword' - Examine a sword in the room");
-                helpMessages.push("  'look John' - Look at the player named John");
-                break;
-                
+                                
             case "attack":
             case "kill":
             case "a":
@@ -768,6 +757,67 @@ export class World {
         
         this.sendCommandOutputToPlayer(playerCharacterId, helpMessages);
     }
+    
+    public playerLooksAt(playerCharacterId: string, args?: string[]): void {
+        const entity = this.entities.get(playerCharacterId) as PlayerEntity;
+        if (!entity) {
+            throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
+        }
+        const room = this.rooms.find(r => r.id === entity.state.currentLocation);
+        if (!room) {
+            throw new Error(`Room not found for location ${entity.state.currentLocation}`);
+        }
+        if (args && args.length > 0) {
+            // Look at a specific object or entity
+            const targetName = args.join(" ").toLowerCase();
+            
+            // Get all entities in the room
+            const roomEntities = this.getRoomEntities(entity.state.currentLocation || "");
+            
+            // Find the entity by name instead of by ID
+            const targetEntity = roomEntities.find(e => 
+                e.baseData.name.toLowerCase() === targetName);
+            
+            if (targetEntity) {
+                // Target found - notify them and the looking player
+                if (targetEntity.type === "player" && targetEntity.state?.gameMessages) {
+                    targetEntity.state.gameMessages.push(`${entity.baseData.name} looks at you.`);
+                }
+                
+                if (entity.state?.gameMessages) {
+                    entity.state.gameMessages.push(`You look at ${targetEntity.baseData.name}.`);
+                }
+            } else {
+                if (entity.state?.gameMessages) {
+                    entity.state.gameMessages.push(`You don't see ${args.join(" ")} here.`);
+                }
+            }
+        } else {
+            // Look at the room
+            if (entity.state?.gameMessages) {
+                entity.state.gameMessages.push(`You look around the ${room.dbRecord.name}.`);
+                entity.state.gameMessages.push(room.dbRecord.description);
+                if (room.dbRecord.exits) {
+                    entity.state.gameMessages.push("Exits: " + Object.keys(room.dbRecord.exits).join(", "));
+                }
+                if (room.roomEntities.length > 0) {
+                    const entityNames = room.roomEntities
+                        .filter(id => id !== playerCharacterId) // Exclude the looking player
+                        .map(id => {
+                            const entity = this.entities.get(id);
+                            return entity ? entity.baseData.name : id;
+                        });
+                    
+                    if (entityNames.length > 0) {
+                        entity.state.gameMessages.push("You see: " + entityNames.join(", "));
+                    } else {
+                        entity.state.gameMessages.push("You don't see anyone else here.");
+                    }
+                }
+            }
+        }
+    }
+
 
     // Handle attack and kill commands with a peaceful message
     public handleCombatCommand(playerCharacterId: string, target?: string): void {

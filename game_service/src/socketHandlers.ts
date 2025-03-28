@@ -105,12 +105,7 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 				break;
 			case CommandType.LOOK:
 				 // Add support for map-related look command
-                if (parsedCommand.args && parsedCommand.args[0] === "map") {
-                    // Send a fresh map update when player looks at map
-                    world.sendMapUpdateToPlayer(socket.data.playerCharacterId);
-                } else {
-                    //world.look(socket.data.playerCharacterId);
-                }
+				world.playerLooksAt(socket.data.playerCharacterId, parsedCommand.args);
 				break;
 			case CommandType.ATTACK:
 				//world.attack(socket.data.playerCharacterId, parsedCommand.args[0]);
