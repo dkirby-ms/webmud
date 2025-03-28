@@ -1,10 +1,7 @@
 import { Socket, Server } from 'socket.io';
-import { sentMessage } from "./message/send.js";
 import { MessageTypes } from './taxonomy.js';
 import { _ } from 'ajv';
 import { CommandType, parseCommand } from './commandParser.js';
-import { tellPlayer } from './message/tell.js'
-import { PlayerCharacterRepository } from './db/playerCharacterRepository.js';
 
 interface Dependencies {
     // socket server
@@ -88,9 +85,23 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 				world.sayToRoom(socket.data.playerCharacterId, parsedCommand.text!);
 				break;
 			case CommandType.TELL:
-				const toPlayerSocket = world.getPlayerSocketByName(parsedCommand.args![0]);
-				const fromPlayerName = world.getPlayerName(socket.data.playerCharacterId);
-				tellPlayer(toPlayerSocket, fromPlayerName, parsedCommand.text!);
+				if (parsedCommand.args && parsedCommand.args.length > 0) {
+					const toPlayerSocket = world.getPlayerSocketByName(parsedCommand.args[0]);
+					const fromPlayerName = world.getPlayerName(socket.data.playerCharacterId);
+					if (!toPlayerSocket) {
+						const output = `Player ${parsedCommand.args[0]} is not online.`;
+						const messages: string[] = [];
+						messages[0] = output;
+						world.sendCommandOutputToPlayer(socket.data.playerCharacterId, messages);
+						return;
+					}
+					const messagesToPlayer: string[] = [];
+					messagesToPlayer[0] = `You tell ${parsedCommand.args[0]} '${parsedCommand.text!}'`;
+					world.sendCommandOutputToPlayer(socket.data.playerCharacterId, messagesToPlayer);
+					const messagesToTarget: string[] = [];
+					messagesToTarget[0] = `${fromPlayerName} tells you '${parsedCommand.text!}'`;
+					world.sendCommandOutputToPlayer(toPlayerSocket.data.playerCharacterId, messagesToTarget);
+				}
 				break;
 			case CommandType.LOOK:
 				 // Add support for map-related look command

@@ -377,7 +377,7 @@ export class World {
 
     public getPlayerSocketByName(playerName: string): Socket | undefined {
         for (const [_, playerData] of this.players.entries()) {
-            if (playerData.playerCharacter.name === playerName) {
+            if (playerData.playerCharacter.name.toLowerCase() === playerName.toLowerCase()) {
                 return playerData.socket;
             }
         }

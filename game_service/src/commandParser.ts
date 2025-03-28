@@ -94,23 +94,14 @@ export function parseCommand(input: string): Command {
     }
 
     // Handle emote commands
-    // Check if the command is a specific emote or the generic 'emote' command
-    if (EMOTE_KEYS.includes(commandWord) || commandWord === "emote" || commandWord === "em") {
-        if (commandWord === "emote" || commandWord === "em") {
-            // For generic emote command, rest is the full emote text
-            return {
-                type: CommandType.EMOTE,
-                text: rest,
-                args: rest.length ? tokens.slice(1) : undefined
-            };
-        } else {
-            // For specific emote commands like "smile", the command itself is the action
-            return {
-                type: CommandType.EMOTE,
-                text: commandWord,
-                args: tokens.slice(1).length ? tokens.slice(1) : undefined
-            };
-        }
+    // Check if the command is a specific emote
+    if (EMOTE_KEYS.includes(commandWord)) {
+        // For specific emote commands like "smile", the command itself is the action
+        return {
+            type: CommandType.EMOTE,
+            text: commandWord,
+            args: tokens.slice(1).length ? tokens.slice(1) : undefined
+        };
     }
 
     return { type: CommandType.UNKNOWN };
