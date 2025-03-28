@@ -4,7 +4,6 @@ import { Flex, Box, Separator } from "@radix-ui/themes";
 import { GameMessagePanel } from "./GameMessagePanel.tsx";
 import { MapPanel } from "./MapPanel.tsx";
 import { RoomView } from "./RoomView.tsx";
-import { StatusPanel } from "./StatusPanel.tsx"; // Keeping import for future use
 import { CommandLine } from "./CommandLine.tsx";
 
 export function GameWindow() {

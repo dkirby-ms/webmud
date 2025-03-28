@@ -1,6 +1,6 @@
 "use client";
 import { useSession } from "next-auth/react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Flex, Button } from "@radix-ui/themes";
 import { useGameService } from "../../contexts/GameServiceContext.tsx";
 import { StickToBottom } from 'use-stick-to-bottom';
