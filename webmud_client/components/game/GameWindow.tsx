@@ -4,7 +4,7 @@ import { Flex, Box, Separator } from "@radix-ui/themes";
 import { GameMessagePanel } from "./GameMessagePanel.tsx";
 import { MapPanel } from "./MapPanel.tsx";
 import { RoomView } from "./RoomView.tsx";
-import { StatusPanel } from "./StatusPanel.tsx";
+import { StatusPanel } from "./StatusPanel.tsx"; // Keeping import for future use
 import { CommandLine } from "./CommandLine.tsx";
 
 export function GameWindow() {
@@ -22,19 +22,19 @@ export function GameWindow() {
 
     return (
         <Flex direction="column" gap="0" height="100%" width="100%" >
-            {/* Top section: Map, Room details, and Status */}
+            {/* Top section: Map and Room details */}
             <Flex direction="row">
                 <Box width="75%" style={{ borderRight: "1px solid #ccc" }}>
                     <MapPanel />
                     <Separator style={{ width: "100%", margin: "10px 0" }} />
-                    <RoomView />
+                    {/* RoomView removed from here */}
                 </Box>
                 <Box width="25%">
-                    <StatusPanel />
+                    <RoomView /> {/* RoomView now placed here instead of StatusPanel */}
                 </Box>
             </Flex>
-            {/* Bottom section: Game Messages and Command Input */}
-            <Flex direction="column" style={{ borderTop: "1px solid #ccc" }}>
+            {/* Bottom section: Game Messages and Command Input - full width */}
+            <Flex direction="column" width="100%" style={{ borderTop: "1px solid #ccc" }}>
                 <GameMessagePanel />
                 <CommandLine />
             </Flex>

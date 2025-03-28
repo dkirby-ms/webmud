@@ -1,11 +1,12 @@
 import { Repositories } from "../db/index.js";
 import { Socket, Server } from "socket.io";
 import { logger, getOppositeDirection } from '../util.js'
-//import { createClient, RedisClientType } from 'redis';
 import { WithId, Document } from 'mongodb';
 import { Entity, EntityFactory, PlayerEntity, EntityClientView } from './entity.js';
 import { MessageTypes } from "../taxonomy.js";
 import { getEmoteByKey, EmoteDefinition } from "./emoteConfig.js";
+import { CommandType } from "../commandParser.js";
+import { EMOTE_KEYS } from "./emoteConfig.js";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const enum RoomType {
@@ -601,6 +602,195 @@ export class World {
 
         // Send the complete client view
         player.socket.emit('game:state_update', entity.toClientView());
+    }
+
+    // Display help information to a player
+    public displayHelp(playerCharacterId: string, args?: string[]): void {
+        const entity = this.entities.get(playerCharacterId) as PlayerEntity;
+        if (!entity) {
+            throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
+        }
+
+        if (args && args.length > 0) {
+            // Show detailed help for a specific command
+            this.displaySpecificHelp(playerCharacterId, args[0]);
+            return;
+        }
+
+        // Generate general help message with all available commands
+        const helpMessages: string[] = [];
+        
+        helpMessages.push("=== AVAILABLE COMMANDS ===");
+        helpMessages.push("");
+        
+        // Movement commands
+        helpMessages.push("MOVEMENT:");
+        helpMessages.push("  north (n), south (s), east (e), west (w), up (u), down (d)");
+        
+        // Basic commands
+        helpMessages.push("");
+        helpMessages.push("BASIC COMMANDS:");
+        helpMessages.push("  look (l) - Look at your surroundings or a specific thing");
+        helpMessages.push("  look map - View the map of areas you've visited");
+        helpMessages.push("  say <message> - Say something to everyone in the room");
+        helpMessages.push("  tell <player> <message> - Send a private message to another player");
+        helpMessages.push("  help (h) - Show this help message");
+        helpMessages.push("  help <command> - Show detailed help for a specific command");
+        
+        // Combat commands
+        helpMessages.push("");
+        helpMessages.push("COMBAT:");
+        helpMessages.push("  attack (a), kill (k) <target> - Attack someone or something");
+        
+        // Emotes
+        helpMessages.push("");
+        helpMessages.push("EMOTES:");
+        const emoteList = EMOTE_KEYS.join(", ");
+        const emoteChunks = this.chunkString(emoteList, 60);
+        helpMessages.push("  " + emoteChunks.join("\n  "));
+        helpMessages.push("  <emote> <target> - Direct an emote at someone (e.g., 'smile John')");
+        
+        this.sendCommandOutputToPlayer(playerCharacterId, helpMessages);
+    }
+    
+    // Helper method to display detailed help for a specific command
+    private displaySpecificHelp(playerCharacterId: string, command: string): void {
+        const entity = this.entities.get(playerCharacterId) as PlayerEntity;
+        if (!entity) {
+            throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
+        }
+        
+        const helpMessages: string[] = [];
+        command = command.toLowerCase();
+        
+        switch (command) {
+            case "move":
+            case "north":
+            case "south":
+            case "east":
+            case "west":
+            case "up":
+            case "down":
+            case "n":
+            case "s":
+            case "e":
+            case "w":
+            case "u":
+            case "d":
+                helpMessages.push("=== MOVEMENT ===");
+                helpMessages.push("Use direction commands to move your character around the world.");
+                helpMessages.push("Commands: north (n), south (s), east (e), west (w), up (u), down (d)");
+                helpMessages.push("Example: 'north' or just 'n' to move north");
+                break;
+                
+            case "say":
+                helpMessages.push("=== SAY ===");
+                helpMessages.push("Say something to all players in your current location.");
+                helpMessages.push("Usage: say <message>");
+                helpMessages.push("Example: 'say Hello everyone!'");
+                break;
+                
+            case "tell":
+                helpMessages.push("=== TELL ===");
+                helpMessages.push("Send a private message to another player.");
+                helpMessages.push("Usage: tell <player> <message>");
+                helpMessages.push("Example: 'tell John How are you doing?'");
+                break;
+                
+            case "look":
+            case "l":
+                helpMessages.push("=== LOOK ===");
+                helpMessages.push("Look at your surroundings or a specific object/person.");
+                helpMessages.push("Usage: look [target]");
+                helpMessages.push("Examples:");
+                helpMessages.push("  'look' - Look at your current location");
+                helpMessages.push("  'look map' - View the map of areas you've visited");
+                helpMessages.push("  'look sword' - Examine a sword in the room");
+                helpMessages.push("  'look John' - Look at the player named John");
+                break;
+                
+            case "attack":
+            case "kill":
+            case "a":
+            case "k":
+                helpMessages.push("=== ATTACK ===");
+                helpMessages.push("Attack another character or creature.");
+                helpMessages.push("Usage: attack <target> or kill <target>");
+                helpMessages.push("Example: 'attack goblin' or 'kill orc'");
+                break;
+                
+            case "emote":
+                helpMessages.push("=== EMOTES ===");
+                helpMessages.push("Express your character's actions and emotions.");
+                helpMessages.push("Available emotes: " + EMOTE_KEYS.join(", "));
+                helpMessages.push("Usage: <emote> [target]");
+                helpMessages.push("Examples:");
+                helpMessages.push("  'smile' - You smile happily");
+                helpMessages.push("  'bow John' - You bow respectfully to John");
+                break;
+                
+            case "help":
+            case "h":
+                helpMessages.push("=== HELP ===");
+                helpMessages.push("Display help information about commands.");
+                helpMessages.push("Usage: help [command]");
+                helpMessages.push("Examples:");
+                helpMessages.push("  'help' - Show list of all commands");
+                helpMessages.push("  'help tell' - Show detailed help about the tell command");
+                break;
+                
+            default:
+                // Check if it's an emote
+                if (EMOTE_KEYS.includes(command)) {
+                    const emote = getEmoteByKey(command);
+                    helpMessages.push(`=== EMOTE: ${command.toUpperCase()} ===`);
+                    helpMessages.push(`Without target: ${emote?.selfText}`);
+                    helpMessages.push(`With target: ${emote?.targetSelfText.replace("{target}", "someone")}`);
+                    helpMessages.push("");
+                    helpMessages.push(`Usage: ${command} [target]`);
+                    helpMessages.push(`Example: '${command} John'`);
+                } else {
+                    helpMessages.push(`No help available for '${command}'.`);
+                    helpMessages.push("Type 'help' for a list of all commands.");
+                }
+                break;
+        }
+        
+        this.sendCommandOutputToPlayer(playerCharacterId, helpMessages);
+    }
+
+    // Handle attack and kill commands with a peaceful message
+    public handleCombatCommand(playerCharacterId: string, target?: string): void {
+        const entity = this.entities.get(playerCharacterId) as PlayerEntity;
+        if (!entity) {
+            throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
+        }
+        
+        if (entity.state?.gameMessages) {
+            entity.state.gameMessages.push("You feel too peaceful for combat.");
+        }
+    }
+
+    // Helper method to chunk a string into smaller pieces
+    private chunkString(str: string, length: number): string[] {
+        const chunks = [];
+        let i = 0;
+        while (i < str.length) {
+            // Find the nearest space within the length limit
+            let end = Math.min(i + length, str.length);
+            if (end < str.length) {
+                while (end > i && str[end] !== ' ') {
+                    end--;
+                }
+                // If no space was found, force break at length
+                if (end === i) {
+                    end = i + length;
+                }
+            }
+            chunks.push(str.substring(i, end).trim());
+            i = end + 1;
+        }
+        return chunks;
     }
 
 }

@@ -114,6 +114,7 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 				break;
 			case CommandType.ATTACK:
 				//world.attack(socket.data.playerCharacterId, parsedCommand.args[0]);
+				world.handleCombatCommand(socket.data.playerCharacterId, parsedCommand);
 				break;
 			case CommandType.EMOTE:
 				// Handle emote commands
@@ -122,6 +123,10 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 					const target = parsedCommand.args && parsedCommand.args.length > 0 ? parsedCommand.args[0] : undefined;
 					world.emoteToRoom(socket.data.playerCharacterId, emoteAction, target);
 				}
+				break;
+			case CommandType.HELP:
+				// Handle help command
+				world.displayHelp(socket.data.playerCharacterId, parsedCommand.args);
 				break;
 			case CommandType.UNKNOWN:
 				logger.warn(`Player ${socket.data.playerCharacterId} sent an unknown command: ${command}`);
