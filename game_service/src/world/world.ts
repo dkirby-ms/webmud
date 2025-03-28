@@ -441,6 +441,16 @@ export class World {
             if (entity.state?.gameMessages) {
                 entity.state.gameMessages.push(`You have arrived in a ${room.dbRecord.name}.`);
             }
+            
+            // Notify other entities in the room about the new arrival
+            const roomEntities = this.getRoomEntities(location);
+            for (const roomEntity of roomEntities) {
+                if (roomEntity.pkid !== playerCharacterId && roomEntity.state?.gameMessages) {
+                    roomEntity.state.gameMessages.push(`${entity.baseData.name} has arrived, seemingly from nowhere.`);
+                }
+            }
+            
+            // Add player to the room entities
             room.roomEntities.push(playerCharacterId);
 
             // Send initial map data
