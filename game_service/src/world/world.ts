@@ -208,7 +208,7 @@ export class World {
                     currentRoom: newRoom.dbRecord.name,
                     roomDescription: newRoom.dbRecord.description,
                     roomExits: newRoom.dbRecord.exits,
-                    roomEntityViews: this.getRoomEntityViews(locationExit.room_id)
+                    roomEntityViews: this.getRoomEntityViews(locationExit.room_id, playerCharacterId)
                 });
 
                 // remove the player entity from the old room
@@ -319,15 +319,17 @@ export class World {
             // WARNING!! at some point the order the entities iterate through will matter
             const roomEntities = this.getRoomEntities(room.id);
             
-            // First, update players' state with room entity views
-            const roomEntityViews = roomEntities.map(entity => entity.toClientView());
-            
-            // Then send each player their complete client view
+            // Send each player their complete client view
             roomEntities.forEach(entity => {
                 if (entity.type === "player") {
                     // Get the player's socket
                     const player = this.players.get(entity.pkid);
                     if (player && player.socket) {
+                        // Get room entity views excluding the current player
+                        const roomEntityViews = roomEntities
+                            .filter(e => e.pkid !== entity.pkid)  // Exclude this player
+                            .map(e => e.toClientView());
+                        
                         // Update the player's state with room entity views
                         entity.updateState({
                             roomEntityViews
@@ -361,9 +363,12 @@ export class World {
         return Array.from(this.entities.values()).filter(e => room.roomEntities.includes(e.pkid));
     }
 
-    private getRoomEntityViews(roomId: string): EntityClientView[] {
+    // Update the getRoomEntityViews method to exclude a specific player
+    private getRoomEntityViews(roomId: string, excludePlayerPkid?: string): EntityClientView[] {
         const roomEntities = this.getRoomEntities(roomId);
-        return roomEntities.map(entity => entity.toClientView());
+        return roomEntities
+            .filter(entity => entity.pkid !== excludePlayerPkid)  // Filter out the excluded player
+            .map(entity => entity.toClientView());
     }
 
     public getPlayerName(playerCharacterId: string): string {
@@ -429,7 +434,7 @@ export class World {
                 currentRoom: room.dbRecord.name,
                 roomDescription: room.dbRecord.description,
                 roomExits: room.dbRecord.exits,
-                roomEntityViews: this.getRoomEntityViews(location)
+                roomEntityViews: this.getRoomEntityViews(location, playerCharacterId)
             });
 
             if (entity.state?.gameMessages) {
@@ -589,7 +594,7 @@ export class World {
         }
 
         // Update the player's state with room entity views
-        const roomEntityViews = this.getRoomEntityViews(roomId);
+        const roomEntityViews = this.getRoomEntityViews(roomId, playerCharacterId);
         entity.updateState({
             roomEntityViews
         });

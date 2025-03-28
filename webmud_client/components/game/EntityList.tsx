@@ -7,15 +7,17 @@ interface EntityState {
   name: string;
   health: number;
   maxHealth: number;
+  currentHealth: number;
   type: string;
   [key: string]: any; // Allow for additional properties
 }
 
 export function EntityList() {
   const { gameState } = useGameService();
-  const roomEntityStates = gameState?.roomEntityStates || [];
+  // Update to use roomEntityViews instead of roomEntityStates
+  const roomEntityViews = gameState?.roomEntityViews || [];
 
-  if (!roomEntityStates || roomEntityStates.length === 0) {
+  if (!roomEntityViews || roomEntityViews.length === 0) {
     return <Box py="2"><Text size="2">No entities in this room</Text></Box>;
   }
 
@@ -23,7 +25,7 @@ export function EntityList() {
     <Box className="entity-list-container">
       <Text className="entity-title" weight="bold" size="2" mb="2">Entities in this area:</Text>
       <Flex direction="column" gap="2" className="entity-list">
-        {roomEntityStates.map((entity: EntityState, index: number) => (
+        {roomEntityViews.map((entity: EntityState, index: number) => (
           <Card 
             key={entity.id || `entity-${index}`} 
             size="1"
@@ -40,8 +42,8 @@ export function EntityList() {
                   <Box 
                     className="health-bar"
                     style={{ 
-                      width: `${((entity.health || 0) / (entity.maxHealth || 100)) * 100}%`,
-                      backgroundColor: getHealthColor(entity.health, entity.maxHealth),
+                      width: `${((entity.currentHealth || 0) / (entity.maxHealth || 100)) * 100}%`,
+                      backgroundColor: getHealthColor(entity.currentHealth, entity.maxHealth),
                     }}
                   />
                 </Box>

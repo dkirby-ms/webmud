@@ -94,6 +94,7 @@ export interface EntityClientView {
     roomItems?: string[];
     gameMessages?: string[];
     roomEffects?: string[];
+    roomEntityViews?: EntityClientView[]; // Add explicit type for room entities
     
     // Map data - only include what's needed for client rendering
     visitedRooms?: string[];
@@ -282,6 +283,7 @@ export abstract class BaseEntity implements Entity {
             roomItems: this.state.roomItems,
             gameMessages: this.state.gameMessages,
             roomEffects: this.state.roomEffects,
+            roomEntityViews: this.state.roomEntityViews || [], // Include room entity views
             
             // Include simplified map data
             visitedRooms: this.state.visitedRooms ? Array.from(this.state.visitedRooms) : [],
