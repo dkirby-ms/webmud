@@ -1,5 +1,7 @@
+import { ObjectId } from 'mongodb';
+
 export interface World {
-  _id: string;
+  _id: ObjectId;
   name: string;
   description: string;
   created: Date;
@@ -7,8 +9,9 @@ export interface World {
 }
 
 export interface Room {
-  _id: string;
+  _id: ObjectId;
   worldId: string;
+  world_id: string; // For backwards compatibility
   name: string;
   description: string;
   exits: {
@@ -19,9 +22,12 @@ export interface Room {
     up?: string;
     down?: string;
   };
-  coordinates: {
+  coordinates?: {
     x: number;
     y: number;
     z: number;
   };
+  properties: {
+    [key: string]: any;
+  }
 }
