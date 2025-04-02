@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import type { World } from '@/types/database';
 import Link from 'next/link';
 
-export default function EditWorld({
+export default async function EditWorld({
   params,
 }: {
   params: { id: string }
 }) {
-  const { id } = params;
+  const resolvedParams = await params;
+  const { id } = resolvedParams;
   const [world, setWorld] = useState<World | null>(null);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState<{name: string; description: string}>({
