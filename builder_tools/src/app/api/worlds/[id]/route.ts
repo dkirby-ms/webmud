@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { MongoClient, ObjectId } from 'mongodb';
 import type { World } from '@/types/database';
+import { auth } from '../../../../../auth';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
 const client = new MongoClient(MONGODB_URI);
@@ -11,6 +12,11 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const authSession = await auth();
+    if (!authSession) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
     const resolvedParams = await params;
     if (!resolvedParams.id) {
       return NextResponse.json(
@@ -53,6 +59,11 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const authSession = await auth();
+    if (!authSession) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
     const resolvedParams = await params;
     if (!resolvedParams.id) {
       return NextResponse.json(

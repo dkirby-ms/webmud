@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
+import { auth } from '../../auth';
 
 async function getWorlds() {
   const res = await fetch('http://localhost:3000/api/worlds', { cache: 'no-store' });
@@ -28,7 +29,16 @@ async function WorldsList() {
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const authSession = await auth();
+  if (!authSession) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-red-500">Unauthorized. Please log in.</p>
+      </div>
+    );
+  }
+  
   return (
     <div className="min-h-screen p-8">
       <header className="mb-8">
