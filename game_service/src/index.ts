@@ -10,6 +10,7 @@ import { Repositories, createRepositories } from './db/index.js';
 import { createDbClient } from './db/client.js';
 import { World } from './world/world.js';
 import { createAdminRouter } from './admin.js';
+import { createApiRouter } from './api/router.js';
 import { registerSocketConnectionHandlers } from './socketHandlers.js';
 
 const WORLD_NAME = process.env.WORLD_NAME || 'defaultServerName';
@@ -98,6 +99,7 @@ export default class GameService {
 
         // Setup admin router for debugging
         this.app.use('/admin', createAdminRouter(this.io));
+        this.app.use('/api', createApiRouter(this.repositories));
 
         // setup auth and access token validator
         this.io.use(async (socket, next) => {

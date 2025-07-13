@@ -14,4 +14,9 @@ export class WorldRepository {
     );
     return result;
   }
+
+  // List all active worlds
+  async listActiveWorlds(): Promise<WithId<Document>[]> {
+    return await this.worlds.find({ "properties.is_active": true }).toArray();
+  }
 }
