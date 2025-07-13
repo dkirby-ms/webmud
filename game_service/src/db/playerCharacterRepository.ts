@@ -53,7 +53,8 @@ export class PlayerCharacterRepository {
 
   // Create a new character document.
   async createCharacter(character: {
-    user_id: string
+    user_id?: string;
+    userId?: string;
     player_id: string;
     name: string;
     description: string;
