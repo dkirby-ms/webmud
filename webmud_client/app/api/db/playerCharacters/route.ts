@@ -4,8 +4,8 @@ import { gameServiceApi } from "../../../../lib/gameServiceApi.ts"
 
 export async function GET() {
   const session = await auth() as any;
-  const userId = session.userId;
   if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const userId = session.userId;
   
   try {
     const characters = await gameServiceApi.fetchPlayerCharacters(userId);
