@@ -1,5 +1,5 @@
 # Stage 1: Build the web client using Node.js
-FROM node:23
+FROM node:24-alpine
 
 WORKDIR /app
 
