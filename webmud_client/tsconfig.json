@@ -34,7 +34,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "lib/db.ts",
+    "lib/gameServiceApi.ts",
     "types/**/*.ts",
     "types/*.ts"
   ],

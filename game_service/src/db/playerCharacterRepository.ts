@@ -22,9 +22,39 @@ export class PlayerCharacterRepository {
     return await this.characters.find({ userId }).toArray();
   }
 
+  // List characters for user with aggregated species and world details
+  async listCharactersForUserWithDetails(userId: string): Promise<WithId<Document>[]> {
+    const results = await this.characters.aggregate([
+      { $match: { userId: userId } },
+      { $lookup: {
+        from: "characterSpecies",
+        localField: "species",
+        foreignField: "_id",
+        as: "speciesData"
+      }},
+      { $unwind: "$speciesData" },
+      { $addFields: { 
+        speciesName: "$speciesData.name",
+        worldObjectId: { $toObjectId: "$worldId" }
+      }},
+      { $project: { speciesData: 0 } },
+      { $lookup: {
+        from: "worlds",
+        localField: "worldObjectId",
+        foreignField: "_id",
+        as: "worldData"
+      }},
+      { $unwind: "$worldData" },
+      { $addFields: { worldName: "$worldData.name", worldUrl: "$worldData.url" } },
+      { $project: { worldData: 0, worldObjectId: 0 } }
+    ]).toArray();
+    return results as WithId<Document>[];
+  }
+
   // Create a new character document.
   async createCharacter(character: {
-    user_id: string
+    user_id?: string;
+    userId?: string;
     player_id: string;
     name: string;
     description: string;

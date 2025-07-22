@@ -1,7 +1,7 @@
 "use server";
-import { connectToDatabase } from "../lib/db.ts"; // adjust to your DB helper
 import { auth } from "../auth.ts";  
 import { logger } from "../lib/utils.ts";
+import { gameServiceApi } from "../lib/gameServiceApi.ts";
 
 export async function createCharacter(formData: FormData) {
   // Get the form fields
@@ -27,10 +27,8 @@ export async function createCharacter(formData: FormData) {
 
   // FUTURE FEATURE: server-side profanity checking using a dictionary of banned words
 
-  // Connect and insert into MongoDB
+  // Create character via game service API
   try {
-    const { db } = await connectToDatabase();
-    
     // add default state info and merge with the incoming data
     const saved_state = {
         "location": "room-002",
@@ -38,7 +36,7 @@ export async function createCharacter(formData: FormData) {
         "max_health": 100
     }
 
-    const newCharacter = await db.collection("playerCharacters").insertOne({
+    const newCharacter = await gameServiceApi.createPlayerCharacter({
       species,
       name,
       worldId,

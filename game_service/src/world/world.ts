@@ -117,18 +117,28 @@ export class World {
         const playerEntity = EntityFactory.createPlayerEntity(playerCharacter);
 
         // Set initial state values if not already set by the factory
-        // Default values for new players
-        if (!playerEntity.state.currentRoom) playerEntity.state.currentRoom = "";
-        if (!playerEntity.state.roomDescription) playerEntity.state.roomDescription = "";
-        if (!playerEntity.state.currentHealth) playerEntity.state.currentHealth = 100;
-        if (!playerEntity.state.gameMessages) playerEntity.state.gameMessages = [];
-        if (!playerEntity.state.currentLocation) playerEntity.state.currentLocation = "room-001";
-        if (!playerEntity.state.roomExits) playerEntity.state.roomExits = [];
-        if (!playerEntity.state.roomItems) playerEntity.state.roomItems = [];
-        if (!playerEntity.state.roomEntityStates) playerEntity.state.roomEntityStates = [];
+        // Default values for new players - use updateState method
+        const initialState: any = {};
+        if (!playerEntity.state.currentRoom) initialState.currentRoom = "";
+        if (!playerEntity.state.roomDescription) initialState.roomDescription = "";
+        if (!playerEntity.state.currentHealth) initialState.currentHealth = 100;
+        if (!playerEntity.state.gameMessages) initialState.gameMessages = [];
+        if (!playerEntity.state.currentLocation) initialState.currentLocation = "room-001";
+        if (!playerEntity.state.roomExits) initialState.roomExits = [];
+        if (!playerEntity.state.roomItems) initialState.roomItems = [];
+        if (!playerEntity.state.roomEntityStates) initialState.roomEntityStates = [];
 
-        // Add welcome message
-        playerEntity.state.gameMessages.push("You have joined the world of " + this.name);
+        // Apply initial state using updateState method
+        if (Object.keys(initialState).length > 0) {
+            playerEntity.updateState(initialState);
+        }
+
+        // Add welcome message using updateState method
+        if (playerEntity.state?.gameMessages) {
+            const currentMessages = [...playerEntity.state.gameMessages];
+            currentMessages.push("You have joined the world of " + this.name);
+            playerEntity.updateState({ gameMessages: currentMessages });
+        }
 
         this.entities.set(playerEntity.pkid, playerEntity);
         this.arrivePlayer(playerEntity.pkid, playerEntity.state.currentLocation || "room-001");
@@ -186,16 +196,17 @@ export class World {
 
                 // Initialize visited rooms if not already set
                 if (!entity.state.visitedRooms) {
-                    entity.state.visitedRooms = new Set<string>();
+                    entity.updateState({ visitedRooms: new Set<string>() });
                 }
 
                 // Mark both current and destination rooms as visited
-                entity.state.visitedRooms.add(entity.state.currentLocation);
-                entity.state.visitedRooms.add(locationExit.room_id);
+                const newVisitedRooms = new Set(entity.state.visitedRooms);
+                newVisitedRooms.add(entity.state.currentLocation);
+                newVisitedRooms.add(locationExit.room_id);
 
                 // Initialize map data if not already set
                 if (!entity.state.mapData) {
-                    entity.state.mapData = { rooms: {} };
+                    entity.updateState({ mapData: { rooms: {} } });
                 }
 
                 // Add or update current room in map data
@@ -210,7 +221,8 @@ export class World {
                     currentRoom: newRoom.dbRecord.name,
                     roomDescription: newRoom.dbRecord.description,
                     roomExits: newRoom.dbRecord.exits,
-                    roomEntityViews: this.getRoomEntityViews(locationExit.room_id, playerCharacterId)
+                    roomEntityViews: this.getRoomEntityViews(locationExit.room_id, playerCharacterId),
+                    visitedRooms: newVisitedRooms
                 });
 
                 // remove the player entity from the old room
@@ -221,14 +233,18 @@ export class World {
 
                 // Add message to the player's message queue
                 if (entity.state?.gameMessages) {
-                    entity.state.gameMessages.push(`You ${movementType} ${direction} to ${newRoom.dbRecord.name}.`);
+                    const currentMessages = [...entity.state.gameMessages];
+                    currentMessages.push(`You ${movementType} ${direction} to ${newRoom.dbRecord.name}.`);
+                    entity.updateState({ gameMessages: currentMessages });
                 }
 
                 // push a message to players in the old room indicating the player moved
                 for (const entityPkid of room.roomEntities) {
                     const otherEntity = this.entities.get(entityPkid) as PlayerEntity;
                     if (otherEntity && otherEntity.state?.gameMessages) {
-                        otherEntity.state.gameMessages.push(`${entity.baseData.name} ${movementType}s ${direction}.`);
+                        const currentMessages = [...otherEntity.state.gameMessages];
+                        currentMessages.push(`${entity.baseData.name} ${movementType}s ${direction}.`);
+                        otherEntity.updateState({ gameMessages: currentMessages });
                     }
                 }
 
@@ -237,7 +253,9 @@ export class World {
                     if (entityPkid !== playerCharacterId) { // Don't notify the arriving player
                         const otherEntity = this.entities.get(entityPkid) as PlayerEntity;
                         if (otherEntity && otherEntity.state?.gameMessages) {
-                            otherEntity.state.gameMessages.push(`${entity.baseData.name} ${movementType}s in from ${getOppositeDirection(direction)}.`);
+                            const currentMessages = [...otherEntity.state.gameMessages];
+                            currentMessages.push(`${entity.baseData.name} ${movementType}s in from ${getOppositeDirection(direction)}.`);
+                            otherEntity.updateState({ gameMessages: currentMessages });
                         }
                     }
                 }
@@ -249,7 +267,9 @@ export class World {
                 this.sendStateToPlayer(playerCharacterId, locationExit.room_id);
             } else {
                 if (entity.state?.gameMessages) {
-                    entity.state.gameMessages.push(`You cannot move ${direction} from here.`);
+                    const currentMessages = [...entity.state.gameMessages];
+                    currentMessages.push(`You cannot move ${direction} from here.`);
+                    entity.updateState({ gameMessages: currentMessages });
                 }
             }
         } else {
@@ -274,11 +294,13 @@ export class World {
         }
 
         // Add or update the room in player's map data
-        entity.state.mapData.rooms[roomId] = {
+        const currentMapData = { ...entity.state.mapData };
+        currentMapData.rooms[roomId] = {
             id: roomId,
             name: room.dbRecord.name,
             exits: roomExits
         };
+        entity.updateState({ mapData: currentMapData });
     }
 
     // advance the game loop - one tick represents 1/20th of a second at the current tick rate
@@ -352,7 +374,9 @@ export class World {
         // Find the entity and use its methods
         const entity = this.entities.get(playerCharacterId) as PlayerEntity;
         if (entity && entity.state?.gameMessages) {
-            entity.state.gameMessages.push(...messages);
+            const currentMessages = [...entity.state.gameMessages];
+            currentMessages.push(...messages);
+            entity.updateState({ gameMessages: currentMessages });
         }
     }
 
@@ -418,14 +442,15 @@ export class World {
         if (entity !== undefined) {
             // Initialize map-related properties
             if (!entity.state.visitedRooms) {
-                entity.state.visitedRooms = new Set<string>();
+                entity.updateState({ visitedRooms: new Set<string>() });
             }
             if (!entity.state.mapData) {
-                entity.state.mapData = { rooms: {} };
+                entity.updateState({ mapData: { rooms: {} } });
             }
 
             // Mark room as visited
-            entity.state.visitedRooms.add(location);
+            const newVisitedRooms = new Set(entity.state.visitedRooms);
+            newVisitedRooms.add(location);
 
             // Add room to map data
             this.updateRoomInPlayerMap(entity, room);
@@ -436,18 +461,23 @@ export class World {
                 currentRoom: room.dbRecord.name,
                 roomDescription: room.dbRecord.description,
                 roomExits: room.dbRecord.exits,
-                roomEntityViews: this.getRoomEntityViews(location, playerCharacterId)
+                roomEntityViews: this.getRoomEntityViews(location, playerCharacterId),
+                visitedRooms: newVisitedRooms
             });
 
             if (entity.state?.gameMessages) {
-                entity.state.gameMessages.push(`You have arrived in a ${room.dbRecord.name}.`);
+                const currentMessages = [...entity.state.gameMessages];
+                currentMessages.push(`You have arrived in a ${room.dbRecord.name}.`);
+                entity.updateState({ gameMessages: currentMessages });
             }
             
             // Notify other entities in the room about the new arrival
             const roomEntities = this.getRoomEntities(location);
             for (const roomEntity of roomEntities) {
                 if (roomEntity.pkid !== playerCharacterId && roomEntity.state?.gameMessages) {
-                    roomEntity.state.gameMessages.push(`${entity.baseData.name} has arrived, seemingly from nowhere.`);
+                    const currentMessages = [...roomEntity.state.gameMessages];
+                    currentMessages.push(`${entity.baseData.name} has arrived, seemingly from nowhere.`);
+                    roomEntity.updateState({ gameMessages: currentMessages });
                 }
             }
             
@@ -476,12 +506,16 @@ export class World {
             const roomEntities = this.getRoomEntities(entity.state.currentLocation || "");
             // Add the message to the player's game messages
             if (entity.state?.gameMessages) {
-                entity.state.gameMessages.push(`You say, "${message}"`);
+                const currentMessages = [...entity.state.gameMessages];
+                currentMessages.push(`You say, "${message}"`);
+                entity.updateState({ gameMessages: currentMessages });
             }
             // Add the message to the other entities' game messages
             for (const roomEntity of roomEntities) {
                 if (roomEntity.pkid !== playerCharacterId && roomEntity.state?.gameMessages) {
-                    roomEntity.state.gameMessages.push(`${entity.baseData.name} says, "${message}"`);
+                    const currentMessages = [...roomEntity.state.gameMessages];
+                    currentMessages.push(`${entity.baseData.name} says, "${message}"`);
+                    roomEntity.updateState({ gameMessages: currentMessages });
                 }
             }
         }
@@ -496,11 +530,15 @@ export class World {
 
         if (entity.setMovementType(newMovementType)) {
             if (entity.state?.gameMessages) {
-                entity.state.gameMessages.push(`You are now ${newMovementType}ing.`);
+                const currentMessages = [...entity.state.gameMessages];
+                currentMessages.push(`You are now ${newMovementType}ing.`);
+                entity.updateState({ gameMessages: currentMessages });
             }
         } else {
             if (entity.state?.gameMessages) {
-                entity.state.gameMessages.push(`You can't ${newMovementType}.`);
+                const currentMessages = [...entity.state.gameMessages];
+                currentMessages.push(`You can't ${newMovementType}.`);
+                entity.updateState({ gameMessages: currentMessages });
             }
         }
     }
@@ -550,7 +588,9 @@ export class World {
                 if (targetEntity.type === "player") {
                     const targetPlayer = this.entities.get(targetEntity.pkid) as PlayerEntity;
                     if (targetPlayer && targetPlayer.state?.gameMessages) {
-                        targetPlayer.state.gameMessages.push(targetMessage);
+                        const currentMessages = [...targetPlayer.state.gameMessages];
+                        currentMessages.push(targetMessage);
+                        targetPlayer.updateState({ gameMessages: currentMessages });
                     }
                 }
             } else {
@@ -573,7 +613,9 @@ export class World {
         
         // Add the message to the player's game messages
         if (entity.state?.gameMessages) {
-            entity.state.gameMessages.push(playerMessage);
+            const currentMessages = [...entity.state.gameMessages];
+            currentMessages.push(playerMessage);
+            entity.updateState({ gameMessages: currentMessages });
         }
         
         // Add the message to other entities in the room
@@ -582,7 +624,9 @@ export class World {
             if (roomEntity.pkid !== playerCharacterId && 
                 (!target || roomEntity.baseData.name.toLowerCase() !== target.toLowerCase()) && 
                 roomEntity.state?.gameMessages) {
-                roomEntity.state.gameMessages.push(othersMessage);
+                const currentMessages = [...roomEntity.state.gameMessages];
+                currentMessages.push(othersMessage);
+                roomEntity.updateState({ gameMessages: currentMessages });
             }
         }
     }
@@ -781,24 +825,31 @@ export class World {
             if (targetEntity) {
                 // Target found - notify them and the looking player
                 if (targetEntity.type === "player" && targetEntity.state?.gameMessages) {
-                    targetEntity.state.gameMessages.push(`${entity.baseData.name} looks at you.`);
+                    const currentMessages = [...targetEntity.state.gameMessages];
+                    currentMessages.push(`${entity.baseData.name} looks at you.`);
+                    targetEntity.updateState({ gameMessages: currentMessages });
                 }
                 
                 if (entity.state?.gameMessages) {
-                    entity.state.gameMessages.push(`You look at ${targetEntity.baseData.name}.`);
+                    const currentMessages = [...entity.state.gameMessages];
+                    currentMessages.push(`You look at ${targetEntity.baseData.name}.`);
+                    entity.updateState({ gameMessages: currentMessages });
                 }
             } else {
                 if (entity.state?.gameMessages) {
-                    entity.state.gameMessages.push(`You don't see ${args.join(" ")} here.`);
+                    const currentMessages = [...entity.state.gameMessages];
+                    currentMessages.push(`You don't see ${args.join(" ")} here.`);
+                    entity.updateState({ gameMessages: currentMessages });
                 }
             }
         } else {
             // Look at the room
             if (entity.state?.gameMessages) {
-                entity.state.gameMessages.push(`You look around the ${room.dbRecord.name}.`);
-                entity.state.gameMessages.push(room.dbRecord.description);
+                const currentMessages = [...entity.state.gameMessages];
+                currentMessages.push(`You look around the ${room.dbRecord.name}.`);
+                currentMessages.push(room.dbRecord.description);
                 if (room.dbRecord.exits) {
-                    entity.state.gameMessages.push("Exits: " + Object.keys(room.dbRecord.exits).join(", "));
+                    currentMessages.push("Exits: " + Object.keys(room.dbRecord.exits).join(", "));
                 }
                 if (room.roomEntities.length > 0) {
                     const entityNames = room.roomEntities
@@ -809,11 +860,12 @@ export class World {
                         });
                     
                     if (entityNames.length > 0) {
-                        entity.state.gameMessages.push("You see: " + entityNames.join(", "));
+                        currentMessages.push("You see: " + entityNames.join(", "));
                     } else {
-                        entity.state.gameMessages.push("You don't see anyone else here.");
+                        currentMessages.push("You don't see anyone else here.");
                     }
                 }
+                entity.updateState({ gameMessages: currentMessages });
             }
         }
     }
@@ -827,7 +879,9 @@ export class World {
         }
         
         if (entity.state?.gameMessages) {
-            entity.state.gameMessages.push("You feel too peaceful for combat.");
+            const currentMessages = [...entity.state.gameMessages];
+            currentMessages.push("You feel too peaceful for combat.");
+            entity.updateState({ gameMessages: currentMessages });
         }
     }
 

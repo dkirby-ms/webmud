@@ -20,7 +20,7 @@ webMUD's [client](./webmud_client/README.md) is a NextJS single page app (SPA) (
 ### Server
 Express.js and socket.io
 
-## Deployment
+## Azure Deployment
 
 Azure Developer CLI can be used to deploy webMUD to Azure, with the following resources deployed.
 
@@ -31,3 +31,9 @@ Azure Developer CLI can be used to deploy webMUD to Azure, with the following re
 - Azure DNS
 
 Run ```azd up``` after creating a parameters file to deploy to Azure.
+
+## Development
+
+- Setup node 23 via nvm
+- Start mongodb via ```docker compose up -d```
+- Start the game service and web clients with ```npm run dev``` in their respective folders
