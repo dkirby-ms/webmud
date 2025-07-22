@@ -109,7 +109,12 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 				break;
 			case CommandType.ATTACK:
 				//world.attack(socket.data.playerCharacterId, parsedCommand.args[0]);
-				world.handleCombatCommand(socket.data.playerCharacterId, parsedCommand);
+				const target = parsedCommand.args && parsedCommand.args.length > 0 ? parsedCommand.args.join(" ") : undefined;
+				world.handleCombatCommand(socket.data.playerCharacterId, target);
+				break;
+			case CommandType.COMBAT:
+				// Handle combat status command
+				world.displayCombatStatus(socket.data.playerCharacterId);
 				break;
 			case CommandType.EMOTE:
 				// Handle emote commands

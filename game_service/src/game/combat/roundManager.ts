@@ -1,10 +1,5 @@
-// Simple logger for combat round manager
-const logger = {
-    info: (msg: string) => console.log(`[INFO] ${msg}`),
-    warn: (msg: string) => console.warn(`[WARN] ${msg}`),
-    debug: (msg: string) => console.log(`[DEBUG] ${msg}`),
-    error: (msg: string) => console.error(`[ERROR] ${msg}`)
-};
+import { logger } from '../../util.js';
+import { MessageTypes } from '../../taxonomy.js';
 
 /**
  * Represents a combat action queued by a player

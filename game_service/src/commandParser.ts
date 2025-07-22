@@ -7,6 +7,7 @@ export enum CommandType {
     LOOK = "look",
     EMOTE = "emote", // Added new command type for emotes
     HELP = "help",   // Added new command type for help
+    COMBAT = "combat", // Added new command type for combat status
 }
 
 import { EMOTE_KEYS } from './world/emoteConfig.js';
@@ -99,6 +100,13 @@ export function parseCommand(input: string): Command {
         return {
             type: CommandType.HELP,
             args: tokens.slice(1),
+        };
+    }
+
+    // Handle 'combat' command
+    if (commandWord === "combat") {
+        return {
+            type: CommandType.COMBAT,
         };
     }
 

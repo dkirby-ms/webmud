@@ -8,6 +8,7 @@ import { getEmoteByKey, EmoteDefinition } from "./emoteConfig.js";
 import { CommandType } from "../commandParser.js";
 import { EMOTE_KEYS } from "./emoteConfig.js";
 import { isBigInt64Array } from "node:util/types";
+import { RoundManager, CombatAction, RoundConfig } from "../game/combat/roundManager.js";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const enum RoomType {
@@ -32,6 +33,7 @@ export class World {
     //protected redis: RedisClientType;
     protected socketServer: Server;
     protected repositories: Repositories;
+    protected combatRoundManager: RoundManager;
 
     // Changed from arrays to Maps for efficient lookups.
     protected players: Map<string, { playerCharacter: any, socket: Socket }> = new Map();
@@ -45,6 +47,13 @@ export class World {
         this.repositories = repositories;
         this.socketServer = socketServer;
         //this.redis = createClient({ url: REDIS_URL });
+
+        // Initialize combat round manager with default configuration
+        const combatConfig: RoundConfig = {
+            roundDurationMs: 5000,  // 5 second rounds
+            windowDurationMs: 2000  // 2 second action window
+        };
+        this.combatRoundManager = new RoundManager(combatConfig);
     }
 
     // init the world from the database 
@@ -92,6 +101,10 @@ export class World {
     public start(): void {
         try {
             this.timer = setInterval(() => this.tick(), this.tickRate);
+            
+            // Start the combat round manager
+            this.combatRoundManager.start();
+            
             logger.info(`World ${this.name} started.`);
         } catch (err) {
             logger.error(`Error initializing game world: ${err}`);
@@ -105,6 +118,9 @@ export class World {
             clearInterval(this.timer);
             logger.info(`Game world stopped.`);
         }
+        
+        // Stop the combat round manager
+        this.combatRoundManager.stop();
     }
 
     
@@ -695,7 +711,8 @@ export class World {
         // Combat commands
         helpMessages.push("");
         helpMessages.push("COMBAT:");
-        helpMessages.push("  attack (a), kill (k) <target> - Attack someone or something");
+        helpMessages.push("  attack (a), kill (k) <target> - Queue attack for next combat round");
+        helpMessages.push("  combat - Show combat round status and timing");
         
         // Emotes
         helpMessages.push("");
@@ -757,9 +774,19 @@ export class World {
             case "a":
             case "k":
                 helpMessages.push("=== ATTACK ===");
-                helpMessages.push("Attack another character or creature.");
+                helpMessages.push("Queue an attack action for the next combat round resolution.");
                 helpMessages.push("Usage: attack <target> or kill <target>");
                 helpMessages.push("Example: 'attack goblin' or 'kill orc'");
+                helpMessages.push("Note: Actions are only accepted during open combat windows.");
+                helpMessages.push("Use 'combat' command to check round status and timing.");
+                break;
+                
+            case "combat":
+                helpMessages.push("=== COMBAT STATUS ===");
+                helpMessages.push("Display the current combat round status and timing.");
+                helpMessages.push("Shows whether the action window is open or closed,");
+                helpMessages.push("time remaining in current window, and queued actions.");
+                helpMessages.push("Usage: combat");
                 break;
                 
             case "emote":
@@ -871,16 +898,48 @@ export class World {
     }
 
 
-    // Handle attack and kill commands with a peaceful message
+    // Handle attack and kill commands with combat round system
     public handleCombatCommand(playerCharacterId: string, target?: string): void {
         const entity = this.entities.get(playerCharacterId) as PlayerEntity;
         if (!entity) {
             throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
         }
         
+        // Check if combat round system is active
+        if (!this.combatRoundManager.isWindowOpen()) {
+            if (entity.state?.gameMessages) {
+                const currentMessages = [...entity.state.gameMessages];
+                const timeRemaining = this.combatRoundManager.getWindowTimeRemaining();
+                if (timeRemaining > 0) {
+                    currentMessages.push(`Action window is closed. Next window opens in ${Math.ceil(timeRemaining / 1000)} seconds.`);
+                } else {
+                    currentMessages.push("Combat action window is currently closed. Wait for the next round.");
+                }
+                entity.updateState({ gameMessages: currentMessages });
+            }
+            return;
+        }
+
+        // Create combat action
+        const combatAction: CombatAction = {
+            playerId: playerCharacterId,
+            actionType: 'attack',
+            target: target,
+            timestamp: Date.now()
+        };
+
+        // Queue the action
+        const queued = this.combatRoundManager.queueAction(combatAction);
+        
         if (entity.state?.gameMessages) {
             const currentMessages = [...entity.state.gameMessages];
-            currentMessages.push("You feel too peaceful for combat.");
+            if (queued) {
+                const targetText = target ? ` ${target}` : "";
+                const timeRemaining = this.combatRoundManager.getWindowTimeRemaining();
+                currentMessages.push(`You prepare to attack${targetText}. Action queued for next resolution (${Math.ceil(timeRemaining / 1000)}s remaining).`);
+            } else {
+                currentMessages.push("Unable to queue combat action at this time.");
+            }
             entity.updateState({ gameMessages: currentMessages });
         }
     }
@@ -905,6 +964,37 @@ export class World {
             i = end + 1;
         }
         return chunks;
+    }
+
+    // Display combat round status to a player
+    public displayCombatStatus(playerCharacterId: string): void {
+        const entity = this.entities.get(playerCharacterId) as PlayerEntity;
+        if (!entity) {
+            throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
+        }
+
+        const roundState = this.combatRoundManager.getCurrentState();
+        const statusMessages: string[] = [];
+
+        statusMessages.push("=== COMBAT STATUS ===");
+        
+        if (roundState.isActive) {
+            statusMessages.push(`Round ${roundState.roundNumber} is active`);
+            
+            if (roundState.windowOpen) {
+                const timeRemaining = this.combatRoundManager.getWindowTimeRemaining();
+                statusMessages.push(`Action window is OPEN - ${Math.ceil(timeRemaining / 1000)} seconds remaining`);
+                statusMessages.push("You can queue combat actions now using 'attack <target>' or 'kill <target>'");
+            } else {
+                statusMessages.push("Action window is CLOSED - waiting for next round");
+            }
+            
+            statusMessages.push(`Actions queued this round: ${roundState.queuedActions.length}`);
+        } else {
+            statusMessages.push("Combat round system is not active");
+        }
+
+        this.sendCommandOutputToPlayer(playerCharacterId, statusMessages);
     }
 
 }
