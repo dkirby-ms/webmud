@@ -1,13 +1,12 @@
 export enum CommandType {
     SAY = "say",
     MOVE = "move",
-    ATTACK = "attack",
+    COMBAT = "combat",
     UNKNOWN = "unknown",
     TELL = "tell",
     LOOK = "look",
     EMOTE = "emote", // Added new command type for emotes
     HELP = "help",   // Added new command type for help
-    COMBAT = "combat", // Added new command type for combat status
 }
 
 import { EMOTE_KEYS } from './world/emoteConfig.js';
@@ -24,7 +23,7 @@ export interface Command {
  * Supported commands:
  * - "say <message>" => CommandType.SAY with message in the "text" property.
  * - Direction commands (e.g., "north", "east") => CommandType.MOVE with the direction in "args".
- * - "kill <target>" => CommandType.ATTACK with the target in "args".
+ * - "kill <target>" or "attack <target>" => CommandType.COMBAT with the target in "args".
  * - "emote <action>" or specific emotes like "smile", "dance" => CommandType.EMOTE
  *
  * If the command is not recognized, type will be CommandType.UNKNOWN.
@@ -82,7 +81,7 @@ export function parseCommand(input: string): Command {
     // Handle the 'kill/attack' command.
     if (commandWord === "kill" || commandWord === "attack" || commandWord === "k" || commandWord === "a") {
         return {
-            type: CommandType.ATTACK,
+            type: CommandType.COMBAT,
             args: tokens.slice(1),
         };
     }
@@ -100,13 +99,6 @@ export function parseCommand(input: string): Command {
         return {
             type: CommandType.HELP,
             args: tokens.slice(1),
-        };
-    }
-
-    // Handle 'combat' command
-    if (commandWord === "combat") {
-        return {
-            type: CommandType.COMBAT,
         };
     }
 

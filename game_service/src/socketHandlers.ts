@@ -107,14 +107,16 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 				 // Add support for map-related look command
 				world.playerLooksAt(socket.data.playerCharacterId, parsedCommand.args);
 				break;
-			case CommandType.ATTACK:
-				//world.attack(socket.data.playerCharacterId, parsedCommand.args[0]);
-				const target = parsedCommand.args && parsedCommand.args.length > 0 ? parsedCommand.args.join(" ") : undefined;
-				world.handleCombatCommand(socket.data.playerCharacterId, target);
-				break;
 			case CommandType.COMBAT:
-				// Handle combat status command
-				world.displayCombatStatus(socket.data.playerCharacterId);
+				// Handle combat/attack commands
+				const target = parsedCommand.args && parsedCommand.args.length > 0 ? parsedCommand.args.join(" ") : undefined;
+				if (target) {
+					// Attack a target
+					world.handleCombatCommand(socket.data.playerCharacterId, target);
+				} else {
+					// Display combat status if no target specified
+					world.displayCombatStatus(socket.data.playerCharacterId);
+				}
 				break;
 			case CommandType.EMOTE:
 				// Handle emote commands
