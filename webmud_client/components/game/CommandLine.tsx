@@ -3,6 +3,8 @@ import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { Box } from "@radix-ui/themes";
 import { useGameService } from "../../contexts/GameServiceContext.tsx";
+import { MessageTypes } from "../../lib/messageTypes";
+
 export function CommandLine() {
 
     const { data: session } = useSession();
@@ -12,8 +14,8 @@ export function CommandLine() {
 
     const handleSendCommand = () => {
         if (input.trim() && socket) {
-            // Emit the message to the server
-            socket.emit('command:send', input);
+            // Emit the message to the server using MessageTypes constant
+            socket.emit(MessageTypes.command.SEND_COMMAND, input);
             setInput('');
         }
     };
