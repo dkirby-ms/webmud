@@ -8,7 +8,7 @@ import { getEmoteByKey, EmoteDefinition } from "./emoteConfig.js";
 import { CommandType } from "../commandParser.js";
 import { EMOTE_KEYS } from "./emoteConfig.js";
 import { isBigInt64Array } from "node:util/types";
-import { RoundManager, CombatAction, RoundConfig, CombatResult } from "../game/combat/roundManager.js";
+import { RoundManager, CombatAction, RoundConfig, CombatResult, GetCombatantsCallback, CombatResultsCallback, AutoActionCallback } from "../game/combat/roundManager.js";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const enum RoomType {
@@ -59,10 +59,41 @@ export class World {
             this.handleCombatEnd(results);
         };
         
+        // Callback for broadcasting combat round results
+        const onCombatResults = (results: CombatResult[]) => {
+            this.broadcastCombatResults(results);
+        };
+        
+        // Callback for auto-queued actions
+        const onAutoAction = (playerId: string, targetId: string, isPlayer: boolean) => {
+            this.handleAutoAction(playerId, targetId, isPlayer);
+        };
+        
         // Callback to get entities for combat processing
         const getEntities = () => this.entities;
         
-        this.combatRoundManager = new RoundManager(combatConfig, onCombatEnd, getEntities);
+        // Callback to get current combatants (players and NPCs in combat areas)
+        const getCombatants = (): { players: any[], npcs: any[] } => {
+            const players: any[] = [];
+            const npcs: any[] = [];
+            
+            // Get all entities in rooms where combat is happening
+            for (const room of this.rooms) {
+                const roomEntities = this.getRoomEntities(room.id);
+                const roomPlayers = roomEntities.filter(e => e.type === "player");
+                const roomNPCs = roomEntities.filter(e => e.type === "npc" || e.type === "mob");
+                
+                // If there are both players and NPCs in the room, they're in combat
+                if (roomPlayers.length > 0 && roomNPCs.length > 0) {
+                    players.push(...roomPlayers);
+                    npcs.push(...roomNPCs);
+                }
+            }
+            
+            return { players, npcs };
+        };
+        
+        this.combatRoundManager = new RoundManager(combatConfig, onCombatEnd, onCombatResults, onAutoAction, getEntities, getCombatants);
     }
 
     // init the world from the database 
@@ -743,6 +774,7 @@ export class World {
         helpMessages.push("  attack (a), kill (k) <target> - Queue attack for next combat round");
         helpMessages.push("  flee - Attempt to flee from combat");
         helpMessages.push("  combat - Show combat round status and timing");
+        helpMessages.push("  Note: If you don't queue an action, you'll automatically attack a random enemy!");
         
         // Emotes
         helpMessages.push("");
@@ -809,6 +841,7 @@ export class World {
                 helpMessages.push("Example: 'attack goblin' or 'kill orc'");
                 helpMessages.push("Note: Actions are only accepted during open combat windows.");
                 helpMessages.push("Use 'combat' command to check round status and timing.");
+                helpMessages.push("If you don't queue an action, you'll automatically attack a random enemy!");
                 break;
                 
             case "combat":
@@ -1194,6 +1227,48 @@ export class World {
     }
 
     /**
+     * Broadcasts combat results to all players in affected rooms
+     */
+    private broadcastCombatResults(results: CombatResult[]): void {
+        const affectedRooms = new Set<string>();
+        
+        // Collect all affected rooms and send messages
+        for (const result of results) {
+            const attackerEntity = this.entities.get(result.attacker);
+            const defenderEntity = this.entities.get(result.target);
+            
+            if (attackerEntity && defenderEntity) {
+                const attackerName = attackerEntity.getName();
+                const defenderName = defenderEntity.getName();
+                const roomId = defenderEntity.state.currentLocation;
+                
+                affectedRooms.add(roomId);
+                
+                const combatMessage = result.defeated 
+                    ? `${attackerName} strikes ${defenderName} for ${result.damage} damage, defeating them!`
+                    : `${attackerName} attacks ${defenderName} for ${result.damage} damage! (${result.targetHealthRemaining}/${defenderEntity.getMaxHealth()} health remaining)`;
+                
+                // Send to all players in the room
+                this.sendMessageToPlayersInRoom(roomId, combatMessage);
+            }
+        }
+    }
+
+    /**
+     * Sends a message to all players in a specific room
+     */
+    private sendMessageToPlayersInRoom(roomId: string, message: string): void {
+        const roomEntities = this.getRoomEntities(roomId);
+        for (const entity of roomEntities) {
+            if (entity.type === "player" && entity.state?.gameMessages) {
+                const currentMessages = [...entity.state.gameMessages];
+                currentMessages.push(message);
+                entity.updateState({ gameMessages: currentMessages });
+            }
+        }
+    }
+
+    /**
      * Sends a message to all players in a specific room
      */
     private sendToPlayersInRoom(roomId: string, messageType: string, data: any): void {
@@ -1203,6 +1278,24 @@ export class World {
                 player.socket.emit(messageType, data);
             }
         }
+    }
+
+    /**
+     * Handles auto-queued actions for players and NPCs
+     */
+    private handleAutoAction(playerId: string, targetId: string, isPlayer: boolean): void {
+        if (isPlayer) {
+            // Notify player that a default attack was queued
+            const playerEntity = this.entities.get(playerId);
+            const targetEntity = this.entities.get(targetId);
+            
+            if (playerEntity && targetEntity && playerEntity.state?.gameMessages) {
+                const currentMessages = [...playerEntity.state.gameMessages];
+                currentMessages.push(`No action queued - automatically attacking ${targetEntity.getName()}!`);
+                playerEntity.updateState({ gameMessages: currentMessages });
+            }
+        }
+        // For NPCs, we don't need to notify anyone - their attacks are automatic
     }
 
     // Helper method to chunk a string into smaller pieces

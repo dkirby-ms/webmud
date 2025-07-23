@@ -36,6 +36,9 @@ export interface CombatResult {
 }
 
 export type CombatEndCallback = (results: CombatResult[]) => void;
+export type CombatResultsCallback = (results: CombatResult[]) => void;
+export type GetCombatantsCallback = () => { players: any[], npcs: any[] };
+export type AutoActionCallback = (playerId: string, targetId: string, isPlayer: boolean) => void;
 
 /**
  * Manages combat rounds with timer-based action processing.
@@ -50,12 +53,25 @@ export class RoundManager {
     private state: RoundState;
     private roundTimer?: NodeJS.Timeout;
     private onCombatEnd?: CombatEndCallback;
+    private onCombatResults?: CombatResultsCallback;
+    private onAutoAction?: AutoActionCallback;
     private getEntitiesCallback?: () => Map<string, any>;
+    private getCombatantsCallback?: GetCombatantsCallback;
 
-    constructor(config: RoundConfig, onCombatEnd?: CombatEndCallback, getEntitiesCallback?: () => Map<string, any>) {
+    constructor(
+        config: RoundConfig, 
+        onCombatEnd?: CombatEndCallback,
+        onCombatResults?: CombatResultsCallback,
+        onAutoAction?: AutoActionCallback,
+        getEntitiesCallback?: () => Map<string, any>,
+        getCombatantsCallback?: GetCombatantsCallback
+    ) {
         this.config = config;
         this.onCombatEnd = onCombatEnd;
+        this.onCombatResults = onCombatResults;
+        this.onAutoAction = onAutoAction;
         this.getEntitiesCallback = getEntitiesCallback;
+        this.getCombatantsCallback = getCombatantsCallback;
         this.state = {
             isActive: false,
             roundNumber: 0,
@@ -186,8 +202,68 @@ export class RoundManager {
         this.state.windowOpen = false;
         logger.debug(`Combat round ${this.state.roundNumber} window closed - processing ${this.state.queuedActions.length} actions`);
 
+        // Auto-queue NPC actions before processing
+        this.autoQueueNPCActions();
+
         // Process actions here in the future
         this.processQueuedActions();
+    }
+
+    /**
+     * Automatically queue attack actions for NPCs and default attacks for players
+     */
+    private autoQueueNPCActions(): void {
+        if (!this.getCombatantsCallback) {
+            return;
+        }
+
+        const combatants = this.getCombatantsCallback();
+        
+        // Auto-queue default attacks for players who haven't acted this round
+        const playersWhoActed = new Set(this.state.queuedActions.map(action => action.playerId));
+        
+        for (const player of combatants.players) {
+            if (!playersWhoActed.has(player.pkid) && combatants.npcs.length > 0) {
+                // Player hasn't acted - queue a default attack against a random NPC
+                const randomNPC = combatants.npcs[Math.floor(Math.random() * combatants.npcs.length)];
+                
+                const playerDefaultAction: CombatAction = {
+                    playerId: player.pkid,
+                    actionType: 'attack',
+                    target: randomNPC.baseData.id
+                };
+                
+                this.state.queuedActions.push(playerDefaultAction);
+                logger.debug(`Auto-queued player default attack: ${player.baseData.name} -> ${randomNPC.baseData.name}`);
+                
+                // Notify about auto-queued player action
+                if (this.onAutoAction) {
+                    this.onAutoAction(player.pkid, randomNPC.baseData.id, true);
+                }
+            }
+        }
+        
+        // Auto-queue attacks for NPCs against random players
+        for (const npc of combatants.npcs) {
+            if (combatants.players.length > 0) {
+                // Pick a random player to attack
+                const randomPlayer = combatants.players[Math.floor(Math.random() * combatants.players.length)];
+                
+                const npcAction: CombatAction = {
+                    playerId: npc.baseData.id,
+                    actionType: 'attack',
+                    target: randomPlayer.pkid
+                };
+                
+                this.state.queuedActions.push(npcAction);
+                logger.debug(`Auto-queued NPC attack: ${npc.baseData.name} -> ${randomPlayer.baseData.name}`);
+                
+                // Notify about auto-queued NPC action
+                if (this.onAutoAction) {
+                    this.onAutoAction(npc.baseData.id, randomPlayer.pkid, false);
+                }
+            }
+        }
     }
 
     /**
@@ -219,11 +295,11 @@ export class RoundManager {
 
                 // Simple damage calculation (1-10 damage)
                 const damage = Math.floor(Math.random() * 10) + 1;
-                const currentHealth = target.state.health || 100;
+                const currentHealth = target.state.currentHealth || target.getCurrentHealth() || 100;
                 const newHealth = Math.max(0, currentHealth - damage);
                 
-                // Update target health
-                target.updateState({ health: newHealth });
+                // Update target health using currentHealth property
+                target.updateState({ currentHealth: newHealth });
                 
                 const result: CombatResult = {
                     attacker: action.playerId,
@@ -237,6 +313,11 @@ export class RoundManager {
                 
                 logger.debug(`Combat: ${action.playerId} attacks ${action.target} for ${damage} damage (${newHealth} health remaining)`);
             }
+        }
+
+        // Broadcast combat results if there were any actions
+        if (results.length > 0 && this.onCombatResults) {
+            this.onCombatResults(results);
         }
 
         // Check if any entities were defeated and call callback
