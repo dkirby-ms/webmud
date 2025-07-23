@@ -48,10 +48,10 @@ export class World {
         this.socketServer = socketServer;
         //this.redis = createClient({ url: REDIS_URL });
 
-        // Initialize combat round manager with default configuration
+        // Initialize combat round manager with test-friendly configuration
         const combatConfig: RoundConfig = {
-            roundDurationMs: 5000,  // 5 second rounds
-            windowDurationMs: 2000  // 2 second action window
+            roundDurationMs: 8000,  // 8 second rounds for testing
+            windowDurationMs: 4000  // 4 second action window for testing
         };
         this.combatRoundManager = new RoundManager(combatConfig);
     }
@@ -82,9 +82,21 @@ export class World {
                 if (entity.type === "player") {
                     this.entities.set(entity.pkid, entity);
                 } else {
-                    // Handle other entity types if necessary
-                    if (entity.id) {
-                        this.entities.set(entity.id, entity);
+                    // Handle other entity types (mobs, NPCs, items)
+                    if (entity.baseData.id) {
+                        this.entities.set(entity.baseData.id, entity);
+                        
+                        // Place non-player entities in their assigned rooms
+                        const roomId = record.room_id || entity.baseData.defaultLocation;
+                        if (roomId) {
+                            const room = this.rooms.find(r => r.id === roomId);
+                            if (room) {
+                                room.roomEntities.push(entity.baseData.id);
+                                logger.info(`Placed ${entity.type} '${entity.baseData.name}' in room ${roomId}`);
+                            } else {
+                                logger.warn(`Room ${roomId} not found for entity ${entity.baseData.id}`);
+                            }
+                        }
                     } else {
                         logger.warn(`Entity without ID found: ${JSON.stringify(entity)}`);
                     }
@@ -102,8 +114,8 @@ export class World {
         try {
             this.timer = setInterval(() => this.tick(), this.tickRate);
             
-            // Start the combat round manager
-            this.combatRoundManager.start();
+            // Don't auto-start combat - it should start when needed
+            // this.combatRoundManager.start();
             
             logger.info(`World ${this.name} started.`);
         } catch (err) {
@@ -402,7 +414,15 @@ export class World {
         if (!room) {
             throw new Error(`Room not found for location ${roomId}`);
         }
-        return Array.from(this.entities.values()).filter(e => room.roomEntities.includes(e.pkid));
+        return Array.from(this.entities.values()).filter(e => {
+            // For player entities, check against pkid
+            if (e.type === "player") {
+                return room.roomEntities.includes(e.pkid);
+            } else {
+                // For non-player entities (mobs, NPCs), check against baseData.id
+                return e.baseData.id && room.roomEntities.includes(e.baseData.id);
+            }
+        });
     }
 
     // Update the getRoomEntityViews method to exclude a specific player
@@ -904,8 +924,53 @@ export class World {
         if (!entity) {
             throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
         }
+
+        // If no target specified, just display combat status
+        if (!target) {
+            this.displayCombatStatus(playerCharacterId);
+            return;
+        }
+
+        // Find the target entity in the current room
+        const roomEntities = this.getRoomEntities(entity.state.currentLocation || "");
+        const targetEntity = roomEntities.find(e => 
+            e.baseData.name.toLowerCase() === target.toLowerCase());
+
+        if (!targetEntity) {
+            if (entity.state?.gameMessages) {
+                const currentMessages = [...entity.state.gameMessages];
+                currentMessages.push(`You don't see ${target} here.`);
+                entity.updateState({ gameMessages: currentMessages });
+            }
+            return;
+        }
+
+        // Check if target can be attacked (not another player for now)
+        if (targetEntity.type === "player") {
+            if (entity.state?.gameMessages) {
+                const currentMessages = [...entity.state.gameMessages];
+                currentMessages.push(`You cannot attack other players.`);
+                entity.updateState({ gameMessages: currentMessages });
+            }
+            return;
+        }
+
+        // If combat round system is not active, start it automatically
+        if (!this.combatRoundManager.getCurrentState().isActive) {
+            this.combatRoundManager.start();
+            
+            // Notify all entities in the room that combat has started
+            for (const roomEntity of roomEntities) {
+                if (roomEntity.type === "player" && roomEntity.state?.gameMessages) {
+                    const currentMessages = [...roomEntity.state.gameMessages];
+                    currentMessages.push(`*** COMBAT INITIATED ***`);
+                    currentMessages.push(`${entity.baseData.name} attacks ${targetEntity.baseData.name}!`);
+                    roomEntity.updateState({ gameMessages: currentMessages });
+                }
+            }
+        }
         
-        // Check if combat round system is active
+        // Check if combat round system window is open
         if (!this.combatRoundManager.isWindowOpen()) {
             if (entity.state?.gameMessages) {
                 const currentMessages = [...entity.state.gameMessages];
@@ -934,9 +999,8 @@ export class World {
         if (entity.state?.gameMessages) {
             const currentMessages = [...entity.state.gameMessages];
             if (queued) {
-                const targetText = target ? ` ${target}` : "";
                 const timeRemaining = this.combatRoundManager.getWindowTimeRemaining();
-                currentMessages.push(`You prepare to attack${targetText}. Action queued for next resolution (${Math.ceil(timeRemaining / 1000)}s remaining).`);
+                currentMessages.push(`You prepare to attack ${targetEntity.baseData.name}. Action queued for next resolution (${Math.ceil(timeRemaining / 1000)}s remaining).`);
             } else {
                 currentMessages.push("Unable to queue combat action at this time.");
             }
