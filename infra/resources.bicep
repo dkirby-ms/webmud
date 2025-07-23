@@ -72,6 +72,12 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.10.
   }
 }
 
+// Note: Azure managed certificates are automatically provisioned when bindingType is set to 'SniEnabled' 
+// and certificateType is set to 'ManagedCertificate'. This requires proper DNS configuration:
+// 1. CNAME record pointing custom domain to the Container App's default domain
+// 2. TXT record for domain verification (asuid.{subdomain} if using subdomain)
+// Azure will handle certificate provisioning, renewal, and binding automatically.
+
 // Key Vault for secrets management
 module keyVault 'br/public:avm/res/key-vault/vault:0.12.1' = {
   name: 'key-vault'
@@ -183,7 +189,8 @@ module gameService 'br/public:avm/res/app/container-app:0.14.1' = {
     customDomains: !empty(gameServiceCustomDomain) ? [
       {
         name: gameServiceCustomDomain
-        bindingType: 'disabled'
+        bindingType: 'SniEnabled'
+        certificateType: 'ManagedCertificate'
       }
     ] : []
     
@@ -292,7 +299,8 @@ module webmudClient 'br/public:avm/res/app/container-app:0.14.1' = {
     customDomains: !empty(webmudClientCustomDomain) ? [
       {
         name: webmudClientCustomDomain
-        bindingType: 'disabled'
+        bindingType: 'SniEnabled'
+        certificateType: 'ManagedCertificate'
       }
     ] : []
     secrets: union([

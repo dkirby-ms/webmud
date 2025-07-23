@@ -142,3 +142,7 @@ mongosh "mongodb://localhost:27017/?replicaSet=rs0" --eval "use('game-service');
 - **MongoDB**: Primary data store with replica set
 - **Azure Container Apps**: Production deployment target
 - **Azure Cosmos DB**: Managed MongoDB in production
+
+## Documentation
+
+- Dont create documentation unless instructed.
