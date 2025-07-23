@@ -8,7 +8,7 @@ import { getEmoteByKey, EmoteDefinition } from "./emoteConfig.js";
 import { CommandType } from "../commandParser.js";
 import { EMOTE_KEYS } from "./emoteConfig.js";
 import { isBigInt64Array } from "node:util/types";
-import { RoundManager, CombatAction, RoundConfig } from "../game/combat/roundManager.js";
+import { RoundManager, CombatAction, RoundConfig, CombatResult } from "../game/combat/roundManager.js";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const enum RoomType {
@@ -53,7 +53,16 @@ export class World {
             roundDurationMs: 8000,  // 8 second rounds for testing
             windowDurationMs: 4000  // 4 second action window for testing
         };
-        this.combatRoundManager = new RoundManager(combatConfig);
+        
+        // Callback for when combat ends due to defeats
+        const onCombatEnd = (results: CombatResult[]) => {
+            this.handleCombatEnd(results);
+        };
+        
+        // Callback to get entities for combat processing
+        const getEntities = () => this.entities;
+        
+        this.combatRoundManager = new RoundManager(combatConfig, onCombatEnd, getEntities);
     }
 
     // init the world from the database 
@@ -732,6 +741,7 @@ export class World {
         helpMessages.push("");
         helpMessages.push("COMBAT:");
         helpMessages.push("  attack (a), kill (k) <target> - Queue attack for next combat round");
+        helpMessages.push("  flee - Attempt to flee from combat");
         helpMessages.push("  combat - Show combat round status and timing");
         
         // Emotes
@@ -807,6 +817,16 @@ export class World {
                 helpMessages.push("Shows whether the action window is open or closed,");
                 helpMessages.push("time remaining in current window, and queued actions.");
                 helpMessages.push("Usage: combat");
+                break;
+                
+            case "flee":
+            case "run":
+                helpMessages.push("=== FLEE ===");
+                helpMessages.push("Attempt to escape from combat.");
+                helpMessages.push("When successful, you will exit combat immediately.");
+                helpMessages.push("If all players flee, combat will end automatically.");
+                helpMessages.push("Usage: flee");
+                helpMessages.push("Note: Currently flee always succeeds, but this may change.");
                 break;
                 
             case "emote":
@@ -989,8 +1009,7 @@ export class World {
         const combatAction: CombatAction = {
             playerId: playerCharacterId,
             actionType: 'attack',
-            target: target,
-            timestamp: Date.now()
+            target: target
         };
 
         // Queue the action
@@ -1005,6 +1024,184 @@ export class World {
                 currentMessages.push("Unable to queue combat action at this time.");
             }
             entity.updateState({ gameMessages: currentMessages });
+        }
+    }
+
+    // Handle flee command - allows players to escape from combat
+    public handleFleeCommand(playerCharacterId: string): void {
+        const entity = this.entities.get(playerCharacterId) as PlayerEntity;
+        if (!entity) {
+            throw new Error(`Player entity not found for user ID ${playerCharacterId}`);
+        }
+
+        // Check if combat is active
+        if (!this.combatRoundManager.getCurrentState().isActive) {
+            if (entity.state?.gameMessages) {
+                const currentMessages = [...entity.state.gameMessages];
+                currentMessages.push("You are not in combat.");
+                entity.updateState({ gameMessages: currentMessages });
+            }
+            return;
+        }
+
+        // Get current room entities to notify them
+        const roomEntities = this.getRoomEntities(entity.state.currentLocation || "");
+
+        // Notify all entities in the room about the flee attempt
+        for (const roomEntity of roomEntities) {
+            if (roomEntity.type === "player" && roomEntity.state?.gameMessages) {
+                const currentMessages = [...roomEntity.state.gameMessages];
+                if (roomEntity.pkid === playerCharacterId) {
+                    currentMessages.push("You attempt to flee from combat!");
+                } else {
+                    currentMessages.push(`${entity.baseData.name} attempts to flee from combat!`);
+                }
+                roomEntity.updateState({ gameMessages: currentMessages });
+            }
+        }
+
+        // For now, fleeing always succeeds - you could add failure chance here
+        const fleeSuccess = true; // Math.random() > 0.3; // 70% success rate
+
+        if (fleeSuccess) {
+            // Get available exits for fleeing
+            const currentRoom = this.rooms.find(r => r.id === entity.state.currentLocation);
+            const availableExits = currentRoom?.dbRecord.exits ? Object.keys(currentRoom.dbRecord.exits) : [];
+            const originalRoomId = entity.state.currentLocation;
+            
+            // Flee successful - notify room and possibly move to random exit
+            for (const roomEntity of roomEntities) {
+                if (roomEntity.type === "player" && roomEntity.state?.gameMessages) {
+                    const currentMessages = [...roomEntity.state.gameMessages];
+                    if (roomEntity.pkid === playerCharacterId) {
+                        currentMessages.push("You successfully flee from combat!");
+                    } else {
+                        currentMessages.push(`${entity.baseData.name} flees from combat!`);
+                    }
+                    roomEntity.updateState({ gameMessages: currentMessages });
+                }
+            }
+            
+            // Move player to a random adjacent room if exits are available
+            if (availableExits.length > 0) {
+                const randomExit = availableExits[Math.floor(Math.random() * availableExits.length)];
+                
+                // Use the existing movePlayer method to handle the movement
+                this.movePlayer(playerCharacterId, randomExit);
+                
+                // Add additional flee message
+                if (entity.state?.gameMessages) {
+                    const currentMessages = [...entity.state.gameMessages];
+                    currentMessages.push(`You flee ${randomExit} to escape!`);
+                    entity.updateState({ gameMessages: currentMessages });
+                }
+            }
+
+            // Check if all players have fled from the original room - if so, end combat
+            const playersInOriginalRoom = this.getRoomEntities(originalRoomId || "")
+                .filter(e => e.type === "player");
+            if (playersInOriginalRoom.length === 0) {
+                this.endCombat("All participants have fled from combat.");
+            }
+        } else {
+            // Flee failed
+            if (entity.state?.gameMessages) {
+                const currentMessages = [...entity.state.gameMessages];
+                currentMessages.push("You fail to flee from combat!");
+                entity.updateState({ gameMessages: currentMessages });
+            }
+        }
+    }
+
+    // End combat with a specific reason
+    private endCombat(reason: string): void {
+        if (!this.combatRoundManager.getCurrentState().isActive) {
+            return;
+        }
+
+        // Stop the combat round manager
+        this.combatRoundManager.stop();
+
+        // Notify all players in all rooms that combat has ended
+        this.rooms.forEach(room => {
+            const roomEntities = this.getRoomEntities(room.id);
+            for (const entity of roomEntities) {
+                if (entity.type === "player" && entity.state?.gameMessages) {
+                    const currentMessages = [...entity.state.gameMessages];
+                    currentMessages.push("*** COMBAT ENDED ***");
+                    currentMessages.push(reason);
+                    entity.updateState({ gameMessages: currentMessages });
+                }
+            }
+        });
+
+        logger.info(`Combat ended: ${reason}`);
+    }
+
+    /**
+     * Handles combat end due to defeats - called by round manager
+     */
+    private handleCombatEnd(results: CombatResult[]): void {
+        if (!this.combatRoundManager.getCurrentState().isActive) {
+            return;
+        }
+
+        // Find defeated entities
+        const defeatedEntities = results
+            .filter(result => result.defeated)
+            .map(result => result.target);
+
+        if (defeatedEntities.length === 0) {
+            return;
+        }
+
+        // Send combat messages to all players in affected rooms
+        const affectedRooms = new Set<string>();
+        
+        for (const result of results) {
+            if (result.defeated) {
+                const defenderEntity = this.entities.get(result.target);
+                const attackerEntity = this.entities.get(result.attacker);
+                
+                if (defenderEntity && attackerEntity) {
+                    const defenderName = defenderEntity.getName();
+                    const attackerName = attackerEntity.getName();
+                    const roomId = defenderEntity.state.currentLocation;
+                    
+                    affectedRooms.add(roomId);
+                    
+                    // Send combat damage message to players in the room
+                    this.sendToPlayersInRoom(roomId, MessageTypes.combat.DAMAGE, {
+                        message: `${defenderName} has been defeated by ${attackerName}!`,
+                        attacker: attackerName,
+                        defender: defenderName,
+                        damage: result.damage,
+                        defeated: true
+                    });
+                }
+            }
+        }
+
+        // End combat with appropriate message
+        const defeatedNames = defeatedEntities
+            .map(entityId => {
+                const entity = this.entities.get(entityId);
+                return entity?.getName() || 'Unknown';
+            })
+            .join(', ');
+
+        this.endCombat(`Combat ended: ${defeatedNames} defeated.`);
+    }
+
+    /**
+     * Sends a message to all players in a specific room
+     */
+    private sendToPlayersInRoom(roomId: string, messageType: string, data: any): void {
+        for (const [playerId, player] of this.players.entries()) {
+            const playerEntity = this.entities.get(playerId);
+            if (playerEntity && playerEntity.state.currentLocation === roomId) {
+                player.socket.emit(messageType, data);
+            }
         }
     }
 

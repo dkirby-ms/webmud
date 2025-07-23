@@ -4,31 +4,38 @@ import { MessageTypes } from '../../taxonomy.js';
 /**
  * Represents a combat action queued by a player
  */
+
+export type CombatActionType = 'attack' | 'defend' | 'special';
+
 export interface CombatAction {
     playerId: string;
-    actionType: 'attack' | 'defend' | 'other';
-    target?: string;
-    timestamp: number;
+    actionType: CombatActionType;
+    target?: string; // Target entity ID for attacks
+    description?: string;
 }
 
-/**
- * Represents the state of a combat round
- */
 export interface RoundState {
     isActive: boolean;
-    roundNumber: number;
     windowOpen: boolean;
+    roundNumber: number;
     windowStartTime: number;
     queuedActions: CombatAction[];
 }
 
-/**
- * Configuration for combat rounds
- */
 export interface RoundConfig {
-    roundDurationMs: number;  // How long each round lasts
-    windowDurationMs: number; // How long the action window stays open
+    windowDurationMs: number; // How long players have to input actions
+    roundDurationMs: number;  // Total time for one complete round
 }
+
+export interface CombatResult {
+    attacker: string;
+    target: string;
+    damage: number;
+    targetHealthRemaining: number;
+    defeated: boolean;
+}
+
+export type CombatEndCallback = (results: CombatResult[]) => void;
 
 /**
  * Manages combat rounds with timer-based action processing.
@@ -42,9 +49,13 @@ export class RoundManager {
     private config: RoundConfig;
     private state: RoundState;
     private roundTimer?: NodeJS.Timeout;
+    private onCombatEnd?: CombatEndCallback;
+    private getEntitiesCallback?: () => Map<string, any>;
 
-    constructor(config: RoundConfig) {
+    constructor(config: RoundConfig, onCombatEnd?: CombatEndCallback, getEntitiesCallback?: () => Map<string, any>) {
         this.config = config;
+        this.onCombatEnd = onCombatEnd;
+        this.getEntitiesCallback = getEntitiesCallback;
         this.state = {
             isActive: false,
             roundNumber: 0,
@@ -185,10 +196,54 @@ export class RoundManager {
      */
     private processQueuedActions(): void {
         const actions = [...this.state.queuedActions];
+        const results: CombatResult[] = [];
         
-        // For now, just log the actions that would be processed
+        if (!this.getEntitiesCallback) {
+            logger.debug('No entities callback set - skipping combat processing');
+            this.state.queuedActions = [];
+            return;
+        }
+
+        const entities = this.getEntitiesCallback();
+        
+        // Process attack actions
         for (const action of actions) {
-            logger.debug(`Processing action: ${action.playerId} ${action.actionType} ${action.target || ''}`);
+            if (action.actionType === 'attack' && action.target) {
+                const attacker = entities.get(action.playerId);
+                const target = entities.get(action.target);
+                
+                if (!attacker || !target) {
+                    logger.debug(`Combat action skipped - invalid entities: attacker=${!!attacker}, target=${!!target}`);
+                    continue;
+                }
+
+                // Simple damage calculation (1-10 damage)
+                const damage = Math.floor(Math.random() * 10) + 1;
+                const currentHealth = target.state.health || 100;
+                const newHealth = Math.max(0, currentHealth - damage);
+                
+                // Update target health
+                target.updateState({ health: newHealth });
+                
+                const result: CombatResult = {
+                    attacker: action.playerId,
+                    target: action.target,
+                    damage: damage,
+                    targetHealthRemaining: newHealth,
+                    defeated: newHealth <= 0
+                };
+                
+                results.push(result);
+                
+                logger.debug(`Combat: ${action.playerId} attacks ${action.target} for ${damage} damage (${newHealth} health remaining)`);
+            }
+        }
+
+        // Check if any entities were defeated and call callback
+        const anyDefeated = results.some(result => result.defeated);
+        if (anyDefeated && this.onCombatEnd) {
+            logger.debug('Combat ending due to defeated entities');
+            this.onCombatEnd(results);
         }
 
         // Clear the queue after processing

@@ -118,6 +118,10 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 					world.displayCombatStatus(socket.data.playerCharacterId);
 				}
 				break;
+			case CommandType.FLEE:
+				// Handle flee command
+				world.handleFleeCommand(socket.data.playerCharacterId);
+				break;
 			case CommandType.EMOTE:
 				// Handle emote commands
 				if (parsedCommand.text) {

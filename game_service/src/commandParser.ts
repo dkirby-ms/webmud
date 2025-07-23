@@ -2,6 +2,7 @@ export enum CommandType {
     SAY = "say",
     MOVE = "move",
     COMBAT = "combat",
+    FLEE = "flee",
     UNKNOWN = "unknown",
     TELL = "tell",
     LOOK = "look",
@@ -83,6 +84,13 @@ export function parseCommand(input: string): Command {
         return {
             type: CommandType.COMBAT,
             args: tokens.slice(1),
+        };
+    }
+
+    // Handle the 'flee' command.
+    if (commandWord === "flee" || commandWord === "run") {
+        return {
+            type: CommandType.FLEE,
         };
     }
 
