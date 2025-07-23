@@ -171,15 +171,8 @@ module gameService 'br/public:avm/res/app/container-app:0.14.1' = {
   params: {
     name: 'game-service'
     ingressTargetPort: 28999
-    corsPolicy: {
-      allowedOrigins: [
-        'https://webmud-client.${containerAppsEnvironment.outputs.defaultDomain}'
-        !empty(webmudClientCustomDomain) ? 'https://${webmudClientCustomDomain}' : ''
-      ]
-      allowedMethods: [
-        '*'
-      ]
-    }
+    ingressAllowInsecure: false
+    ingressExternal: true
     scaleSettings:{
       maxReplicas: 10
       minReplicas: 1
@@ -197,7 +190,7 @@ module gameService 'br/public:avm/res/app/container-app:0.14.1' = {
     secrets: union([
         {
           name: 'mongodb-url'
-          identity:gameServiceIdentity.outputs.resourceId
+          identity: gameServiceIdentity.outputs.resourceId
           keyVaultUrl: cosmosMongo.outputs.exportedSecrets['mongodb-url'].secretUri
         }
       ],
@@ -291,6 +284,8 @@ module webmudClient 'br/public:avm/res/app/container-app:0.14.1' = {
   params: {
     name: 'webmud-client'
     ingressTargetPort: 3000
+    ingressAllowInsecure: false
+    ingressExternal: true
     scaleSettings: {
       maxReplicas: 10
       minReplicas: 1      
