@@ -145,4 +145,4 @@ mongosh "mongodb://localhost:27017/?replicaSet=rs0" --eval "use('game-service');
 
 ## Documentation
 
-- Dont create documentation unless instructed.
+- Don't create documentation unless instructed.
