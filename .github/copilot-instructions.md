@@ -22,6 +22,7 @@ webMUD is a real-time multiplayer web-based MUD (Multi-User Dungeon) with a modu
 - Repository pattern in `game_service/src/db/` - always use repositories, never direct MongoDB queries
 - Entity Factory pattern in `game_service/src/world/entity.js` for type-safe entity creation
 - Room-based spatial organization with 6-directional exits (n, e, s, w, up, down)
+- Backend-for-frontend (BFF) pattern for client data access via `webmud_client/app/api/` routes
 
 ### World State Management
 - `World` class manages game loop at 10 ticks/second in `game_service/src/world/world.ts`

@@ -17,13 +17,14 @@ use('game-service');
 const entitiesData = [
     {
         "world_id": "67b1ff97bfd2ac9c9a8a546b",
-        "room_id": "67a8127c506208690c7cccdf",
-        "entity_pk": "12345656exampleObjectId",
+        "room_id": "room-002", // Place in the Hallway room
+        "entity_pk": "goblin-001",
         "entity_type": "mob",
+        "name": "Goblin",
+        "description": "A small, green creature with sharp teeth and a nasty disposition.",
         "state": {
-            // status object needs refining
             "health": 100,
-            "mana": 100,
+            "mana": 50,
             "stamina": 100,
             "abilities": {
                 "skill-001": 10,
@@ -32,17 +33,16 @@ const entitiesData = [
             },
             "attributes": {
                 "strength": 12,
-                "dexterity": 12,
+                "dexterity": 14,
                 "constitution": 12,
-                "intelligence": 12,
-                "wisdom": 12,
-                "charisma": 16,
+                "intelligence": 8,
+                "wisdom": 10,
+                "charisma": 6,
             },
-            "size": "medium",
+            "size": "small",
             "speed": 1.0,
             "effects": [],
-            "equipment": {
-            },
+            "equipment": {},
             "inventory": [],
         },
         "lastAction": {
@@ -54,7 +54,7 @@ const entitiesData = [
 
 entitiesData.forEach(entity => {
     db.getCollection('entities').updateOne(
-        { mob_id: entity.mob_id },
+        { entity_pk: entity.entity_pk },
         { $set: entity },
         { upsert: true }
     );

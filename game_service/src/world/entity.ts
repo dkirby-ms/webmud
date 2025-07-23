@@ -159,21 +159,34 @@ export abstract class BaseEntity implements Entity {
     }
 
     protected extractBaseData(dbRecord: any): BaseEntityData {
+        // For mob entities, try to get a proper name
+        let name = dbRecord.name || 'Unknown';
+        if (dbRecord.entity_type === 'mob' && (!dbRecord.name || dbRecord.name === 'Unknown')) {
+            // Try to derive name from mob_id or entity_pk if available
+            if (dbRecord.mob_id) {
+                name = `Mob ${dbRecord.mob_id}`;
+            } else if (dbRecord.entity_pk) {
+                name = `Entity ${dbRecord.entity_pk.slice(-6)}`; // Use last 6 chars
+            } else {
+                name = 'Unknown Creature';
+            }
+        }
+
         return {
             id: dbRecord._id?.toString() || dbRecord.entity_pk || '',
-            name: dbRecord.name || 'Unknown',
+            name: name,
             description: dbRecord.description || 'No description available',
             baseInventory: dbRecord.inventory || [],
             baseEquipped: dbRecord.equipped || [],
-            startingRoom: dbRecord.startingRoom || '',
-            baseHealth: dbRecord.health || 100,
-            maxHealth: dbRecord.maxHealth || 100,
-            defaultLocation: dbRecord.location || '',
+            startingRoom: dbRecord.startingRoom || dbRecord.room_id || '',
+            baseHealth: dbRecord.health || dbRecord.state?.health || 100,
+            maxHealth: dbRecord.maxHealth || dbRecord.state?.health || 100,
+            defaultLocation: dbRecord.location || dbRecord.room_id || '',
             defaultMovementType: dbRecord.movementType || 'walk',
             availableMovementTypes: dbRecord.movementTypes || ['walk'],
             type: dbRecord.entity_type || '',
             form: dbRecord.form || 'humanoid',
-            size: dbRecord.size || 'medium'
+            size: dbRecord.size || dbRecord.state?.size || 'medium'
         };
     }
 
@@ -362,6 +375,7 @@ export class EntityFactory {
             case 'player':
                 return new PlayerEntity(dbRecord);
             case 'npc':
+            case 'mob':  // Handle both 'npc' and 'mob' types
                 return new NPCEntity(dbRecord);
             case 'item':
                 return new ItemEntity(dbRecord);

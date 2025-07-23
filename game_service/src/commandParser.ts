@@ -1,7 +1,8 @@
 export enum CommandType {
     SAY = "say",
     MOVE = "move",
-    ATTACK = "attack",
+    COMBAT = "combat",
+    FLEE = "flee",
     UNKNOWN = "unknown",
     TELL = "tell",
     LOOK = "look",
@@ -23,7 +24,7 @@ export interface Command {
  * Supported commands:
  * - "say <message>" => CommandType.SAY with message in the "text" property.
  * - Direction commands (e.g., "north", "east") => CommandType.MOVE with the direction in "args".
- * - "kill <target>" => CommandType.ATTACK with the target in "args".
+ * - "kill <target>" or "attack <target>" => CommandType.COMBAT with the target in "args".
  * - "emote <action>" or specific emotes like "smile", "dance" => CommandType.EMOTE
  *
  * If the command is not recognized, type will be CommandType.UNKNOWN.
@@ -81,8 +82,15 @@ export function parseCommand(input: string): Command {
     // Handle the 'kill/attack' command.
     if (commandWord === "kill" || commandWord === "attack" || commandWord === "k" || commandWord === "a") {
         return {
-            type: CommandType.ATTACK,
+            type: CommandType.COMBAT,
             args: tokens.slice(1),
+        };
+    }
+
+    // Handle the 'flee' command.
+    if (commandWord === "flee" || commandWord === "run") {
+        return {
+            type: CommandType.FLEE,
         };
     }
 
