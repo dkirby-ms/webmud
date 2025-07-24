@@ -10,8 +10,6 @@ This project is an interactive web-based MUD built with a modular, scalable arch
   
 ## Architecture
 
-![architecture diagram](./docs/img/architecture.png)
-
 webMUD code is written primarily with Typescript and employs a classic client-server architecture. Instances of a given game world run from a "game server" and players connect to these worlds from a web application. The game world stores persistent data in MongoDB. 
 
 ### Client
