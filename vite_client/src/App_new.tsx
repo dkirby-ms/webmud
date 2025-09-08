@@ -1,21 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { NavBar } from './components/NavBar';
 import { CharacterManagement } from './components/CharacterManagement';
-import { initializeGameServiceApi } from './lib/gameServiceApi';
 import type { PlayerCharacter } from './types';
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, user, isLoading, getAccessToken } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
   const [currentView, setCurrentView] = useState<'home' | 'characters' | 'game'>('home');
   const [connectedCharacter, setConnectedCharacter] = useState<PlayerCharacter | null>(null);
-
-  // Initialize API with auth token provider when auth is ready
-  useEffect(() => {
-    if (isAuthenticated && getAccessToken) {
-      initializeGameServiceApi(getAccessToken);
-    }
-  }, [isAuthenticated, getAccessToken]);
 
   const handleGameConnect = (character: PlayerCharacter) => {
     setConnectedCharacter(character);
