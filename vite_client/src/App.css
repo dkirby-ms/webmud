@@ -1,0 +1,54 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.app {
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+.app-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #f8f9fa;
+}
+
+.loading-spinner {
+  font-size: 18px;
+  color: #666;
+}
+
+.app-main {
+  padding-top: 80px; /* Account for fixed navbar */
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.authenticated-content,
+.unauthenticated-content {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.authenticated-content h2,
+.unauthenticated-content h2 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.authenticated-content p {
+  color: #666;
+  margin: 10px 0;
+}
+
+.unauthenticated-content p {
+  color: #666;
+  margin-bottom: 30px;
+}

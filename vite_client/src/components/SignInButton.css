@@ -1,0 +1,19 @@
+.signin-button {
+  background: #0078d4;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.signin-button:hover {
+  background: #106ebe;
+}
+
+.signin-button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
