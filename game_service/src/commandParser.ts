@@ -31,6 +31,10 @@ export interface Command {
  * If the command is not recognized, type will be CommandType.UNKNOWN.
  */
 export function parseCommand(input: string): Command {
+    if (!input || typeof input !== 'string') {
+        return { type: CommandType.UNKNOWN };
+    }
+    
     const trimmed = input.trim();
     if (trimmed.length === 0) {
         return { type: CommandType.UNKNOWN };

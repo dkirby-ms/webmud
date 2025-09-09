@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useGameService } from "../contexts/GameServiceContext";
 import { MapPanel } from "./MapPanel";
 import { RoomView } from "./RoomView";
-import { MessageTypes } from "../lib/messageTypes";
+import { CommandConsole } from "./CommandConsole";
 import type { PlayerCharacter } from "../types";
 
 interface GameWindowProps {
@@ -11,7 +11,7 @@ interface GameWindowProps {
 }
 
 export function GameWindow({ character, onDisconnect }: GameWindowProps) {
-  const { socket, connectionStatus, globalChatMessages, connect, disconnect } = useGameService();
+  const { connectionStatus, connect, disconnect } = useGameService();
   const hasConnected = useRef(false);
 
   // Connect to game service when component mounts
@@ -32,15 +32,6 @@ export function GameWindow({ character, onDisconnect }: GameWindowProps) {
   const handleDisconnect = () => {
     disconnect();
     onDisconnect();
-  };
-
-  const sendCommand = (command: string) => {
-    if (socket && connectionStatus === 'connected') {
-      socket.emit(MessageTypes.command.SEND_COMMAND, {
-        command,
-        playerId: character._id,
-      });
-    }
   };
 
   return (
@@ -82,40 +73,13 @@ export function GameWindow({ character, onDisconnect }: GameWindowProps) {
             <MapPanel />
           </div>
           
-          {/* Messages Panel */}
+          {/* Command Console */}
           <div className="flex-1 flex flex-col">
-            <div className="p-2 bg-gray-700 text-sm font-medium border-b border-gray-600">Game Messages</div>
-            <div className="flex-1 p-4 overflow-y-auto">
-              <div className="font-mono text-sm space-y-1">
-                {globalChatMessages.map((message, index) => (
-                  <div key={index} className="text-gray-300">
-                    {message}
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            {/* Command Input */}
-            <div className="border-t border-gray-700 p-4">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const form = e.target as HTMLFormElement;
-                  const input = form.querySelector('input') as HTMLInputElement;
-                  if (input.value.trim()) {
-                    sendCommand(input.value.trim());
-                    input.value = '';
-                  }
-                }}
-              >
-                <input
-                  type="text"
-                  placeholder="Enter command..."
-                  disabled={connectionStatus !== 'connected'}
-                  className="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 disabled:opacity-50"
-                />
-              </form>
-            </div>
+            <div className="p-2 bg-gray-700 text-sm font-medium border-b border-gray-600">Game Console</div>
+            <CommandConsole 
+              playerId={character._id}
+              disabled={connectionStatus !== 'connected'}
+            />
           </div>
         </div>
 
