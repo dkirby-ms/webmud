@@ -5,7 +5,7 @@ import type {
   AccountInfo,
   SilentRequest
 } from '@azure/msal-browser';
-import { msalConfig, loginRequest } from './authConfig';
+import { msalConfig, loginRequest, gameServiceRequest } from './authConfig';
 
 interface AuthContextType {
   instance: PublicClientApplication;
@@ -14,6 +14,7 @@ interface AuthContextType {
   login: () => Promise<void>;
   logout: () => Promise<void>;
   getAccessToken: () => Promise<string | null>;
+  getGameServiceToken: () => Promise<string | null>;
   isLoading: boolean;
 }
 
@@ -113,6 +114,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const getGameServiceToken = async (): Promise<string | null> => {
+    if (!user) return null;
+
+    const request: SilentRequest = {
+      scopes: gameServiceRequest.scopes || [],
+      account: user,
+    };
+
+    try {
+      const response = await msalInstance.acquireTokenSilent(request);
+      return response.accessToken;
+    } catch (error) {
+      console.error('Failed to acquire game service token silently:', error);
+      
+      // If silent token acquisition fails, try popup
+      try {
+        const response = await msalInstance.acquireTokenPopup(request);
+        return response.accessToken;
+      } catch (popupError) {
+        console.error('Failed to acquire game service token via popup:', popupError);
+        return null;
+      }
+    }
+  };
+
   const value: AuthContextType = {
     instance: msalInstance,
     isAuthenticated,
@@ -120,6 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     logout,
     getAccessToken,
+    getGameServiceToken,
     isLoading,
   };
 

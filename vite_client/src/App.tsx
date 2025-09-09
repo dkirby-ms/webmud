@@ -2,20 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { NavBar } from './components/NavBar';
 import { CharacterManagement } from './components/CharacterManagement';
+import { GameClient } from './components/GameClient';
 import { initializeGameServiceApi } from './lib/gameServiceApi';
 import type { PlayerCharacter } from './types';
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, user, isLoading, getAccessToken } = useAuth();
+  const { isAuthenticated, user, isLoading, getGameServiceToken } = useAuth();
   const [currentView, setCurrentView] = useState<'home' | 'characters' | 'game'>('home');
   const [connectedCharacter, setConnectedCharacter] = useState<PlayerCharacter | null>(null);
 
   // Initialize API with auth token provider when auth is ready
   useEffect(() => {
-    if (isAuthenticated && getAccessToken) {
-      initializeGameServiceApi(getAccessToken);
+    if (isAuthenticated && getGameServiceToken) {
+      initializeGameServiceApi(getGameServiceToken);
     }
-  }, [isAuthenticated, getAccessToken]);
+  }, [isAuthenticated, getGameServiceToken]);
 
   const handleGameConnect = (character: PlayerCharacter) => {
     setConnectedCharacter(character);
@@ -56,15 +57,19 @@ const AppContent: React.FC = () => {
       case 'characters':
         return <CharacterManagement onGameConnect={handleGameConnect} />;
       case 'game':
-        return (
+        return connectedCharacter ? (
+          <GameClient 
+            character={connectedCharacter} 
+            onDisconnect={() => {
+              setConnectedCharacter(null);
+              setCurrentView('characters');
+            }} 
+          />
+        ) : (
           <div className="max-w-4xl mx-auto p-6">
-            <div className="bg-gray-800 p-6 rounded-lg shadow">
-              <h3 className="text-xl font-semibold mb-2 text-white">Game View</h3>
-              <p className="text-gray-300 mb-4">
-                Connected as: {connectedCharacter?.name} 
-                ({connectedCharacter?.speciesName} Level {connectedCharacter?.playerLevel || connectedCharacter?.level})
-              </p>
-              <p className="text-gray-300">Game interface coming soon...</p>
+            <div className="bg-red-800 p-6 rounded-lg shadow">
+              <h3 className="text-xl font-semibold mb-2 text-white">Error</h3>
+              <p className="text-gray-300">No character selected for game connection.</p>
               <button
                 onClick={() => setCurrentView('characters')}
                 className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"

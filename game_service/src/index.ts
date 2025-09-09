@@ -50,7 +50,9 @@ export default class GameService {
     // private members
     private corsOptions = {
         origin: process.env.CORS_ORIGIN || "*",
-        methods: process.env.CORS_METHODS ? process.env.CORS_METHODS.split(",") : ["GET", "POST"]
+        methods: process.env.CORS_METHODS ? process.env.CORS_METHODS.split(",") : ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+        credentials: true
     };
     private disconnectedPlayers: Map<string, { cleanupTimer: NodeJS.Timeout, disconnectTime: number }> = new Map();
 
@@ -106,29 +108,28 @@ export default class GameService {
             const userId = socket.handshake.auth.userId;
             const userFriendlyName = socket.handshake.auth.userFriendlyName;
             const playerCharacterId = socket.handshake.auth.playerCharacterId;
-            // const token = socket.handshake.auth.token;
+            const token = socket.handshake.auth.token;
             const session = (socket.request as any).session;
-            session.userId = userId;
-            session.userFriendlyName = userFriendlyName;
-            session.playerCharacterId = playerCharacterId;
-            next();
-            // if (!token) {
-            //     // Inform the client that no token was provided
-            //     const error = new Error("Authentication error - access token not found");
-            //     (error as any).code = "NO_TOKEN";
-            //     return next(error);
-            // }
-            // try {
-            //     const payload = await validateJwt(token);
-            //     session.userId = payload.sub;
-            //     session.userFriendlyName = payload.name;
-            //     next();
-            // } catch (e) {
-            //     // Instead of a generic error, add a custom error code
-            //     const error = new Error("Authentication error - token expired or invalid");
-            //     (error as any).code = "TOKEN_EXPIRED";
-            //     return next(error);
-            // }
+            
+            if (!token) {
+                // Inform the client that no token was provided
+                const error = new Error("Authentication error - access token not found");
+                (error as any).code = "NO_TOKEN";
+                return next(error);
+            }
+            
+            try {
+                const payload = await validateJwt(token);
+                session.userId = payload.sub || payload.oid; // Use sub first, fall back to oid
+                session.userFriendlyName = payload.name || userFriendlyName;
+                session.playerCharacterId = playerCharacterId;
+                next();
+            } catch (e) {
+                // Instead of a generic error, add a custom error code
+                const error = new Error("Authentication error - token expired or invalid");
+                (error as any).code = "TOKEN_EXPIRED";
+                return next(error);
+            }
         });
 
         // setup connection handler
