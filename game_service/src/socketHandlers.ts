@@ -40,9 +40,16 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 		 	const disconnectedPlayer = disconnectedPlayers.get(playerCharacterId);
 		 	clearTimeout(disconnectedPlayer?.cleanupTimer);
 			const disconnectTime = disconnectedPlayer?.disconnectTime || 0;
-			world.reconnectPlayer(playerCharacterId, socket);
-			disconnectedPlayers.delete(playerCharacterId);
-			logger.info(`Player character ${playerCharacterId} reconnected after ${Date.now() - disconnectTime}ms.`);
+			try {
+				world.reconnectPlayer(playerCharacterId, socket);
+				disconnectedPlayers.delete(playerCharacterId);
+				logger.info(`Player character ${playerCharacterId} reconnected after ${Date.now() - disconnectTime}ms.`);
+			} catch (error) {
+				// Player no longer exists in world, treat as new connection
+				logger.info(`Player character ${playerCharacterId} not found in world, treating as new connection`);
+				disconnectedPlayers.delete(playerCharacterId);
+				world.addPlayer(playerCharacterId, playerCharacter, socket);
+			}
 		} else {
 			logger.info(`Player ${userId} connected with character ${playerCharacter.name}`);
 			world.addPlayer(playerCharacterId, playerCharacter, socket);

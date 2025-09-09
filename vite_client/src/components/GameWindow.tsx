@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useGameService } from "../contexts/GameServiceContext";
 import { MapPanel } from "./MapPanel";
 import { RoomView } from "./RoomView";
@@ -12,17 +12,22 @@ interface GameWindowProps {
 
 export function GameWindow({ character, onDisconnect }: GameWindowProps) {
   const { socket, connectionStatus, globalChatMessages, connect, disconnect } = useGameService();
+  const hasConnected = useRef(false);
 
   // Connect to game service when component mounts
   useEffect(() => {
-    const gameServiceUrl = import.meta.env.VITE_GAME_SERVICE_URL || 'http://localhost:28999';
-    connect(gameServiceUrl, character._id);
+    if (!hasConnected.current) {
+      const gameServiceUrl = import.meta.env.VITE_GAME_SERVICE_URL || 'http://localhost:28999';
+      connect(gameServiceUrl, character._id);
+      hasConnected.current = true;
+    }
     
     // Cleanup: disconnect when component unmounts
     return () => {
       disconnect();
+      hasConnected.current = false;
     };
-  }, [character._id, connect, disconnect]);
+  }, [character._id]); // Only depend on character ID, not the functions
 
   const handleDisconnect = () => {
     disconnect();

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuth } from "../AuthContext";
 
@@ -29,9 +29,18 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
     const [globalChatMessages, setGlobalChatMessages] = useState<string[]>([]);
     const [gameState, setGameState] = useState<any>({});
     const { user, getGameServiceToken } = useAuth();
+    const connectionAttemptRef = useRef<boolean>(false);
     
     // create a socket and connect to the specified game service uri 
-    const connect = async (server: string, playerCharacterId: string) => {
+    const connect = useCallback(async (server: string, playerCharacterId: string) => {
+        // Prevent multiple connection attempts
+        if (connectionAttemptRef.current || socket) {
+            console.log('Connection already in progress or active, skipping...');
+            return;
+        }
+        
+        connectionAttemptRef.current = true;
+        
         // indicate connection attempt
         setConnectionStatus('connecting');
         
@@ -40,6 +49,7 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
             if (!token) {
                 setConnectionStatus('error');
                 console.error('Failed to get authentication token');
+                connectionAttemptRef.current = false;
                 return;
             }
 
@@ -57,6 +67,7 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
                 setSocket(newSocket); // store the socket in the context state
                 setServerAddress(server);
                 setConnectionStatus('connected');
+                connectionAttemptRef.current = false;
 
                 newSocket.emit('game:player_join', playerCharacterId);
             });
@@ -65,6 +76,7 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
                 console.log('Connection error connecting to server:', server, err);
                 setServerAddress(server);
                 setConnectionStatus('error');
+                connectionAttemptRef.current = false;
                 console.error(err);
             });
 
@@ -73,6 +85,7 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
                 setSocket(null);
                 setServerAddress('');
                 setConnectionStatus('disconnected');
+                connectionAttemptRef.current = false;
             });
 
             newSocket.on("chat:sent", (message) => {
@@ -99,10 +112,11 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
         } catch (error) {
             console.error('Failed to connect to game service:', error);
             setConnectionStatus('error');
+            connectionAttemptRef.current = false;
         }
-    }
+    }, [getGameServiceToken, user]);
 
-    const disconnect = () => {
+    const disconnect = useCallback(() => {
         if (socket) {
             socket.disconnect();
             setSocket(null);
@@ -111,16 +125,16 @@ export const GameServiceProvider = ({ children }: { children: React.ReactNode })
         } else {
             console.log('GameService provider disconnect received but no socket connection to disconnect!');
         }
-    }
+        connectionAttemptRef.current = false; // Reset flag on manual disconnect
+    }, [socket]);
 
     useEffect(() => {
         return () => {
             if (socket) { // clean up on unmount
                 socket.disconnect();
-                setSocket(null);
             }
         }
-    }, [socket]);
+    }, []); // Empty dependency array - only run on unmount
 
     return (
         <GameServiceContext.Provider value={{ socket, serverAddress, connectionStatus, connect, disconnect, globalChatMessages, gameState }}>
