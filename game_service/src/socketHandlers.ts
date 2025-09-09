@@ -27,6 +27,7 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 	socket.on(MessageTypes.game.PLAYER_JOIN, async (playerCharacterId: string) => {
 		
 		const playerCharacter = await repositories.playerCharacterRepository.getCharacterById(playerCharacterId);
+		logger.info(`Auth debug - userId from socket: ${userId}, playerCharacter.userId: ${playerCharacter?.userId}, match: ${playerCharacter?.userId === userId}`);
 		if (playerCharacter?.userId !== userId) {
 			throw new Error("Player is not authorized to connect with this character.");
 		}
@@ -134,12 +135,23 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 				// Handle help command
 				world.displayHelp(socket.data.playerCharacterId, parsedCommand.args);
 				break;
+			case CommandType.DELETE_CHARACTER:
+				// Handle delete character command
+				{
+					const output = "To delete your character, please use the web interface. This action cannot be undone.";
+					const messages: string[] = [];
+					messages[0] = output;
+					world.sendCommandOutputToPlayer(socket.data.playerCharacterId, messages);
+				}
+				break;
 			case CommandType.UNKNOWN:
 				logger.warn(`Player ${socket.data.playerCharacterId} sent an unknown command: ${command}`);
-				const output = "Sorry, I don't understand that command.";
-				const messages: string[] = [];
-				messages[0] = output;
-				world.sendCommandOutputToPlayer(socket.data.playerCharacterId, messages);
+				{
+					const output = "Sorry, I don't understand that command.";
+					const messages: string[] = [];
+					messages[0] = output;
+					world.sendCommandOutputToPlayer(socket.data.playerCharacterId, messages);
+				}
 				break;
 		}
 	});

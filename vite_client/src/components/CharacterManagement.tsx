@@ -19,6 +19,11 @@ export const CharacterManagement: React.FC<CharacterManagementProps> = ({
     setRefreshKey(prev => prev + 1); // Force refresh of character list
   };
 
+  const handleCharacterDeleted = () => {
+    setSelectedCharacterId(undefined); // Clear selection
+    setRefreshKey(prev => prev + 1); // Force refresh of character list
+  };
+
   const handleCharacterSelect = (character: PlayerCharacter) => {
     setSelectedCharacterId(character._id);
   };
@@ -62,6 +67,7 @@ export const CharacterManagement: React.FC<CharacterManagementProps> = ({
         onCharacterSelect={handleCharacterSelect}
         onConnect={handleConnect}
         selectedCharacterId={selectedCharacterId}
+        onCharacterDeleted={handleCharacterDeleted}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuthenticatedApi } from '../hooks/useAuthenticatedApi';
 import { PlayerCharacterCard } from './PlayerCharacterCard';
 import type { PlayerCharacter } from '../types';
@@ -7,17 +7,45 @@ interface CharacterListProps {
   onCharacterSelect?: (character: PlayerCharacter) => void;
   onConnect?: (character: PlayerCharacter) => void;
   selectedCharacterId?: string;
+  onCharacterDeleted?: () => void;
 }
 
 export const CharacterList: React.FC<CharacterListProps> = ({
   onCharacterSelect,
   onConnect,
   selectedCharacterId,
+  onCharacterDeleted,
 }) => {
-  const { usePlayerCharacters, user } = useAuthenticatedApi();
+  const { usePlayerCharacters, user, deleteCharacter } = useAuthenticatedApi();
   const { data: characters, loading, error, refetch } = usePlayerCharacters();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const selectedCharacter = characters?.find(char => char._id === selectedCharacterId);
+
+  const handleDeleteCharacter = async () => {
+    if (!selectedCharacter) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteCharacter(selectedCharacter._id);
+      await refetch(); // Refresh the character list
+      setShowDeleteConfirm(false);
+      // Reset selection if the deleted character was selected
+      if (onCharacterSelect) {
+        onCharacterSelect({} as PlayerCharacter); // Clear selection
+      }
+      // Notify parent component
+      if (onCharacterDeleted) {
+        onCharacterDeleted();
+      }
+    } catch (error) {
+      console.error('Failed to delete character:', error);
+      alert('Failed to delete character. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   if (!user) {
     return (
@@ -100,17 +128,41 @@ export const CharacterList: React.FC<CharacterListProps> = ({
               >
                 Connect
               </button>
-              <button
-                onClick={() => {
-                  // TODO: Implement character deletion
-                  console.log('Delete character:', selectedCharacter._id);
-                }}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Delete
-              </button>
+              {!showDeleteConfirm ? (
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  Delete
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={isDeleting}
+                    className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteCharacter}
+                    disabled={isDeleting}
+                    className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                  >
+                    {isDeleting ? 'Deleting...' : 'Confirm Delete'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
+          {showDeleteConfirm && (
+            <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-sm text-red-800 dark:text-red-200">
+                <strong>Warning:</strong> This will permanently delete "{selectedCharacter.name}" and all associated progress. This action cannot be undone.
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>

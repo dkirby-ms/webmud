@@ -44,11 +44,20 @@ export function useAuthenticatedApi() {
     });
   };
 
+  const deleteCharacter = async (characterId: string) => {
+    if (!isAuthenticated || !user) {
+      throw new Error('Must be authenticated to delete character');
+    }
+    
+    return gameServiceApi.deletePlayerCharacter(characterId);
+  };
+
   return {
     usePlayerCharacters,
     useCharacterSpecies,
     useGameWorlds,
     createCharacter,
+    deleteCharacter,
     isAuthenticated,
     user,
   };

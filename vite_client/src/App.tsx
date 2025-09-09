@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
+import { GameServiceProvider } from './contexts/GameServiceContext';
 import { NavBar } from './components/NavBar';
 import { CharacterManagement } from './components/CharacterManagement';
-import { GameClient } from './components/GameClient';
+import { GameWindow } from './components/GameWindow';
 import { initializeGameServiceApi } from './lib/gameServiceApi';
 import type { PlayerCharacter } from './types';
 
@@ -58,7 +59,7 @@ const AppContent: React.FC = () => {
         return <CharacterManagement onGameConnect={handleGameConnect} />;
       case 'game':
         return connectedCharacter ? (
-          <GameClient 
+          <GameWindow 
             character={connectedCharacter} 
             onDisconnect={() => {
               setConnectedCharacter(null);
@@ -119,7 +120,9 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <GameServiceProvider>
+        <AppContent />
+      </GameServiceProvider>
     </AuthProvider>
   );
 }

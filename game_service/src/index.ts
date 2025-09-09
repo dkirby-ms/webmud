@@ -120,7 +120,8 @@ export default class GameService {
             
             try {
                 const payload = await validateJwt(token);
-                session.userId = payload.sub || payload.oid; // Use sub first, fall back to oid
+                // Use the userId from auth payload first, then fall back to JWT payload
+                session.userId = userId || payload.sub || payload.oid;
                 session.userFriendlyName = payload.name || userFriendlyName;
                 session.playerCharacterId = playerCharacterId;
                 next();

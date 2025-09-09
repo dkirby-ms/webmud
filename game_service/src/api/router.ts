@@ -94,5 +94,34 @@ export function createApiRouter(repositories: Repositories): Router {
     }
   });
 
+  router.delete('/playerCharacters/:characterId', authenticateJwt, async (req, res): Promise<void> => {
+    try {
+      const { characterId } = req.params;
+      const authenticatedUser = (req as any).user;
+      
+      // First, get the character to verify ownership
+      const character = await repositories.playerCharacterRepository.getCharacterById(characterId);
+      if (!character) {
+        res.status(404).json({ error: 'Character not found' });
+        return;
+      }
+      
+      // Ensure user can only delete their own characters
+      if (authenticatedUser.sub !== character.userId && authenticatedUser.oid !== character.userId) {
+        res.status(403).json({ error: 'Access denied: can only delete your own characters' });
+        return;
+      }
+
+      const success = await repositories.playerCharacterRepository.deleteCharacterById(characterId);
+      if (success) {
+        res.json({ success: true, message: 'Character deleted successfully' });
+      } else {
+        res.status(400).json({ error: 'Failed to delete character' });
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   return router;
 }

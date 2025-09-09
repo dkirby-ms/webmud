@@ -8,6 +8,7 @@ export enum CommandType {
     LOOK = "look",
     EMOTE = "emote", // Added new command type for emotes
     HELP = "help",   // Added new command type for help
+    DELETE_CHARACTER = "delete_character", // Added command type for deleting character
 }
 
 import { EMOTE_KEYS } from './world/emoteConfig.js';
@@ -107,6 +108,13 @@ export function parseCommand(input: string): Command {
         return {
             type: CommandType.HELP,
             args: tokens.slice(1),
+        };
+    }
+
+    // Handle 'delete character' command
+    if (commandWord === "delete" && tokens.length > 1 && tokens[1].toLowerCase() === "character") {
+        return {
+            type: CommandType.DELETE_CHARACTER,
         };
     }
 

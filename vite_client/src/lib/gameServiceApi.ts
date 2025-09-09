@@ -62,6 +62,12 @@ class GameServiceApi {
       body: JSON.stringify(characterData),
     });
   }
+
+  async deletePlayerCharacter(characterId: string) {
+    return this.handleFetch(`/api/playerCharacters/${characterId}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const gameServiceApi = new GameServiceApi();

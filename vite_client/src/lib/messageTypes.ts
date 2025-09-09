@@ -1,9 +1,4 @@
-export interface ChatMessage {
-    content: string;
-    senderName: string;
-    channel: string;
-  }
-
+// Message types constants - should be kept in sync with game_service/src/taxonomy.ts
 export const MessageTypes = {
     command: {
         SEND_COMMAND: "command:send",
@@ -19,22 +14,18 @@ export const MessageTypes = {
         PLAYER_JOIN: "game:player_join",
         PLAYER_LEAVE: "game:player_leave",
         GAME_STATE_UPDATE: "game:state_update",
-        MAP_UPDATE: "game:map_update", // Added message type for map updates
-        ROOM_UPDATE: "game:room_update", // Added message type for room updates
+        ROOM_UPDATE: "game:room_update",
+        MAP_UPDATE: "game:map_update",
     },
     character: {
         DELETE_CHARACTER: "character:delete", // Added message type for character deletion
     },
     combat: {
         ATTACK: "combat:attack",
+        DEFENSE: "combat:defense",
         DAMAGE: "combat:damage",
-        DEFEND: "combat:defend",
-        COMBAT_END: "combat:combat_end",
-    },
-    // Additional event categories can be added here
+        DEATH: "combat:death",
+    }
 } as const;
 
-export type ChatEvent = keyof typeof MessageTypes.chat;
-export type GameEvent = keyof typeof MessageTypes.game;
-export type CharacterEvent = keyof typeof MessageTypes.character;
-export type CombatEvent = keyof typeof MessageTypes.combat;
+export type MessageType = typeof MessageTypes;
