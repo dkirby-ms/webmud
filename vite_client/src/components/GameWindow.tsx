@@ -35,9 +35,10 @@ export function GameWindow({ character, onDisconnect }: GameWindowProps) {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-900 text-white">
+    
+    <div className="h-full flex flex-col bg-gray-900 text-white overflow-hidden">
       {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700 p-4">
+      <div className="bg-gray-800 border-b border-gray-700 p-4 flex-shrink-0">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-xl font-bold">webMUD - {character.name}</h1>
@@ -64,27 +65,29 @@ export function GameWindow({ character, onDisconnect }: GameWindowProps) {
       </div>
 
       {/* Main Game Area */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex min-h-0">
         {/* Left Panel: Map and Room Details */}
-        <div className="flex-1 flex flex-col border-r border-gray-700">
+        <div className="flex-1 flex flex-col border-r border-gray-700 min-h-0">
           {/* Map */}
-          <div className="bg-gray-800 border-b border-gray-700">
+          <div className="bg-gray-800 border-b border-gray-700 flex-shrink-0">
             <div className="p-2 bg-gray-700 text-sm font-medium">Map</div>
             <MapPanel />
           </div>
           
           {/* Command Console */}
-          <div className="flex-1 flex flex-col">
-            <div className="p-2 bg-gray-700 text-sm font-medium border-b border-gray-600">Game Console</div>
-            <CommandConsole 
-              playerId={character._id}
-              disabled={connectionStatus !== 'connected'}
-            />
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="p-2 bg-gray-700 text-sm font-medium border-b border-gray-600 flex-shrink-0">Game Console</div>
+            <div className="flex-1 min-h-0">
+              <CommandConsole 
+                playerId={character._id}
+                disabled={connectionStatus !== 'connected'}
+              />
+            </div>
           </div>
         </div>
 
         {/* Right Panel: Room View */}
-        <div className="w-80 bg-gray-800 p-4">
+        <div className="w-80 bg-gray-800 p-4 flex-shrink-0">
           <div className="mb-2 text-sm font-medium text-gray-300">Current Room</div>
           <RoomView />
         </div>

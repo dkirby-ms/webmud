@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import { useGameService } from '../contexts/GameServiceContext';
 import { MessageTypes } from '../lib/messageTypes';
+import { StickToBottom } from 'use-stick-to-bottom';
 
 interface CommandConsoleProps {
   playerId: string;
@@ -20,6 +21,8 @@ const COMMON_COMMANDS = [
   'attack', 'kill', 'flee', 'help', 'smile', 'dance', 'wave', 'bow'
 ];
 
+const MAX_MESSAGES = 500; // Limit messages to prevent performance issues
+
 export function CommandConsole({ playerId, disabled = false }: CommandConsoleProps) {
   const { socket, connectionStatus } = useGameService();
   const [currentInput, setCurrentInput] = useState('');
@@ -31,13 +34,11 @@ export function CommandConsole({ playerId, disabled = false }: CommandConsolePro
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
   
   const inputRef = useRef<HTMLInputElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const lastGameMessageCountRef = useRef<number>(0);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive - StickToBottom will handle this
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // StickToBottom component handles auto-scrolling, so we don't need manual scrolling
   }, [messages]);
 
   // Set up game service message listeners
@@ -130,7 +131,14 @@ export function CommandConsole({ playerId, disabled = false }: CommandConsolePro
       text: messageData.text || ''
     };
     
-    setMessages(prev => [...prev, message]);
+    setMessages(prev => {
+      const newMessages = [...prev, message];
+      // Keep only the most recent MAX_MESSAGES to prevent performance issues
+      if (newMessages.length > MAX_MESSAGES) {
+        return newMessages.slice(-MAX_MESSAGES);
+      }
+      return newMessages;
+    });
   };
 
   const determineMessageType = (text: string): GameMessage['type'] => {
@@ -265,38 +273,42 @@ export function CommandConsole({ playerId, disabled = false }: CommandConsolePro
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-900 text-white">
+    <div className="flex flex-col h-full bg-gray-900 text-white overflow-hidden">
       {/* Messages Area */}
-      <div 
-        ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 font-mono text-sm space-y-1"
-      >
-        {messages.length === 0 && (
-          <div className="text-gray-500 italic">
-            Welcome to webMUD! Type commands to interact with the world.
-            <br />
-            Try typing "help" for available commands.
-          </div>
-        )}
-        
-        {messages.map((message) => (
-          <div 
-            key={message.id} 
-            className={`flex ${getMessageStyle(message.type)}`}
-          >
-            <span className="text-gray-500 text-xs mr-2 select-none">
-              {formatTime(message.timestamp)}
-            </span>
-            <span className="flex-1 whitespace-pre-wrap break-words">
-              {message.text}
-            </span>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
+      <div className="flex-1 min-h-0 relative">
+        <StickToBottom 
+          className="w-full h-full overflow-y-auto"
+          resize="smooth"
+          initial="smooth"
+        >
+          <StickToBottom.Content className="p-4 font-mono text-sm space-y-1">
+            {messages.length === 0 && (
+              <div className="text-gray-500 italic">
+                Welcome to webMUD! Type commands to interact with the world.
+                <br />
+                Try typing "help" for available commands.
+              </div>
+            )}
+            
+            {messages.map((message) => (
+              <div 
+                key={message.id} 
+                className={`flex ${getMessageStyle(message.type)}`}
+              >
+                <span className="text-gray-500 text-xs mr-2 select-none">
+                  {formatTime(message.timestamp)}
+                </span>
+                <span className="flex-1 whitespace-pre-wrap break-words">
+                  {message.text}
+                </span>
+              </div>
+            ))}
+          </StickToBottom.Content>
+        </StickToBottom>
       </div>
 
       {/* Command Input Area */}
-      <div className="border-t border-gray-700 p-4 relative">
+      <div className="border-t border-gray-700 p-4 relative flex-shrink-0">
         {/* Suggestions Dropdown */}
         {showSuggestions && suggestions.length > 0 && (
           <div className="absolute bottom-full left-4 right-4 mb-1 bg-gray-800 border border-gray-600 rounded-md shadow-lg max-h-32 overflow-y-auto z-10">
