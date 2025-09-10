@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, KeyboardEvent } from 'react';
+import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
 import { useGameService } from '../contexts/GameServiceContext';
 import { MessageTypes } from '../lib/messageTypes';
 import { StickToBottom } from 'use-stick-to-bottom';
