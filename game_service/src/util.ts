@@ -48,10 +48,32 @@ export function validateJwt(token: string): Promise<jwt.JwtPayload | string | an
     jwt.verify(
       token,
       getKey,
-      { algorithms: ["RS256"] } as jwt.VerifyOptions,
+      { 
+        algorithms: ["RS256"],
+        audience: process.env.AUTH_ENTRA_ID_AUDIENCE,
+        issuer: data.issuer
+      } as jwt.VerifyOptions,
       (error, decoded) => {
         if (error) return reject(error);
-        resolve(decoded as jwt.JwtPayload | string);
+        
+        const payload = decoded as jwt.JwtPayload;
+        
+        // Validate that the token contains the required scope
+        const requiredScope = process.env.AUTH_ENTRA_ID_SCOPE;
+        if (requiredScope) {
+          const scopeClaim = payload.scp || payload.scope;
+          if (scopeClaim) {
+            const scopes = typeof scopeClaim === 'string' ? scopeClaim.split(' ') : scopeClaim;
+            const requiredScopeName = requiredScope.split('/').pop();
+            if (!scopes.includes(requiredScopeName)) {
+              return reject(new Error('Token does not contain required scope'));
+            }
+          } else {
+            return reject(new Error('Token does not contain scope information'));
+          }
+        }
+        
+        resolve(payload);
       }
     );
   });

@@ -77,4 +77,10 @@ export class PlayerCharacterRepository {
     const result = await this.characters.deleteOne({ player_id: playerId });
     return result.deletedCount === 1;
   }
+
+  // Delete a character by _id.
+  async deleteCharacterById(characterId: string): Promise<boolean> {
+    const result = await this.characters.deleteOne({ _id: new ObjectId(characterId) });
+    return result.deletedCount === 1;
+  }
 }

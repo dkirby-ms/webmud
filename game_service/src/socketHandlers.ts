@@ -27,6 +27,7 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 	socket.on(MessageTypes.game.PLAYER_JOIN, async (playerCharacterId: string) => {
 		
 		const playerCharacter = await repositories.playerCharacterRepository.getCharacterById(playerCharacterId);
+		logger.info(`Auth debug - userId from socket: ${userId}, playerCharacter.userId: ${playerCharacter?.userId}, match: ${playerCharacter?.userId === userId}`);
 		if (playerCharacter?.userId !== userId) {
 			throw new Error("Player is not authorized to connect with this character.");
 		}
@@ -39,9 +40,16 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 		 	const disconnectedPlayer = disconnectedPlayers.get(playerCharacterId);
 		 	clearTimeout(disconnectedPlayer?.cleanupTimer);
 			const disconnectTime = disconnectedPlayer?.disconnectTime || 0;
-			world.reconnectPlayer(playerCharacterId, socket);
-			disconnectedPlayers.delete(playerCharacterId);
-			logger.info(`Player character ${playerCharacterId} reconnected after ${Date.now() - disconnectTime}ms.`);
+			try {
+				world.reconnectPlayer(playerCharacterId, socket);
+				disconnectedPlayers.delete(playerCharacterId);
+				logger.info(`Player character ${playerCharacterId} reconnected after ${Date.now() - disconnectTime}ms.`);
+			} catch (error) {
+				// Player no longer exists in world, treat as new connection
+				logger.info(`Player character ${playerCharacterId} not found in world, treating as new connection`);
+				disconnectedPlayers.delete(playerCharacterId);
+				world.addPlayer(playerCharacterId, playerCharacter, socket);
+			}
 		} else {
 			logger.info(`Player ${userId} connected with character ${playerCharacter.name}`);
 			world.addPlayer(playerCharacterId, playerCharacter, socket);
@@ -71,9 +79,32 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 	});
 
 	// when a client sends a command message -
-	socket.on(MessageTypes.command.SEND_COMMAND, (command) => {
+	socket.on(MessageTypes.command.SEND_COMMAND, (commandData) => {
+		// Handle both string commands and command objects
+		const commandText = typeof commandData === 'string' ? commandData : commandData?.command;
+		
+		if (!commandText) {
+			logger.warn(`Player ${socket.data.playerCharacterId} sent invalid command data:`, commandData);
+			return;
+		}
+		
+		// Check if player still exists in the world before processing commands
+		if (!socket.data.playerCharacterId) {
+			logger.warn('Command received from socket without playerCharacterId');
+			return;
+		}
+		
+		// Check if player exists in the world
+		const playerExists = world.players.has(socket.data.playerCharacterId);
+		if (!playerExists) {
+			logger.warn(`Command received from player ${socket.data.playerCharacterId} who is not in the world. Ignoring command.`);
+			// Optionally disconnect the socket since the player is no longer valid
+			socket.disconnect();
+			return;
+		}
+		
 		// parse the command and take the appropriate action
-		const parsedCommand = parseCommand(command);
+		const parsedCommand = parseCommand(commandText);
 		switch (parsedCommand.type) {
 			case CommandType.MOVE:
 				const direction = parsedCommand.args![0];
@@ -134,12 +165,23 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 				// Handle help command
 				world.displayHelp(socket.data.playerCharacterId, parsedCommand.args);
 				break;
+			case CommandType.DELETE_CHARACTER:
+				// Handle delete character command
+				{
+					const output = "To delete your character, please use the web interface. This action cannot be undone.";
+					const messages: string[] = [];
+					messages[0] = output;
+					world.sendCommandOutputToPlayer(socket.data.playerCharacterId, messages);
+				}
+				break;
 			case CommandType.UNKNOWN:
-				logger.warn(`Player ${socket.data.playerCharacterId} sent an unknown command: ${command}`);
-				const output = "Sorry, I don't understand that command.";
-				const messages: string[] = [];
-				messages[0] = output;
-				world.sendCommandOutputToPlayer(socket.data.playerCharacterId, messages);
+				logger.warn(`Player ${socket.data.playerCharacterId} sent an unknown command: ${commandText}`);
+				{
+					const output = "Sorry, I don't understand that command.";
+					const messages: string[] = [];
+					messages[0] = output;
+					world.sendCommandOutputToPlayer(socket.data.playerCharacterId, messages);
+				}
 				break;
 		}
 	});

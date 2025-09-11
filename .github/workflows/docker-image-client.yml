@@ -1,29 +1,48 @@
-name: webmud_client Docker Image CI
+name: vite_client Docker Image CI
 
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'vite_client/**'
+      - '.github/workflows/docker-image-client.yml'
   pull_request:
     branches: [ "main" ]
+    paths:
+      - 'vite_client/**'
+      - '.github/workflows/docker-image-client.yml'
 
 jobs:
-
   buildPush:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
     - name: Set tag
       id: set_tag
-      run: echo "tag=$(date +%s)" >> $GITHUB_OUTPUT
-
-    - name: Build the Docker image
-      run: docker build ./webmud_client/ --file ./webmud_client/Dockerfile --tag saitchocr.azurecr.io/webmud_client:${{ steps.set_tag.outputs.tag }}
+      run: |
+        if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+          echo "tag=latest" >> $GITHUB_OUTPUT
+        else
+          echo "tag=$(date +%s)-${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+        fi
 
     - name: Log in to Azure Container Registry
-      run: az acr login --name saitchocr --username saitchocr --password ${{ secrets.REGISTRY_SECRET }}
+      run: echo "${{ secrets.REGISTRY_SECRET }}" | docker login saitchocr.azurecr.io -u saitchocr --password-stdin
 
-    - name: Push the Docker image
-      run: docker push saitchocr.azurecr.io/webmud_client:${{ steps.set_tag.outputs.tag }}
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./vite_client
+        file: ./vite_client/Dockerfile
+        push: true
+        tags: saitchocr.azurecr.io/vite_client:${{ steps.set_tag.outputs.tag }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64
 
