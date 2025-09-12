@@ -7,6 +7,7 @@ interface DeckManagerProps {
 }
 
 export const DeckManager: React.FC<DeckManagerProps> = ({ playerId, onClose }) => {
+  const [decks, setDecks] = useState<PlayerDeck[]>([]);
   const [selectedDeck, setSelectedDeck] = useState<PlayerDeck | null>(null);
   const [collection, setCollection] = useState<CardCollection | null>(null);
   const [loading, setLoading] = useState(true);
@@ -252,9 +253,28 @@ export const DeckManager: React.FC<DeckManagerProps> = ({ playerId, onClose }) =
               {/* Left panel: Deck selection and cards */}
               <div className="w-1/2 border-r border-gray-200 dark:border-gray-700 p-6 flex flex-col">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {selectedDeck?.name || 'No Deck Selected'}
-                  </h3>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      Deck Builder
+                    </h3>
+                    {/* Deck Selector */}
+                    <select
+                      value={selectedDeck?._id || ''}
+                      onChange={(e) => {
+                        const deck = decks.find(d => d._id === e.target.value);
+                        setSelectedDeck(deck || null);
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
+                               bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                    >
+                      <option value="">Select a deck...</option>
+                      {decks.map(deck => (
+                        <option key={deck._id} value={deck._id}>
+                          {deck.name} ({deck.cards.reduce((sum, card) => sum + card.quantity, 0)}/{deck.maxSize} cards)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
                     {selectedDeck && (
                       <span>

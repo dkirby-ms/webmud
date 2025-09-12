@@ -9,6 +9,9 @@ import { EntityRepository } from "./entityRepository.js";
 import { PlayerCharacterRepository } from "./playerCharacterRepository.js";
 import { CharacterSpeciesRepository } from "./characterSpeciesRepository.js";
 import { CharacterSkillsRepository } from "./characterSkillsRepository.js";
+import { CardRepository } from "./cardRepository.js";
+import { DeckRepository } from "./deckRepository.js";
+import { CardCollectionRepository } from "./cardCollectionRepository.js";
 
 export interface Repositories {
   userRepository: UserRepository;
@@ -20,6 +23,9 @@ export interface Repositories {
   playerCharacterRepository: PlayerCharacterRepository;
   characterSpeciesRepository: CharacterSpeciesRepository;
   characterSkillsRepository: CharacterSkillsRepository;
+  cardRepository: CardRepository;
+  deckRepository: DeckRepository;
+  cardCollectionRepository: CardCollectionRepository;
 }
 
 export function createRepositories(db: Db): Repositories {
@@ -33,5 +39,8 @@ export function createRepositories(db: Db): Repositories {
     playerCharacterRepository: new PlayerCharacterRepository(db),
     characterSpeciesRepository: new CharacterSpeciesRepository(db),
     characterSkillsRepository: new CharacterSkillsRepository(db),
+    cardRepository: new CardRepository(db),
+    deckRepository: new DeckRepository(db),
+    cardCollectionRepository: new CardCollectionRepository(db),
   };
 }
