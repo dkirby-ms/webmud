@@ -123,5 +123,239 @@ export function createApiRouter(repositories: Repositories): Router {
     }
   });
 
+  // Cards endpoints (public - no auth required for browsing)
+  router.get('/cards', async (req, res) => {
+    try {
+      const { type, rarity, minLevel, maxLevel } = req.query;
+      const filter: any = {};
+      
+      if (type) filter.type = type;
+      if (rarity) filter.rarity = rarity;
+      if (minLevel) filter.minLevel = parseInt(minLevel as string);
+      if (maxLevel) filter.maxLevel = parseInt(maxLevel as string);
+      
+      const cards = await repositories.cardRepository.listCards(filter);
+      res.json(cards);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  router.get('/cards/search', async (req, res) => {
+    try {
+      const { q } = req.query;
+      if (!q || typeof q !== 'string') {
+        res.status(400).json({ error: 'Search query is required' });
+        return;
+      }
+      
+      const cards = await repositories.cardRepository.searchCards(q);
+      res.json(cards);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  router.get('/cards/:cardId', async (req, res) => {
+    try {
+      const { cardId } = req.params;
+      const card = await repositories.cardRepository.getCard(cardId);
+      
+      if (!card) {
+        res.status(404).json({ error: 'Card not found' });
+        return;
+      }
+      
+      res.json(card);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Player Card Collection endpoints (require authentication)
+  router.get('/players/:playerId/collection', authenticateJwt, async (req, res): Promise<void> => {
+    try {
+      const { playerId } = req.params;
+      const authenticatedUser = (req as any).user;
+      
+      // Get the player character to verify ownership
+      const character = await repositories.playerCharacterRepository.getCharacterById(playerId);
+      if (!character) {
+        res.status(404).json({ error: 'Character not found' });
+        return;
+      }
+      
+      // Ensure user can only access their own collection
+      if (authenticatedUser.sub !== character.userId && authenticatedUser.oid !== character.userId) {
+        res.status(403).json({ error: 'Access denied: can only access your own collection' });
+        return;
+      }
+
+      const collection = await repositories.cardCollectionRepository.getCollectionWithCards(
+        playerId, 
+        repositories.cardRepository
+      );
+      
+      if (!collection) {
+        // Create empty collection if none exists
+        const newCollection = await repositories.cardCollectionRepository.createCollection(playerId);
+        res.json(newCollection);
+        return;
+      }
+      
+      res.json(collection);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Player Decks endpoints (require authentication)
+  router.get('/players/:playerId/decks', authenticateJwt, async (req, res): Promise<void> => {
+    try {
+      const { playerId } = req.params;
+      const authenticatedUser = (req as any).user;
+      
+      // Get the player character to verify ownership
+      const character = await repositories.playerCharacterRepository.getCharacterById(playerId);
+      if (!character) {
+        res.status(404).json({ error: 'Character not found' });
+        return;
+      }
+      
+      // Ensure user can only access their own decks
+      if (authenticatedUser.sub !== character.userId && authenticatedUser.oid !== character.userId) {
+        res.status(403).json({ error: 'Access denied: can only access your own decks' });
+        return;
+      }
+
+      const decks = await repositories.deckRepository.getPlayerDecks(playerId);
+      res.json(decks);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  router.post('/players/:playerId/decks', authenticateJwt, async (req, res): Promise<void> => {
+    try {
+      const { playerId } = req.params;
+      const { name, maxSize = 30, isActive = false } = req.body;
+      const authenticatedUser = (req as any).user;
+      
+      // Get the player character to verify ownership
+      const character = await repositories.playerCharacterRepository.getCharacterById(playerId);
+      if (!character) {
+        res.status(404).json({ error: 'Character not found' });
+        return;
+      }
+      
+      // Ensure user can only create decks for themselves
+      if (authenticatedUser.sub !== character.userId && authenticatedUser.oid !== character.userId) {
+        res.status(403).json({ error: 'Access denied: can only create decks for yourself' });
+        return;
+      }
+
+      if (!name || name.trim().length === 0) {
+        res.status(400).json({ error: 'Deck name is required' });
+        return;
+      }
+
+      const deck = await repositories.deckRepository.createDeck({
+        playerId,
+        name: name.trim(),
+        cards: [],
+        isActive,
+        maxSize
+      });
+      
+      res.json(deck);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  router.get('/decks/:deckId', authenticateJwt, async (req, res): Promise<void> => {
+    try {
+      const { deckId } = req.params;
+      const authenticatedUser = (req as any).user;
+      
+      // Get the deck to verify ownership
+      const deck = await repositories.deckRepository.getDeck(deckId);
+      if (!deck) {
+        res.status(404).json({ error: 'Deck not found' });
+        return;
+      }
+      
+      // Get the player character to verify ownership
+      const character = await repositories.playerCharacterRepository.getCharacterById(deck.playerId);
+      if (!character) {
+        res.status(404).json({ error: 'Character not found' });
+        return;
+      }
+      
+      // Ensure user can only access their own decks
+      if (authenticatedUser.sub !== character.userId && authenticatedUser.oid !== character.userId) {
+        res.status(403).json({ error: 'Access denied: can only access your own decks' });
+        return;
+      }
+
+      const deckWithCards = await repositories.deckRepository.getDeckWithCards(deckId, repositories.cardRepository);
+      res.json(deckWithCards);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  router.post('/decks/:deckId/cards', authenticateJwt, async (req, res): Promise<void> => {
+    try {
+      const { deckId } = req.params;
+      const { cardId, quantity = 1 } = req.body;
+      const authenticatedUser = (req as any).user;
+      
+      // Get the deck to verify ownership
+      const deck = await repositories.deckRepository.getDeck(deckId);
+      if (!deck) {
+        res.status(404).json({ error: 'Deck not found' });
+        return;
+      }
+      
+      // Get the player character to verify ownership
+      const character = await repositories.playerCharacterRepository.getCharacterById(deck.playerId);
+      if (!character) {
+        res.status(404).json({ error: 'Character not found' });
+        return;
+      }
+      
+      // Ensure user can only modify their own decks
+      if (authenticatedUser.sub !== character.userId && authenticatedUser.oid !== character.userId) {
+        res.status(403).json({ error: 'Access denied: can only modify your own decks' });
+        return;
+      }
+
+      // Verify card exists
+      const card = await repositories.cardRepository.getCard(cardId);
+      if (!card) {
+        res.status(404).json({ error: 'Card not found' });
+        return;
+      }
+
+      // Verify player has the card in their collection
+      const hasCard = await repositories.cardCollectionRepository.hasCard(deck.playerId, cardId, quantity);
+      if (!hasCard) {
+        res.status(400).json({ error: 'Insufficient cards in collection' });
+        return;
+      }
+
+      const success = await repositories.deckRepository.addCardToDeck(deckId, cardId, quantity);
+      
+      if (success) {
+        res.json({ success: true, message: 'Card added to deck' });
+      } else {
+        res.status(400).json({ error: 'Failed to add card to deck' });
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   return router;
 }

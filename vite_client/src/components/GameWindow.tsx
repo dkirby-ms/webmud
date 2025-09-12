@@ -3,6 +3,7 @@ import { useGameService } from "../contexts/GameServiceContext";
 import { MapPanel } from "./MapPanel";
 import { RoomView } from "./RoomView";
 import { CommandConsole } from "./CommandConsole";
+import { DeckOverview } from "./DeckOverview";
 import type { PlayerCharacter } from "../types";
 
 interface GameWindowProps {
@@ -69,7 +70,7 @@ export function GameWindow({ character, onDisconnect }: GameWindowProps) {
         {/* Left Panel: Map and Room Details */}
         <div className="flex-1 flex flex-col border-r border-gray-700 min-h-0">
           {/* Map */}
-          <div className="bg-gray-800 border-b border-gray-700 flex-shrink-0">
+          <div className="bg-gray-800 border-b border-gray-700 flex-shrink-0 h-64">
             <div className="p-2 bg-gray-700 text-sm font-medium">Map</div>
             <MapPanel />
           </div>
@@ -86,10 +87,18 @@ export function GameWindow({ character, onDisconnect }: GameWindowProps) {
           </div>
         </div>
 
-        {/* Right Panel: Room View */}
-        <div className="w-80 bg-gray-800 p-4 flex-shrink-0">
-          <div className="mb-2 text-sm font-medium text-gray-300">Current Room</div>
-          <RoomView />
+        {/* Right Panel: Room View and Deck */}
+        <div className="w-80 bg-gray-800 flex flex-col flex-shrink-0">
+          {/* Room View */}
+          <div className="p-4 border-b border-gray-700">
+            <div className="mb-2 text-sm font-medium text-gray-300">Current Room</div>
+            <RoomView />
+          </div>
+          
+          {/* Deck Overview */}
+          <div className="p-4 flex-1">
+            <DeckOverview playerId={character._id} />
+          </div>
         </div>
       </div>
     </div>
