@@ -1,4 +1,4 @@
-import { Db, Collection, WithId, Document, ObjectId } from "mongodb";
+import { Db, Collection, WithId, Document } from "mongodb";
 
 export class EntityRepository {
     private entities: Collection;

@@ -1,8 +1,7 @@
 import { ajv } from "../util.js";
-import type {Server as SocketIOServer, Socket } from "socket.io";
+import type { Socket } from "socket.io";
 import { Repositories } from "../db/index.js";
-import { UserRepository } from "../db/userRepository.js";
-import { Db, Collection, ObjectId, WithId, Document } from "mongodb";
+import { ObjectId } from "mongodb";
 
 const validate = ajv.compile({
   type: "object",
@@ -22,7 +21,7 @@ interface ListMessagesParams {
   repositories: Repositories;
 }
 
-export function listMessages({ session, socket, repositories }: ListMessagesParams): (query: any, callback: (result: any) => void) => Promise<void> {
+export function listMessages({ session, repositories }: ListMessagesParams): (query: any, callback: (result: any) => void) => Promise<void> {
   return async (query, callback) => {
     if (typeof callback !== "function") {
       return;

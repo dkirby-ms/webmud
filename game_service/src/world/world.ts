@@ -4,12 +4,9 @@ import { logger, getOppositeDirection } from '../util.js'
 import { WithId, Document } from 'mongodb';
 import { Entity, EntityFactory, PlayerEntity, EntityClientView } from './entity.js';
 import { MessageTypes } from "../taxonomy.js";
-import { getEmoteByKey, EmoteDefinition } from "./emoteConfig.js";
-import { CommandType } from "../commandParser.js";
+import { getEmoteByKey } from "./emoteConfig.js";
 import { EMOTE_KEYS } from "./emoteConfig.js";
-import { isBigInt64Array } from "node:util/types";
 
-const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const enum RoomType {
     Room = 'room'
 }
@@ -95,7 +92,7 @@ export class World {
             }
 
         } catch (err) {
-            throw (`Error initializing game world: ${err}`);
+            throw new Error(`Error initializing game world: ${err}`);
         }
 
     }
@@ -164,7 +161,8 @@ export class World {
             throw new Error(`Player not found for user ID ${playerCharacterId}`);
         }
         player.socket = socket;
-        const playerEntity = this.entities.get(playerCharacterId); // not sure we need to do anything with entities here
+        // Note: playerEntity may be used for future entity state management
+        // const playerEntity = this.entities.get(playerCharacterId);
     }
 
     // remove a player from the world
@@ -325,9 +323,9 @@ export class World {
     private gatherInputs(): void {
         // gather inputs from all connected players
         // for each player, gather the input
-        for (const player of this.players.values()) {
+        for (const _player of this.players.values()) {
             // gather the input from the player
-
+            // TODO: Implement input gathering logic
         }
     }
 
@@ -422,7 +420,8 @@ export class World {
         if (!player) {
             throw new Error(`Player not found for user ID ${playerCharacterId}`);
         }
-        const playerEntity = this.entities.get(playerCharacterId);
+        // Note: playerEntity may be used for future character state management
+        // const playerEntity = this.entities.get(playerCharacterId);
         return player.playerCharacter.name;
     }
 
@@ -895,6 +894,11 @@ export class World {
             i = end + 1;
         }
         return chunks;
+    }
+
+    // Public method to check if a player exists in the world
+    public hasPlayer(playerCharacterId: string): boolean {
+        return this.players.has(playerCharacterId);
     }
 
 }
