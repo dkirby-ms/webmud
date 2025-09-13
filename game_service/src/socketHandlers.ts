@@ -1,17 +1,19 @@
 import { Socket, Server } from 'socket.io';
 import { MessageTypes } from './taxonomy.js';
-import { _ } from 'ajv';
 import { CommandType, parseCommand } from './commandParser.js';
+import { Repositories } from './db/index.js';
+import { World } from './world/world.js';
+import { Logger } from 'winston';
 
 interface Dependencies {
     // socket server
     io: Server;
 	// logger used for logging events
-	logger: any;
+	logger: Logger;
 	// repositories to access data (e.g. playerCharacterRepository)
-	repositories: any;
+	repositories: Repositories;
 	// game world instance used for add/remove player
-	world: any;
+	world: World;
 	// disconnectedPlayers map to track disconnects
 	disconnectedPlayers: Map<string, { cleanupTimer: NodeJS.Timeout, disconnectTime: number }>;
 	// cleanup interval constant (in ms)
@@ -21,14 +23,13 @@ interface Dependencies {
 export function registerSocketConnectionHandlers(socket: Socket, deps: Dependencies) {
 	const { logger, repositories, world, disconnectedPlayers, CLEANUP_DISCONNECT_GRACE_PERIOD } = deps;
 	const userId = socket.data?.userId;
-	const io = deps.io;
 
 	// on connectPlayer
 	socket.on(MessageTypes.game.PLAYER_JOIN, async (playerCharacterId: string) => {
 		
 		const playerCharacter = await repositories.playerCharacterRepository.getCharacterById(playerCharacterId);
 		logger.info(`Auth debug - userId from socket: ${userId}, playerCharacter.userId: ${playerCharacter?.userId}, match: ${playerCharacter?.userId === userId}`);
-		if (playerCharacter?.userId !== userId) {
+		if (!playerCharacter || playerCharacter.userId !== userId) {
 			throw new Error("Player is not authorized to connect with this character.");
 		}
 		socket.data.timeConnected = Date.now();
@@ -95,7 +96,7 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 		}
 		
 		// Check if player exists in the world
-		const playerExists = world.players.has(socket.data.playerCharacterId);
+		const playerExists = world.hasPlayer(socket.data.playerCharacterId);
 		if (!playerExists) {
 			logger.warn(`Command received from player ${socket.data.playerCharacterId} who is not in the world. Ignoring command.`);
 			// Optionally disconnect the socket since the player is no longer valid
@@ -137,21 +138,6 @@ export function registerSocketConnectionHandlers(socket: Socket, deps: Dependenc
 			case CommandType.LOOK:
 				 // Add support for map-related look command
 				world.playerLooksAt(socket.data.playerCharacterId, parsedCommand.args);
-				break;
-			case CommandType.COMBAT:
-				// Handle combat/attack commands
-				const target = parsedCommand.args && parsedCommand.args.length > 0 ? parsedCommand.args.join(" ") : undefined;
-				if (target) {
-					// Attack a target
-					world.handleCombatCommand(socket.data.playerCharacterId, target);
-				} else {
-					// Display combat status if no target specified
-					world.displayCombatStatus(socket.data.playerCharacterId);
-				}
-				break;
-			case CommandType.FLEE:
-				// Handle flee command
-				world.handleFleeCommand(socket.data.playerCharacterId);
 				break;
 			case CommandType.EMOTE:
 				// Handle emote commands

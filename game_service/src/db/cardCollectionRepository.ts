@@ -1,4 +1,4 @@
-import { Db, Collection, WithId, Document, ObjectId } from "mongodb";
+import { Db, Collection, WithId, Document } from "mongodb";
 
 export interface CollectionCard {
   cardId: string;
@@ -21,13 +21,13 @@ export class CardCollectionRepository {
   }
 
   // Helper method to convert string to ObjectId if possible
-  private toObjectIdOrString(id: string): ObjectId | string {
-    try {
-      return new ObjectId(id);
-    } catch {
-      return id;
-    }
-  }
+  // private toObjectIdOrString(id: string): ObjectId | string {
+  //   try {
+  //     return new ObjectId(id);
+  //   } catch {
+  //     return id;
+  //   }
+  // }
 
   // Get a player's card collection
   async getPlayerCollection(playerId: string): Promise<WithId<Document> | null> {

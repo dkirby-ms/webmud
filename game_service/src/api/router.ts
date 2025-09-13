@@ -28,7 +28,7 @@ export function createApiRouter(repositories: Repositories): Router {
   const router = Router();
 
   // Character Species endpoints (public - no auth required)
-  router.get('/characterSpecies', async (req, res) => {
+  router.get('/characterSpecies', async (_req, res) => {
     try {
       const species = await repositories.characterSpeciesRepository.listSpecies();
       res.json(species);
@@ -38,7 +38,7 @@ export function createApiRouter(repositories: Repositories): Router {
   });
 
   // Character Skills endpoints (public - no auth required)
-  router.get('/characterSkills', async (req, res) => {
+  router.get('/characterSkills', async (_req, res) => {
     try {
       const skills = await repositories.characterSkillsRepository.listSkills();
       res.json(skills);
@@ -48,7 +48,7 @@ export function createApiRouter(repositories: Repositories): Router {
   });
 
   // Game Worlds endpoints (public - no auth required)
-  router.get('/gameWorlds', async (req, res) => {
+  router.get('/gameWorlds', async (_req, res) => {
     try {
       const worlds = await repositories.worldRepository.listActiveWorlds();
       res.json(worlds);

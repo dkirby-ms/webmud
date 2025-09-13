@@ -18,7 +18,7 @@ interface AckMessageParams {
   repositories: Repositories;
 }
 
-export function ackMessage({ socket, session, repositories }: AckMessageParams): (payload: any, callback: (result: any) => void) => Promise<void> {
+export function ackMessage({ session, repositories }: AckMessageParams): (payload: any, callback: (result: any) => void) => Promise<void> {
   return async (payload, callback) => {
     if (typeof callback !== "function") {
       return;
@@ -32,7 +32,8 @@ export function ackMessage({ socket, session, repositories }: AckMessageParams):
     }
 
     try {
-      const validatedPayload = payload as { channelId: string; messageId: string };
+      // Validate the payload structure
+      payload as { channelId: string; messageId: string };
       await repositories.messageRepository.ackMessage(session.userId, payload.channelId, payload.messageId);
     } catch (e) {
       return callback({

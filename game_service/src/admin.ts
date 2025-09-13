@@ -1,5 +1,4 @@
 import express from 'express';
-import { time } from 'node:console';
 import { Server } from 'socket.io';
 
 // Future work - add authorization check for admin routes
@@ -12,7 +11,7 @@ export function createAdminRouter(io: Server) {
     const router = express.Router();
 
     // Endpoint to inspect connected sockets
-    router.get('/sockets', async (req, res) => {
+    router.get('/sockets', async (_req, res) => {
         const sockets = await io.fetchSockets();
 
         res.json(sockets.map((socket) => ({
