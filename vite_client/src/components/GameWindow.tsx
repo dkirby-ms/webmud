@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useGameService } from "../contexts/GameServiceContext";
 import { MapPanel } from "./MapPanel";
+import { Battlefield } from "./Battlefield";
 import { RoomView } from "./RoomView";
 import { CommandConsole } from "./CommandConsole";
 import { DeckOverview } from "./DeckOverview";
@@ -67,16 +68,29 @@ export function GameWindow({ character, onDisconnect }: GameWindowProps) {
 
       {/* Main Game Area */}
       <div className="flex-1 flex min-h-0">
-        {/* Left Panel: Map and Room Details */}
+        {/* Left Panel: Map + Battlefield and Console */}
         <div className="flex-1 flex flex-col border-r border-gray-700 min-h-0">
-          {/* Map */}
-          <div className="bg-gray-800 border-b border-gray-700 flex-shrink-0 h-64">
-            <div className="p-2 bg-gray-700 text-sm font-medium">Map</div>
-            <MapPanel />
+          {/* Tactical Row: Map + Battlefield (occupies proportionally more space) */}
+          <div className="bg-gray-800 border-b border-gray-700 flex flex-row overflow-hidden grow basis-2/3 min-h-0">
+            <div className="flex flex-col w-1/2 border-r border-gray-700">
+              <div className="p-2 bg-gray-700 text-sm font-medium">Map</div>
+              <div className="flex-1 min-h-0 h-full"><MapPanel /></div>
+            </div>
+            <div className="flex flex-col w-1/2">
+              <div className="p-2 bg-gray-700 text-sm font-medium">Battlefield</div>
+              <div className="flex-1 min-h-0 overflow-auto p-1">
+                <Battlefield
+                  width={12}
+                  height={8}
+                  playerId={character._id}
+                  interactive
+                />
+              </div>
+            </div>
           </div>
           
           {/* Command Console */}
-          <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex flex-col min-h-0 basis-1/3">
             <div className="p-2 bg-gray-700 text-sm font-medium border-b border-gray-600 flex-shrink-0">Game Console</div>
             <div className="flex-1 min-h-0">
               <CommandConsole 

@@ -14,3 +14,4 @@ export { CharacterList } from './CharacterList';
 export { CreateCharacterForm } from './CreateCharacterForm';
 export { PlayerCharacterCard } from './PlayerCharacterCard';
 export { CharacterSpeciesCard } from './CharacterSpeciesCard';
+export { Battlefield } from './Battlefield';
